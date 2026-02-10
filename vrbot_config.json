@@ -1,0 +1,26 @@
+{
+  "adb_host": "127.0.0.1",
+  "adb_port": 5555,
+  "ws_url": "wss://ws.vrbot.me/ws",
+  "ws_token": "",
+  "license_key": "",
+  "device_id": "",
+  "screen_width": 1280,
+  "screen_height": 720,
+  "enabled_tasks": ["all"],
+  "disabled_tasks": [],
+  "antiban": {
+    "tap_delay_min": 800,
+    "tap_delay_max": 3500,
+    "tap_offset_min": 3,
+    "tap_offset_max": 12,
+    "rest_every_min": 35,
+    "rest_every_max": 65,
+    "rest_duration_min": 3,
+    "rest_duration_max": 8,
+    "session_max_hours": 4.0,
+    "session_break_min": 20,
+    "session_break_max": 45,
+    "enabled": true
+  }
+}
