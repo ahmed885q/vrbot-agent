@@ -1,1 +1,4 @@
-from .humanizer import Humanizer
+from antiban.humanizer import Humanizer
+
+__all__ = ["Humanizer"]
+

@@ -1,1 +1,4 @@
-from .vision import Vision
+from ocr.vision import Vision
+
+__all__ = ["Vision"]
+

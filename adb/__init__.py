@@ -1,1 +1,4 @@
-from .controller import ADBController
+from adb.controller import ADBController
+
+__all__ = ["ADBController"]
+

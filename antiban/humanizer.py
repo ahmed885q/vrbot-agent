@@ -1,174 +1,205 @@
 """
-Anti-Ban Humanizer — Makes bot actions look human
-- Random delays between actions
-- Random tap position offsets
-- Natural swipe curves
-- Rest breaks and session management
+VRBOT Agent — Anti-Ban Humanizer
+Simulates human-like behavior patterns to avoid game detection.
+Inspired by GnBots' safe botting practices.
 """
-
-import asyncio
 import random
 import time
 import math
 import logging
-from typing import Tuple
+from datetime import datetime, timedelta
 
 log = logging.getLogger("vrbot.antiban")
 
 
 class Humanizer:
-    def __init__(self, config):
-        self.cfg = config
-        self._session_start = time.time()
-        self._last_rest = time.time()
+    """Simulates human behavior to avoid bot detection."""
+
+    def __init__(self, config=None):
+        cfg = config or {}
+        self.min_click_delay = cfg.get("min_click_delay", 800) / 1000.0
+        self.max_click_delay = cfg.get("max_click_delay", 3500) / 1000.0
+        self.pixel_offset = cfg.get("pixel_offset", 12)
+        self.rest_interval_min = cfg.get("rest_interval_min", 30)
+        self.rest_interval_max = cfg.get("rest_interval_max", 60)
+        self.rest_duration_min = cfg.get("rest_duration_min", 5)
+        self.rest_duration_max = cfg.get("rest_duration_max", 15)
+        self.session_max_hours = cfg.get("session_max_hours", 8)
+        self.sleep_start = cfg.get("sleep_hours_start", 23)
+        self.sleep_end = cfg.get("sleep_hours_end", 7)
+        self.shuffle_actions = cfg.get("action_order_shuffle", True)
+
+        # Session tracking
+        self._session_start = datetime.now()
         self._action_count = 0
+        self._last_rest = datetime.now()
         self._total_actions = 0
+        self._fatigue_level = 0.0  # 0.0 - 1.0
 
-    # ─── Delays ─────────────────────────────────────
+    # ─── Delays ───────────────────────────────────────────────
 
-    async def delay(self, min_ms: int = None, max_ms: int = None):
-        """Random delay between actions (human-like)"""
-        if not self.cfg.enabled:
-            await asyncio.sleep(0.1)
-            return
-
-        lo = min_ms or self.cfg.tap_delay_min
-        hi = max_ms or self.cfg.tap_delay_max
-
-        # Use gaussian distribution (more natural than uniform)
-        mean = (lo + hi) / 2
-        std = (hi - lo) / 4
-        delay_ms = max(lo, min(hi, random.gauss(mean, std)))
-
-        # Occasionally add extra "thinking" time (5% chance)
-        if random.random() < 0.05:
-            delay_ms += random.randint(1000, 3000)
-
-        await asyncio.sleep(delay_ms / 1000)
-
-    async def short_delay(self):
-        """Short delay (UI transition)"""
-        await self.delay(300, 800)
-
-    async def medium_delay(self):
-        """Medium delay (reading/deciding)"""
-        await self.delay(1000, 2500)
-
-    async def long_delay(self):
-        """Long delay (complex decision)"""
-        await self.delay(2500, 5000)
-
-    # ─── Position Randomization ─────────────────────
-
-    def randomize_pos(self, x: int, y: int, radius: int = None) -> Tuple[int, int]:
-        """Add random offset to tap position (human inaccuracy)"""
-        if not self.cfg.enabled:
-            return x, y
-
-        r = radius or random.randint(self.cfg.tap_offset_min, self.cfg.tap_offset_max)
-
-        # Gaussian offset (most taps near center, few at edges)
-        dx = int(random.gauss(0, r / 2))
-        dy = int(random.gauss(0, r / 2))
-
-        return x + dx, y + dy
-
-    def randomize_region(self, x: int, y: int, w: int, h: int) -> Tuple[int, int]:
-        """Random position within a region (for buttons)"""
-        # Don't click edges (looks robotic), stay in center 70%
-        margin_x = int(w * 0.15)
-        margin_y = int(h * 0.15)
-        rx = random.randint(x + margin_x, x + w - margin_x)
-        ry = random.randint(y + margin_y, y + h - margin_y)
-        return rx, ry
-
-    # ─── Human-like Swipe ──────────────────────────
-
-    def humanize_swipe(
-        self, x1: int, y1: int, x2: int, y2: int
-    ) -> Tuple[int, int, int, int, int]:
-        """
-        Humanize swipe: add curve, randomize start/end, duration
-        Returns (x1, y1, x2, y2, duration_ms)
-        """
-        if not self.cfg.enabled:
-            return x1, y1, x2, y2, 400
-
-        # Randomize start and end positions
-        x1, y1 = self.randomize_pos(x1, y1, 5)
-        x2, y2 = self.randomize_pos(x2, y2, 5)
-
-        # Random duration
-        duration = random.randint(
-            self.cfg.swipe_duration_min,
-            self.cfg.swipe_duration_max
-        )
-
-        return x1, y1, x2, y2, duration
-
-    # ─── Rest Breaks ───────────────────────────────
-
-    async def maybe_rest(self) -> bool:
-        """
-        Check if it's time for a rest break.
-        Returns True if rested.
-        """
-        if not self.cfg.enabled:
-            return False
-
+    def delay(self, context="normal"):
+        """Human-like random delay between actions."""
+        base = self._get_base_delay(context)
+        # Add fatigue factor — tired humans are slower
+        fatigue_bonus = self._fatigue_level * 1.5
+        delay = base + fatigue_bonus
+        # Add slight randomness using gaussian distribution
+        delay = max(0.3, random.gauss(delay, delay * 0.2))
+        time.sleep(delay)
         self._action_count += 1
         self._total_actions += 1
-        now = time.time()
+        self._update_fatigue()
 
-        # Check session limit
-        session_hours = (now - self._session_start) / 3600
-        if session_hours >= self.cfg.session_max_hours:
-            rest_min = random.randint(self.cfg.session_break_min, self.cfg.session_break_max)
-            log.info(f"Session break: {rest_min} minutes (played {session_hours:.1f}h)")
-            await asyncio.sleep(rest_min * 60)
-            self._session_start = time.time()
-            self._last_rest = time.time()
-            self._action_count = 0
-            return True
+    def _get_base_delay(self, context):
+        """Get base delay based on action context."""
+        delays = {
+            "fast":    (0.3, 0.8),    # Quick taps (dismiss, close)
+            "normal":  (0.8, 2.0),    # Regular actions
+            "slow":    (1.5, 3.5),    # Careful actions (upgrades, trains)
+            "reading": (2.0, 5.0),    # Simulating reading text
+            "thinking": (3.0, 8.0),   # Simulating decision making
+            "menu":    (0.5, 1.5),    # Menu navigation
+        }
+        lo, hi = delays.get(context, (self.min_click_delay, self.max_click_delay))
+        return random.uniform(lo, hi)
 
-        # Check periodic rest
-        minutes_since_rest = (now - self._last_rest) / 60
-        rest_threshold = random.randint(self.cfg.rest_every_min, self.cfg.rest_every_max)
+    def micro_delay(self):
+        """Very short delay between rapid sequential actions."""
+        time.sleep(random.uniform(0.1, 0.4))
 
-        if minutes_since_rest >= rest_threshold:
-            rest_min = random.randint(self.cfg.rest_duration_min, self.cfg.rest_duration_max)
-            log.info(f"Taking a break: {rest_min} minutes ({self._action_count} actions since last rest)")
-            await asyncio.sleep(rest_min * 60)
-            self._last_rest = time.time()
-            self._action_count = 0
-            return True
+    # ─── Click Offset ─────────────────────────────────────────
 
-        return False
+    def offset(self, base_offset=None):
+        """Get random pixel offset for click position."""
+        off = base_offset or self.pixel_offset
+        # Use gaussian distribution — clicks cluster around center
+        return int(random.gauss(0, off / 2.5))
 
-    # ─── Task Order Randomization ──────────────────
+    def offset_xy(self, x, y, base_offset=None):
+        """Apply random offset to coordinates."""
+        return (
+            x + self.offset(base_offset),
+            y + self.offset(base_offset)
+        )
 
-    def shuffle_tasks(self, tasks: list) -> list:
-        """Shuffle task execution order (anti-pattern detection)"""
-        if not self.cfg.enabled:
+    # ─── Rest / Break System ──────────────────────────────────
+
+    def should_rest(self):
+        """Check if it's time for a break."""
+        elapsed = (datetime.now() - self._last_rest).total_seconds() / 60
+        # Random rest interval
+        rest_interval = random.uniform(self.rest_interval_min, self.rest_interval_max)
+        return elapsed >= rest_interval
+
+    def take_rest(self):
+        """Simulate a natural break."""
+        duration = random.uniform(self.rest_duration_min, self.rest_duration_max) * 60
+        log.info(f"😴 Taking a rest for {duration/60:.1f} minutes (human simulation)")
+        self._last_rest = datetime.now()
+        self._fatigue_level = max(0, self._fatigue_level - 0.3)
+        time.sleep(duration)
+        log.info("☀️ Break finished, resuming...")
+
+    def should_sleep(self):
+        """Check if it's sleep hours (stop botting)."""
+        hour = datetime.now().hour
+        if self.sleep_start > self.sleep_end:
+            return hour >= self.sleep_start or hour < self.sleep_end
+        return self.sleep_start <= hour < self.sleep_end
+
+    def session_expired(self):
+        """Check if session exceeded max hours."""
+        elapsed = (datetime.now() - self._session_start).total_seconds() / 3600
+        return elapsed >= self.session_max_hours
+
+    def reset_session(self):
+        """Reset session timer."""
+        self._session_start = datetime.now()
+        self._action_count = 0
+        self._fatigue_level = 0.0
+
+    # ─── Action Randomization ─────────────────────────────────
+
+    def shuffle_tasks(self, tasks):
+        """Slightly shuffle task order to avoid patterns."""
+        if not self.shuffle_actions or len(tasks) < 2:
             return tasks
 
-        # Fisher-Yates with bias (mostly same order, slight variation)
-        shuffled = tasks.copy()
-        for i in range(len(shuffled) - 1, 0, -1):
-            # 30% chance to swap with a nearby task
-            if random.random() < 0.3:
-                j = max(0, i - random.randint(1, 3))
-                shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
-        return shuffled
+        tasks = list(tasks)
+        # Don't fully shuffle — just swap a few adjacent items
+        swaps = random.randint(1, max(1, len(tasks) // 3))
+        for _ in range(swaps):
+            i = random.randint(0, len(tasks) - 2)
+            # Only swap if priority allows
+            if hasattr(tasks[i], 'priority') and hasattr(tasks[i+1], 'priority'):
+                if abs(tasks[i].priority - tasks[i+1].priority) <= 2:
+                    tasks[i], tasks[i+1] = tasks[i+1], tasks[i]
+            else:
+                tasks[i], tasks[i+1] = tasks[i+1], tasks[i]
+        return tasks
 
-    # ─── Stats ─────────────────────────────────────
+    def random_idle_action(self, adb):
+        """Perform random idle actions (scroll, zoom) to look human."""
+        action = random.choice(["scroll", "zoom", "wait", "nothing", "nothing"])
 
-    def stats(self) -> dict:
-        now = time.time()
+        if action == "scroll":
+            # Random map scroll
+            x1 = random.randint(300, 900)
+            y1 = random.randint(200, 500)
+            dx = random.randint(-200, 200)
+            dy = random.randint(-150, 150)
+            adb.swipe(x1, y1, x1 + dx, y1 + dy,
+                      duration_ms=random.randint(300, 800), human=True)
+            log.debug("Idle: random scroll")
+
+        elif action == "zoom":
+            adb.pinch_zoom(640, 360, zoom_in=random.choice([True, False]))
+            log.debug("Idle: random zoom")
+
+        elif action == "wait":
+            wait = random.uniform(2, 8)
+            log.debug(f"Idle: waiting {wait:.1f}s")
+            time.sleep(wait)
+
+    # ─── Fatigue System ───────────────────────────────────────
+
+    def _update_fatigue(self):
+        """Update fatigue level based on actions performed."""
+        # Fatigue increases with actions, decreases with time
+        self._fatigue_level = min(1.0, self._action_count / 500)
+
+    @property
+    def stats(self):
+        """Return humanizer stats."""
+        elapsed = (datetime.now() - self._session_start).total_seconds() / 3600
         return {
+            "session_hours": round(elapsed, 2),
             "total_actions": self._total_actions,
-            "session_hours": round((now - self._session_start) / 3600, 2),
-            "since_rest_min": round((now - self._last_rest) / 60, 1),
-            "actions_since_rest": self._action_count,
-            "enabled": self.cfg.enabled,
+            "fatigue_level": round(self._fatigue_level, 2),
+            "is_sleep_time": self.should_sleep(),
+            "needs_rest": self.should_rest(),
         }
+
+    # ─── Swipe Patterns ──────────────────────────────────────
+
+    def human_swipe_duration(self, distance):
+        """Calculate human-like swipe duration based on distance."""
+        base = 200 + (distance * 0.8)
+        return int(base + random.uniform(-80, 120))
+
+    def bezier_points(self, start, end, control=None, steps=10):
+        """Generate bezier curve points for smooth swipe path."""
+        if control is None:
+            mid_x = (start[0] + end[0]) // 2 + random.randint(-30, 30)
+            mid_y = (start[1] + end[1]) // 2 + random.randint(-20, 20)
+            control = (mid_x, mid_y)
+
+        points = []
+        for i in range(steps + 1):
+            t = i / steps
+            x = (1-t)**2 * start[0] + 2*(1-t)*t * control[0] + t**2 * end[0]
+            y = (1-t)**2 * start[1] + 2*(1-t)*t * control[1] + t**2 * end[1]
+            points.append((int(x), int(y)))
+        return points
+

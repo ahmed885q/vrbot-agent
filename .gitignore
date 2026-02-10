@@ -1,5 +1,13 @@
 __pycache__/
 *.pyc
+*.pyo
 logs/
 screenshots/
+config/vrbot_config.json
+config/accounts.json
+config/rules.json
 .env
+*.egg-info/
+dist/
+build/
+

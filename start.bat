@@ -1,9 +1,5 @@
 @echo off
-title VRBOT Agent v1.0 - Viking Rise Bot
-color 0B
-echo ================================================
-echo   VRBOT Agent v1.0 - Starting...
-echo ================================================
+title VRBOT Agent v2.0
 echo.
 
 :: Check Python
@@ -14,14 +10,15 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Check LDPlayer ADB connection
-echo [INFO] Checking LDPlayer ADB connection...
+:: Check LDPlayer ADB
+echo [INFO] Checking LDPlayer connection...
 adb connect 127.0.0.1:5555 >nul 2>&1
 
 :: Start the bot
-echo [INFO] Starting VRBOT Agent...
+echo [INFO] Starting VRBOT Agent v2.0...
 echo.
 python main.py
 echo.
 echo [INFO] VRBOT Agent stopped.
 pause
+

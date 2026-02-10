@@ -1,0 +1,32 @@
+{
+  "accounts": [
+    {
+      "id": "acc_1_main",
+      "name": "Main Account",
+      "instance_index": 0,
+      "game_account": "main@example.com",
+      "enabled": true,
+      "status": "idle",
+      "rules": {
+        "days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+        "cooldown_minutes": 120
+      },
+      "notes": "Primary account"
+    },
+    {
+      "id": "acc_2_farm1",
+      "name": "Farm 1",
+      "instance_index": 1,
+      "game_account": "farm1@example.com",
+      "enabled": true,
+      "status": "idle",
+      "rules": {
+        "days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+        "cooldown_minutes": 180,
+        "max_runs_per_day": 8
+      },
+      "notes": "Resource farm"
+    }
+  ]
+}
+
