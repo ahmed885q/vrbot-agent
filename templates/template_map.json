@@ -1,0 +1,1317 @@
+{
+  "btn_claim_green": {
+    "category": "buttons",
+    "desc": "Green Claim button in Daily Quests",
+    "action": "tap"
+  },
+  "btn_go_blue": {
+    "category": "buttons",
+    "desc": "Blue Go button in Daily Quests",
+    "action": "tap"
+  },
+  "btn_go_blue_2": {
+    "category": "buttons",
+    "desc": "Blue Go button variant 2",
+    "action": "tap"
+  },
+  "btn_ok_green": {
+    "category": "buttons",
+    "desc": "Green OK confirmation button",
+    "action": "tap"
+  },
+  "btn_close_x_dark": {
+    "category": "buttons",
+    "desc": "X close button (dark background)",
+    "action": "tap"
+  },
+  "btn_close_x_bracket": {
+    "category": "buttons",
+    "desc": "[B] X close in Mystic Realm",
+    "action": "tap"
+  },
+  "btn_close_x_large": {
+    "category": "buttons",
+    "desc": "Large X close button",
+    "action": "tap"
+  },
+  "btn_back": {
+    "category": "buttons",
+    "desc": "Back arrow button",
+    "action": "tap"
+  },
+  "btn_gather": {
+    "category": "buttons",
+    "desc": "Gather button on resource point",
+    "action": "tap"
+  },
+  "btn_search_blue": {
+    "category": "buttons",
+    "desc": "Blue Search button on world map",
+    "action": "tap"
+  },
+  "btn_go_event_blue": {
+    "category": "buttons",
+    "desc": "Blue Go button in City Event Report",
+    "action": "tap"
+  },
+  "event_go_btn_errand": {
+    "category": "buttons",
+    "desc": "Go button for Run Errand event",
+    "action": "tap"
+  },
+  "event_go_btn_merchant": {
+    "category": "buttons",
+    "desc": "Go button for Wandering Merchant",
+    "action": "tap"
+  },
+  "event_go_btn_resource": {
+    "category": "buttons",
+    "desc": "Go button for Resource Refreshed",
+    "action": "tap"
+  },
+  "daily_quests_title": {
+    "category": "daily_quests",
+    "desc": "Daily Quests title header",
+    "action": "detect"
+  },
+  "daily_quests_sidebar_header": {
+    "category": "daily_quests",
+    "desc": "Daily Quests sidebar header",
+    "action": "detect"
+  },
+  "daily_quests_collapse_arrow": {
+    "category": "daily_quests",
+    "desc": "Collapse arrow on sidebar",
+    "action": "tap"
+  },
+  "daily_quests_gift_icon": {
+    "category": "daily_quests",
+    "desc": "Gift icon in quests",
+    "action": "tap"
+  },
+  "tab_daily_quests": {
+    "category": "daily_quests",
+    "desc": "Daily Quests tab",
+    "action": "tap"
+  },
+  "tab_quests": {
+    "category": "daily_quests",
+    "desc": "Quests tab",
+    "action": "tap"
+  },
+  "quest_status_completed": {
+    "category": "daily_quests",
+    "desc": "Quest completed (1/1) status",
+    "action": "detect"
+  },
+  "quest_status_incomplete": {
+    "category": "daily_quests",
+    "desc": "Quest incomplete (0/1) status",
+    "action": "detect"
+  },
+  "quest_icon_feather": {
+    "category": "daily_quests",
+    "desc": "Feather quest icon",
+    "action": "detect"
+  },
+  "quest_points_bar": {
+    "category": "daily_quests",
+    "desc": "Quest points progress bar",
+    "action": "detect"
+  },
+  "quest_chest_20": {
+    "category": "daily_quests",
+    "desc": "Quest chest at 20 points",
+    "action": "tap"
+  },
+  "quest_chest_40": {
+    "category": "daily_quests",
+    "desc": "Quest chest at 40 points",
+    "action": "tap"
+  },
+  "quest_chest_60": {
+    "category": "daily_quests",
+    "desc": "Quest chest at 60 points",
+    "action": "tap"
+  },
+  "quest_chest_80": {
+    "category": "daily_quests",
+    "desc": "Quest chest at 80 points",
+    "action": "tap"
+  },
+  "quest_chest_100": {
+    "category": "daily_quests",
+    "desc": "Quest chest at 100 points",
+    "action": "tap"
+  },
+  "beast_wars_event": {
+    "category": "events",
+    "desc": "Beast Wars event banner",
+    "action": "tap"
+  },
+  "kingdom_mayhem_event": {
+    "category": "events",
+    "desc": "Kingdom Mayhem event",
+    "action": "tap"
+  },
+  "kings_return_event": {
+    "category": "events",
+    "desc": "King's Return event",
+    "action": "tap"
+  },
+  "event_hub_label": {
+    "category": "events",
+    "desc": "Event Hub label",
+    "action": "tap"
+  },
+  "title_city_event_report": {
+    "category": "events",
+    "desc": "City Event Report title",
+    "action": "detect"
+  },
+  "event_explore_mystic": {
+    "category": "events",
+    "desc": "Explore Mystic Realm event card",
+    "action": "detect"
+  },
+  "event_run_errand": {
+    "category": "events",
+    "desc": "Run Errand event card",
+    "action": "detect"
+  },
+  "event_wandering_merchant": {
+    "category": "events",
+    "desc": "Wandering Merchant event card",
+    "action": "detect"
+  },
+  "event_resource_refreshed": {
+    "category": "events",
+    "desc": "Resource Point Refreshed card",
+    "action": "detect"
+  },
+  "label_permanent_event": {
+    "category": "events",
+    "desc": "Permanent Event label",
+    "action": "detect"
+  },
+  "icon_arena": {
+    "category": "combat_modes",
+    "desc": "Arena mode icon",
+    "action": "tap"
+  },
+  "icon_mystic_realm": {
+    "category": "combat_modes",
+    "desc": "Mystic Realm mode icon",
+    "action": "tap"
+  },
+  "icon_drill_ground": {
+    "category": "combat_modes",
+    "desc": "Drill Ground mode icon",
+    "action": "tap"
+  },
+  "label_arena": {
+    "category": "combat_modes",
+    "desc": "Arena label text",
+    "action": "detect"
+  },
+  "label_mystic_realm": {
+    "category": "combat_modes",
+    "desc": "Mystic Realm label text",
+    "action": "detect"
+  },
+  "label_drill_ground": {
+    "category": "combat_modes",
+    "desc": "Drill Ground label text",
+    "action": "detect"
+  },
+  "mystic_realm_floor_label": {
+    "category": "combat_modes",
+    "desc": "Floor label in Mystic Realm",
+    "action": "detect"
+  },
+  "mystic_realm_minimap": {
+    "category": "combat_modes",
+    "desc": "Minimap in Mystic Realm",
+    "action": "detect"
+  },
+  "mystic_floor_info": {
+    "category": "combat_modes",
+    "desc": "Floor 6/60 info text",
+    "action": "detect"
+  },
+  "mystic_keys_count": {
+    "category": "combat_modes",
+    "desc": "Keys count (18/18)",
+    "action": "detect"
+  },
+  "current_floor_quest_panel": {
+    "category": "combat_modes",
+    "desc": "Current Floor's Quest panel",
+    "action": "detect"
+  },
+  "gregorys_squad_label": {
+    "category": "combat_modes",
+    "desc": "Gregory's Squad label",
+    "action": "detect"
+  },
+  "title_obtainable_resources": {
+    "category": "village",
+    "desc": "Obtainable Resources title",
+    "action": "detect"
+  },
+  "village_icon_blue": {
+    "category": "village",
+    "desc": "Blue village icon",
+    "action": "detect"
+  },
+  "village_collect_icon": {
+    "category": "village",
+    "desc": "Village collect/visit icon",
+    "action": "tap"
+  },
+  "gem_icon": {
+    "category": "village",
+    "desc": "Gem reward icon",
+    "action": "detect"
+  },
+  "village_entry_geirleif": {
+    "category": "village",
+    "desc": "Geirleif Village entry",
+    "action": "detect"
+  },
+  "village_entry_moonlit": {
+    "category": "village",
+    "desc": "Moonlit Village entry",
+    "action": "detect"
+  },
+  "search_monster_icon": {
+    "category": "world_search",
+    "desc": "Monster search icon",
+    "action": "tap"
+  },
+  "search_shadowflame_icon": {
+    "category": "world_search",
+    "desc": "Shadowflame Assassin icon",
+    "action": "tap"
+  },
+  "search_farm_icon": {
+    "category": "world_search",
+    "desc": "Farm resource search icon",
+    "action": "tap"
+  },
+  "search_sawmill_icon": {
+    "category": "world_search",
+    "desc": "Sawmill resource search icon",
+    "action": "tap"
+  },
+  "search_quarry_icon": {
+    "category": "world_search",
+    "desc": "Quarry resource search icon",
+    "action": "tap"
+  },
+  "search_goldmine_icon": {
+    "category": "world_search",
+    "desc": "Gold Mine resource search icon",
+    "action": "tap"
+  },
+  "label_monster": {
+    "category": "world_search",
+    "desc": "Monster label text",
+    "action": "detect"
+  },
+  "label_farm": {
+    "category": "world_search",
+    "desc": "Farm label text",
+    "action": "detect"
+  },
+  "label_sawmill": {
+    "category": "world_search",
+    "desc": "Sawmill label text",
+    "action": "detect"
+  },
+  "label_quarry": {
+    "category": "world_search",
+    "desc": "Quarry label text",
+    "action": "detect"
+  },
+  "label_goldmine": {
+    "category": "world_search",
+    "desc": "Gold Mine label text",
+    "action": "detect"
+  },
+  "daily_conquest_quests": {
+    "category": "world_search",
+    "desc": "Daily Conquest Quests label",
+    "action": "detect"
+  },
+  "hunt_monsters_text": {
+    "category": "world_search",
+    "desc": "Hunt monsters tooltip text",
+    "action": "detect"
+  },
+  "quarry_info_popup": {
+    "category": "resource_info",
+    "desc": "Quarry info popup window",
+    "action": "detect"
+  },
+  "quarry_info_icon": {
+    "category": "resource_info",
+    "desc": "Info (i) icon on popup",
+    "action": "detect"
+  },
+  "resource_point_label": {
+    "category": "resource_info",
+    "desc": "Resource Point label",
+    "action": "detect"
+  },
+  "tribe_leaders_location": {
+    "category": "navigation",
+    "desc": "Tribe Leader's Location tooltip",
+    "action": "detect"
+  },
+  "mall_icon": {
+    "category": "navigation",
+    "desc": "Mall icon top bar",
+    "action": "tap"
+  },
+  "hero_portrait_topleft": {
+    "category": "hud",
+    "desc": "Hero portrait top-left",
+    "action": "tap"
+  },
+  "power_display": {
+    "category": "hud",
+    "desc": "Power number display",
+    "action": "detect"
+  },
+  "resource_bar_top": {
+    "category": "hud",
+    "desc": "Resource bar (Food/Wood/Stone/Gold/Gems)",
+    "action": "detect"
+  },
+  "coordinates_bar": {
+    "category": "hud",
+    "desc": "Coordinates X:Y display",
+    "action": "detect"
+  },
+  "bottom_toolbar_right": {
+    "category": "hud",
+    "desc": "Bottom right toolbar icons",
+    "action": "detect"
+  },
+  "chat_area": {
+    "category": "hud",
+    "desc": "Chat area bottom left",
+    "action": "detect"
+  },
+  "left_sidebar_icons": {
+    "category": "hud",
+    "desc": "Left sidebar action icons",
+    "action": "detect"
+  },
+  "mail_claim_all_btn": {
+    "category": "mail",
+    "desc": "Mail claim all button",
+    "action": "tap"
+  },
+  "tribe_assist_btn": {
+    "category": "tribe",
+    "desc": "Tribe assist button",
+    "action": "tap"
+  },
+  "city_building_icon_boat": {
+    "category": "city_buildings",
+    "desc": "Boat/dock building icon",
+    "action": "tap"
+  },
+  "city_building_icon_axe": {
+    "category": "city_buildings",
+    "desc": "Axe/barracks building icon",
+    "action": "tap"
+  },
+  "city_building_icon_hammer": {
+    "category": "city_buildings",
+    "desc": "Hammer/forge building icon",
+    "action": "tap"
+  },
+  "city_building_icon_coin": {
+    "category": "city_buildings",
+    "desc": "Coin/market building icon",
+    "action": "tap"
+  },
+  "city_building_icon_helmet": {
+    "category": "city_buildings",
+    "desc": "Helmet/training building icon",
+    "action": "tap"
+  },
+  "city_building_icon_scroll": {
+    "category": "city_buildings",
+    "desc": "Scroll/academy building icon",
+    "action": "tap"
+  },
+  "city_building_icon_throne": {
+    "category": "city_buildings",
+    "desc": "Throne/hall building icon",
+    "action": "tap"
+  },
+  "toolbar_sword_icon": {
+    "category": "toolbar",
+    "desc": "Sword toolbar icon",
+    "action": "tap"
+  },
+  "toolbar_anchor_icon": {
+    "category": "toolbar",
+    "desc": "Anchor toolbar icon",
+    "action": "tap"
+  },
+  "toolbar_shield_icon": {
+    "category": "toolbar",
+    "desc": "Shield toolbar icon",
+    "action": "tap"
+  },
+  "toolbar_helmet_icon": {
+    "category": "toolbar",
+    "desc": "Helmet toolbar icon",
+    "action": "tap"
+  },
+  "toolbar_alliance_icon": {
+    "category": "toolbar",
+    "desc": "Alliance toolbar icon",
+    "action": "tap"
+  },
+  "toolbar_tasks_icon": {
+    "category": "toolbar",
+    "desc": "Tasks toolbar icon",
+    "action": "tap"
+  },
+  "toolbar_compass_icon": {
+    "category": "toolbar",
+    "desc": "Compass toolbar icon",
+    "action": "tap"
+  },
+  "sidebar_shield_btn": {
+    "category": "sidebar",
+    "desc": "Shield button left sidebar",
+    "action": "tap"
+  },
+  "sidebar_arrow_down": {
+    "category": "sidebar",
+    "desc": "Arrow down sidebar",
+    "action": "tap"
+  },
+  "event_beast_wars_ar": {
+    "category": "events",
+    "desc": "Beast Wars event (Arabic)",
+    "action": "tap"
+  },
+  "event_kingdom_mayhem_ar": {
+    "category": "events",
+    "desc": "Kingdom Mayhem (Arabic)",
+    "action": "tap"
+  },
+  "event_kings_return_ar": {
+    "category": "events",
+    "desc": "King's Return (Arabic)",
+    "action": "tap"
+  },
+  "event_mall_ar": {
+    "category": "events",
+    "desc": "Mall icon (Arabic)",
+    "action": "tap"
+  },
+  "chat_bubble": {
+    "category": "hud",
+    "desc": "Chat bubble in city",
+    "action": "detect"
+  },
+  "btn_eye_off": {
+    "category": "hud",
+    "desc": "Eye off button (hide UI)",
+    "action": "tap"
+  },
+  "btn_search_magnify": {
+    "category": "hud",
+    "desc": "Search magnify glass button",
+    "action": "tap"
+  },
+  "btn_wrench": {
+    "category": "hud",
+    "desc": "Wrench/settings button",
+    "action": "tap"
+  },
+  "hero_portrait_frame": {
+    "category": "hud",
+    "desc": "Hero portrait with frame",
+    "action": "tap"
+  },
+  "power_number": {
+    "category": "hud",
+    "desc": "Power number display",
+    "action": "detect"
+  },
+  "troops_count": {
+    "category": "hud",
+    "desc": "Troops count display",
+    "action": "detect"
+  },
+  "notification_badge_red": {
+    "category": "hud",
+    "desc": "Red notification badge",
+    "action": "detect"
+  },
+  "map_resource_stone_6": {
+    "category": "world_map",
+    "desc": "Stone resource Lv6 on map",
+    "action": "tap"
+  },
+  "map_resource_wood_8": {
+    "category": "world_map",
+    "desc": "Wood resource Lv8 on map",
+    "action": "tap"
+  },
+  "map_resource_food_6": {
+    "category": "world_map",
+    "desc": "Food resource Lv6 on map",
+    "action": "tap"
+  },
+  "map_monster_icon": {
+    "category": "world_map",
+    "desc": "Monster icon on world map",
+    "action": "tap"
+  },
+  "alliance_fort_label": {
+    "category": "world_map",
+    "desc": "Alliance fort label",
+    "action": "detect"
+  },
+  "player_base_worldmap": {
+    "category": "world_map",
+    "desc": "Player base on world map",
+    "action": "detect"
+  },
+  "player_label_worldmap": {
+    "category": "world_map",
+    "desc": "Player name label on map",
+    "action": "detect"
+  },
+  "worldmap_minimap": {
+    "category": "world_map",
+    "desc": "Minimap top-right corner",
+    "action": "tap"
+  },
+  "worldmap_left_icons": {
+    "category": "world_map",
+    "desc": "Left sidebar icons on map",
+    "action": "detect"
+  },
+  "worldmap_search_icon": {
+    "category": "world_map",
+    "desc": "Search icon on world map",
+    "action": "tap"
+  },
+  "memory_indicator": {
+    "category": "hud",
+    "desc": "Memory usage indicator",
+    "action": "detect"
+  },
+  "city_overview_en": {
+    "category": "city_buildings",
+    "desc": "City overview English",
+    "action": "detect"
+  },
+  "event_beast_wars_en": {
+    "category": "events",
+    "desc": "Beast Wars (English)",
+    "action": "tap"
+  },
+  "download_indicator": {
+    "category": "hud",
+    "desc": "Download progress indicator",
+    "action": "detect"
+  },
+  "badge_5_toolbar": {
+    "category": "hud",
+    "desc": "Badge number 5 on toolbar",
+    "action": "detect"
+  },
+  "badge_29_toolbar": {
+    "category": "hud",
+    "desc": "Badge number 29 on toolbar",
+    "action": "detect"
+  },
+  "event_hub_banner": {
+    "category": "events",
+    "desc": "Event Hub banner on map",
+    "action": "tap"
+  },
+  "worldmap_territory_border": {
+    "category": "world_map",
+    "desc": "Territory border on map",
+    "action": "detect"
+  },
+  "search_niflung_icon": {
+    "category": "world_search",
+    "desc": "Niflung search icon",
+    "action": "tap"
+  },
+  "label_niflung": {
+    "category": "world_search",
+    "desc": "Niflung label text",
+    "action": "detect"
+  },
+  "search_monster_icon_2": {
+    "category": "world_search",
+    "desc": "Monster search icon v2",
+    "action": "tap"
+  },
+  "search_farm_icon_2": {
+    "category": "world_search",
+    "desc": "Farm search icon v2",
+    "action": "tap"
+  },
+  "search_sawmill_icon_2": {
+    "category": "world_search",
+    "desc": "Sawmill search icon v2",
+    "action": "tap"
+  },
+  "search_quarry_icon_2": {
+    "category": "world_search",
+    "desc": "Quarry search icon v2",
+    "action": "tap"
+  },
+  "search_goldmine_icon_2": {
+    "category": "world_search",
+    "desc": "Gold Mine search icon v2",
+    "action": "tap"
+  },
+  "screenshot_popup": {
+    "category": "popups",
+    "desc": "Screenshot notification popup",
+    "action": "detect"
+  },
+  "auxiliary_tribe_fort": {
+    "category": "world_map",
+    "desc": "Auxiliary Tribe Fort label",
+    "action": "detect"
+  },
+  "mail_title": {
+    "category": "mail",
+    "desc": "Mail title header",
+    "action": "detect"
+  },
+  "mail_tab_report": {
+    "category": "mail",
+    "desc": "Report tab",
+    "action": "tap"
+  },
+  "mail_tab_system": {
+    "category": "mail",
+    "desc": "System tab",
+    "action": "tap"
+  },
+  "mail_tab_personal": {
+    "category": "mail",
+    "desc": "Personal tab",
+    "action": "tap"
+  },
+  "mail_tab_tribe": {
+    "category": "mail",
+    "desc": "Tribe tab",
+    "action": "tap"
+  },
+  "mail_tab_kingdom": {
+    "category": "mail",
+    "desc": "Kingdom tab",
+    "action": "tap"
+  },
+  "mail_tab_sent": {
+    "category": "mail",
+    "desc": "Sent tab",
+    "action": "tap"
+  },
+  "mail_tab_favorites": {
+    "category": "mail",
+    "desc": "Favorites tab",
+    "action": "tap"
+  },
+  "mail_btn_claim_large": {
+    "category": "mail",
+    "desc": "Large Claim button in mail",
+    "action": "tap"
+  },
+  "mail_btn_read_claim_all": {
+    "category": "mail",
+    "desc": "Read & Claim All button",
+    "action": "tap"
+  },
+  "mail_btn_delete_read": {
+    "category": "mail",
+    "desc": "Delete Read Mail button",
+    "action": "tap"
+  },
+  "mail_btn_new_mail": {
+    "category": "mail",
+    "desc": "New Mail button",
+    "action": "tap"
+  },
+  "mail_unclaimed_rewards": {
+    "category": "mail",
+    "desc": "Unclaimed rewards entry",
+    "action": "tap"
+  },
+  "mail_system_recovery": {
+    "category": "mail",
+    "desc": "System Recovery entry",
+    "action": "detect"
+  },
+  "mail_entry_unread_new": {
+    "category": "mail",
+    "desc": "Unread new mail entry",
+    "action": "tap"
+  },
+  "mail_star_icon": {
+    "category": "mail",
+    "desc": "Star/favorite icon",
+    "action": "tap"
+  },
+  "mail_trash_icon": {
+    "category": "mail",
+    "desc": "Trash/delete icon",
+    "action": "tap"
+  },
+  "mail_envelope_icon": {
+    "category": "mail",
+    "desc": "Mail envelope icon",
+    "action": "detect"
+  },
+  "mail_label_new_badge": {
+    "category": "mail",
+    "desc": "New badge on mail",
+    "action": "detect"
+  },
+  "tribe_title": {
+    "category": "tribe",
+    "desc": "Tribe title header",
+    "action": "detect"
+  },
+  "tribe_banner": {
+    "category": "tribe",
+    "desc": "Tribe banner/flag",
+    "action": "detect"
+  },
+  "tribe_info_panel": {
+    "category": "tribe",
+    "desc": "Tribe info panel (Might, Members)",
+    "action": "detect"
+  },
+  "tribe_btn_honor_wall": {
+    "category": "tribe",
+    "desc": "Honor Wall button",
+    "action": "tap"
+  },
+  "tribe_btn_trial": {
+    "category": "tribe",
+    "desc": "Trial button",
+    "action": "tap"
+  },
+  "tribe_btn_war": {
+    "category": "tribe",
+    "desc": "War button",
+    "action": "tap"
+  },
+  "tribe_btn_tribe_members": {
+    "category": "tribe",
+    "desc": "Tribe Members button",
+    "action": "tap"
+  },
+  "tribe_btn_odyssey": {
+    "category": "tribe",
+    "desc": "Odyssey button",
+    "action": "tap"
+  },
+  "tribe_btn_technology": {
+    "category": "tribe",
+    "desc": "Technology button",
+    "action": "tap"
+  },
+  "tribe_btn_tribe_bank": {
+    "category": "tribe",
+    "desc": "Tribe Bank button",
+    "action": "tap"
+  },
+  "tribe_city_territory_label": {
+    "category": "tribe",
+    "desc": "City Territory label",
+    "action": "detect"
+  },
+  "tribe_tab_crystal_trove": {
+    "category": "tribe",
+    "desc": "Crystal Trove tab",
+    "action": "tap"
+  },
+  "tribe_tab_materials_war": {
+    "category": "tribe",
+    "desc": "Materials for War tab",
+    "action": "tap"
+  },
+  "tribe_tab_assist": {
+    "category": "tribe",
+    "desc": "Assist tab",
+    "action": "tap"
+  },
+  "tribe_tab_gifts": {
+    "category": "tribe",
+    "desc": "Gifts tab",
+    "action": "tap"
+  },
+  "tribe_tab_shop": {
+    "category": "tribe",
+    "desc": "Shop tab",
+    "action": "tap"
+  },
+  "tribe_tab_warehouse": {
+    "category": "tribe",
+    "desc": "Warehouse tab",
+    "action": "tap"
+  },
+  "tribe_tab_settings": {
+    "category": "tribe",
+    "desc": "Settings tab",
+    "action": "tap"
+  },
+  "tribe_side_icon_1": {
+    "category": "tribe",
+    "desc": "Side icon 1",
+    "action": "tap"
+  },
+  "tribe_side_icon_2": {
+    "category": "tribe",
+    "desc": "Side icon 2",
+    "action": "tap"
+  },
+  "tribe_side_icon_3": {
+    "category": "tribe",
+    "desc": "Side icon 3",
+    "action": "tap"
+  },
+  "tribe_side_icon_4": {
+    "category": "tribe",
+    "desc": "Side icon 4",
+    "action": "tap"
+  },
+  "tribe_side_icon_5": {
+    "category": "tribe",
+    "desc": "Side icon 5",
+    "action": "tap"
+  },
+  "hero_title": {
+    "category": "hero",
+    "desc": "Hero title header",
+    "action": "detect"
+  },
+  "hero_count_32": {
+    "category": "hero",
+    "desc": "Hero count (32)",
+    "action": "detect"
+  },
+  "hero_grade_filter": {
+    "category": "hero",
+    "desc": "Grade filter dropdown",
+    "action": "tap"
+  },
+  "hero_card_gold_1": {
+    "category": "hero",
+    "desc": "Gold hero card 1",
+    "action": "tap"
+  },
+  "hero_card_gold_2": {
+    "category": "hero",
+    "desc": "Gold hero card 2",
+    "action": "tap"
+  },
+  "hero_card_gold_3": {
+    "category": "hero",
+    "desc": "Gold hero card 3",
+    "action": "tap"
+  },
+  "hero_card_gold_4": {
+    "category": "hero",
+    "desc": "Gold hero card 4",
+    "action": "tap"
+  },
+  "hero_card_gold_5": {
+    "category": "hero",
+    "desc": "Gold hero card 5",
+    "action": "tap"
+  },
+  "hero_card_gold_6": {
+    "category": "hero",
+    "desc": "Gold hero card 6",
+    "action": "tap"
+  },
+  "hero_details_btn": {
+    "category": "hero",
+    "desc": "Details button",
+    "action": "tap"
+  },
+  "hero_name_gregory": {
+    "category": "hero",
+    "desc": "Hero name Gregory",
+    "action": "detect"
+  },
+  "hero_power_number": {
+    "category": "hero",
+    "desc": "Hero power number",
+    "action": "detect"
+  },
+  "hero_tag_infantry": {
+    "category": "hero",
+    "desc": "Infantry tag",
+    "action": "detect"
+  },
+  "hero_tag_pvp": {
+    "category": "hero",
+    "desc": "PvP tag",
+    "action": "detect"
+  },
+  "hero_tag_basic_attacker": {
+    "category": "hero",
+    "desc": "Basic Attacker tag",
+    "action": "detect"
+  },
+  "hero_inspirer_label": {
+    "category": "hero",
+    "desc": "Inspirer class label",
+    "action": "detect"
+  },
+  "hero_level_badge": {
+    "category": "hero",
+    "desc": "Hero level badge",
+    "action": "detect"
+  },
+  "hero_stars_gold": {
+    "category": "hero",
+    "desc": "Gold stars rating",
+    "action": "detect"
+  },
+  "hero_green_dot": {
+    "category": "hero",
+    "desc": "Green active dot",
+    "action": "detect"
+  },
+  "upgrade_title": {
+    "category": "upgrade",
+    "desc": "Upgrade Power title",
+    "action": "detect"
+  },
+  "upgrade_close_x": {
+    "category": "upgrade",
+    "desc": "Close X on upgrade screen",
+    "action": "tap"
+  },
+  "upgrade_info_icon": {
+    "category": "upgrade",
+    "desc": "Info icon on upgrade",
+    "action": "tap"
+  },
+  "upgrade_level_24_to_25": {
+    "category": "upgrade",
+    "desc": "Level 24 -> 25 text",
+    "action": "detect"
+  },
+  "upgrade_power_label": {
+    "category": "upgrade",
+    "desc": "Power label",
+    "action": "detect"
+  },
+  "upgrade_power_heyday": {
+    "category": "upgrade",
+    "desc": "Heyday power tier",
+    "action": "detect"
+  },
+  "upgrade_power_eternal": {
+    "category": "upgrade",
+    "desc": "Eternal Glory tier",
+    "action": "detect"
+  },
+  "upgrade_green_arrow": {
+    "category": "upgrade",
+    "desc": "Green upgrade arrow",
+    "action": "detect"
+  },
+  "upgrade_march_queue": {
+    "category": "upgrade",
+    "desc": "March Queue info",
+    "action": "detect"
+  },
+  "upgrade_might_values": {
+    "category": "upgrade",
+    "desc": "Might values with bonus",
+    "action": "detect"
+  },
+  "upgrade_resource_costs": {
+    "category": "upgrade",
+    "desc": "Resource costs bar",
+    "action": "detect"
+  },
+  "upgrade_food_cost": {
+    "category": "upgrade",
+    "desc": "Food cost amount",
+    "action": "detect"
+  },
+  "upgrade_wood_cost": {
+    "category": "upgrade",
+    "desc": "Wood cost amount",
+    "action": "detect"
+  },
+  "upgrade_stone_cost": {
+    "category": "upgrade",
+    "desc": "Stone cost amount",
+    "action": "detect"
+  },
+  "upgrade_prereq_walls": {
+    "category": "upgrade",
+    "desc": "Prerequisite Walls building",
+    "action": "detect"
+  },
+  "upgrade_prereq_academy": {
+    "category": "upgrade",
+    "desc": "Prerequisite Academy building",
+    "action": "detect"
+  },
+  "upgrade_btn_go_walls": {
+    "category": "upgrade",
+    "desc": "Go button for Walls prereq",
+    "action": "tap"
+  },
+  "upgrade_btn_go_academy": {
+    "category": "upgrade",
+    "desc": "Go button for Academy prereq",
+    "action": "tap"
+  },
+  "upgrade_building_image": {
+    "category": "upgrade",
+    "desc": "Building preview image",
+    "action": "detect"
+  },
+  "chiefs_hall_label": {
+    "category": "buildings",
+    "desc": "Chief's Hall name label",
+    "action": "detect"
+  },
+  "chiefs_hall_level_24": {
+    "category": "buildings",
+    "desc": "Chief's Hall level 24",
+    "action": "detect"
+  },
+  "building_action_upgrade": {
+    "category": "buildings",
+    "desc": "Green upgrade arrow button",
+    "action": "tap"
+  },
+  "building_action_info": {
+    "category": "buildings",
+    "desc": "Building info button",
+    "action": "tap"
+  },
+  "building_action_castle": {
+    "category": "buildings",
+    "desc": "Castle/enter action",
+    "action": "tap"
+  },
+  "building_action_people": {
+    "category": "buildings",
+    "desc": "People/manage action",
+    "action": "tap"
+  },
+  "building_action_gear": {
+    "category": "buildings",
+    "desc": "Gear settings button",
+    "action": "tap"
+  },
+  "city_coin_bubble": {
+    "category": "city_buildings",
+    "desc": "Coin bubble in city",
+    "action": "tap"
+  },
+  "city_boat_bubble": {
+    "category": "city_buildings",
+    "desc": "Boat bubble in city",
+    "action": "tap"
+  },
+  "city_shield_bubble": {
+    "category": "city_buildings",
+    "desc": "Shield bubble in city",
+    "action": "tap"
+  },
+  "event_eternal_drought": {
+    "category": "events",
+    "desc": "Eternal Drought event",
+    "action": "tap"
+  },
+  "monument_icon": {
+    "category": "city_buildings",
+    "desc": "Monument/pyramid icon",
+    "action": "tap"
+  },
+  "coin_icon_left": {
+    "category": "city_buildings",
+    "desc": "Coin icon left side",
+    "action": "tap"
+  },
+  "star_icon_top": {
+    "category": "hud",
+    "desc": "Star icon top bar",
+    "action": "tap"
+  },
+  "monster_info_popup": {
+    "category": "monsters",
+    "desc": "Monster info popup full",
+    "action": "detect"
+  },
+  "monster_info_icon": {
+    "category": "monsters",
+    "desc": "Info icon on monster popup",
+    "action": "tap"
+  },
+  "monster_share_icon": {
+    "category": "monsters",
+    "desc": "Share icon on monster popup",
+    "action": "tap"
+  },
+  "monster_timer": {
+    "category": "monsters",
+    "desc": "Monster respawn timer",
+    "action": "detect"
+  },
+  "monster_level_title": {
+    "category": "monsters",
+    "desc": "Monster level and name",
+    "action": "detect"
+  },
+  "monster_first_victory_label": {
+    "category": "monsters",
+    "desc": "First victory grants label",
+    "action": "detect"
+  },
+  "monster_reward_exp": {
+    "category": "monsters",
+    "desc": "EXP reward icon",
+    "action": "detect"
+  },
+  "monster_reward_item1": {
+    "category": "monsters",
+    "desc": "Reward item 1",
+    "action": "detect"
+  },
+  "monster_reward_item2": {
+    "category": "monsters",
+    "desc": "Reward item 2",
+    "action": "detect"
+  },
+  "monster_reward_item3": {
+    "category": "monsters",
+    "desc": "Reward item 3",
+    "action": "detect"
+  },
+  "monster_defeat_text": {
+    "category": "monsters",
+    "desc": "Please defeat text",
+    "action": "detect"
+  },
+  "monster_btn_search": {
+    "category": "monsters",
+    "desc": "Search button on monster",
+    "action": "tap"
+  },
+  "monster_location_label": {
+    "category": "monsters",
+    "desc": "Monster location coords",
+    "action": "detect"
+  },
+  "march_arrows_yellow": {
+    "category": "march",
+    "desc": "Yellow march arrows",
+    "action": "detect"
+  },
+  "local_time_indicator": {
+    "category": "hud",
+    "desc": "Local time indicator",
+    "action": "detect"
+  },
+  "map_monster_level_63": {
+    "category": "monsters",
+    "desc": "Level 63 monster on map",
+    "action": "tap"
+  },
+  "map_monster_level_64": {
+    "category": "monsters",
+    "desc": "Level 64 monster on map",
+    "action": "tap"
+  },
+  "farmer_event_title": {
+    "category": "farmer_events",
+    "desc": "Special Farmer Event Report title",
+    "action": "detect"
+  },
+  "farmer_event_troubled": {
+    "category": "farmer_events",
+    "desc": "Someone seems troubled event",
+    "action": "detect"
+  },
+  "farmer_event_found": {
+    "category": "farmer_events",
+    "desc": "Tribesman found something event",
+    "action": "detect"
+  },
+  "farmer_btn_go_troubled": {
+    "category": "farmer_events",
+    "desc": "Go button troubled event",
+    "action": "tap"
+  },
+  "farmer_btn_go_found": {
+    "category": "farmer_events",
+    "desc": "Go button found event",
+    "action": "tap"
+  },
+  "farmer_close_x": {
+    "category": "farmer_events",
+    "desc": "Close X farmer report",
+    "action": "tap"
+  },
+  "farmer_timer_troubled": {
+    "category": "farmer_events",
+    "desc": "Timer for troubled event",
+    "action": "detect"
+  },
+  "farmer_timer_found": {
+    "category": "farmer_events",
+    "desc": "Timer for found event",
+    "action": "detect"
+  },
+  "farmer_portrait_troubled": {
+    "category": "farmer_events",
+    "desc": "Portrait troubled person",
+    "action": "detect"
+  },
+  "farmer_portrait_found": {
+    "category": "farmer_events",
+    "desc": "Portrait tribesman found",
+    "action": "detect"
+  },
+  "sidebar_mail_icon": {
+    "category": "sidebar",
+    "desc": "Mail icon left sidebar",
+    "action": "tap"
+  },
+  "sidebar_tribe_icon": {
+    "category": "sidebar",
+    "desc": "Tribe icon left sidebar",
+    "action": "tap"
+  },
+  "sidebar_utc_label": {
+    "category": "hud",
+    "desc": "UTC label",
+    "action": "detect"
+  }
+}
