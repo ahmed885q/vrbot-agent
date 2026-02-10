@@ -72,12 +72,21 @@ class BaseTask(ABC):
         pass
 
     def _ensure_main_screen(self, max_tries=5):
-        """Navigate back to main game screen."""
+        """Navigate back to main city screen."""
         for _ in range(max_tries):
-            if self.vision.exists("btn_main_city") or self.vision.exists("main_screen_indicator"):
+            # Check for city screen markers (real templates)
+            if (self.vision.exists("btn_compass", threshold=0.80) or
+                self.vision.exists("btn_mail", threshold=0.80) or
+                self.vision.exists("btn_shield", threshold=0.80)):
                 return True
-            # Try pressing back or close
+            # Try pressing close buttons
             if self.vision.tap_on("btn_close_x", wait=False):
+                self.human.delay("fast")
+                continue
+            if self.vision.tap_on("btn_popup_close_x", wait=False):
+                self.human.delay("fast")
+                continue
+            if self.vision.tap_on("btn_back", wait=False):
                 self.human.delay("fast")
                 continue
             self.adb.go_back()
@@ -216,40 +225,63 @@ class GatherResourcesTask(BaseTask):
     category = "resources"
     estimated_time = 60
 
+    TILE_MAP = {
+        "food":  "tile_farm",
+        "wood":  "tile_sawmill",
+        "stone": "tile_quarry",
+        "gold":  "tile_gold_mine",
+    }
+
     def run(self, overrides):
         """Send troops to gather resources on the map."""
         resource = overrides.get("resource_type", "food")
+        tile_template = self.TILE_MAP.get(resource, "tile_farm")
 
-        # Go to world map
-        if not self._safe_tap("btn_world_map", timeout=5):
-            return True
+        # Step 1: Go to world map via compass
+        if not self.vision.exists("btn_worldmap_search", threshold=0.75):
+            # Not on world map — tap compass from city
+            if not self._safe_tap("btn_compass", timeout=5):
+                log.warning("Cannot open world map")
+                return True
+            self.human.delay("normal")
 
-        self.human.delay("normal")
-
-        # Search for resource tile
-        if self.vision.tap_on("btn_search", timeout=5):
+        # Step 2: Open search panel
+        if self._safe_tap("btn_worldmap_search", timeout=5):
             self.human.delay("fast")
 
-            # Select resource type
-            if self._safe_tap(f"btn_search_{resource}", timeout=5):
-                self.human.delay("normal")
+            # Step 3: Select resource tile type
+            if self._safe_tap(tile_template, timeout=5):
+                self.human.delay("fast")
 
-                # Tap search/find
-                if self._safe_tap("btn_search_confirm", timeout=5):
+                # Step 4: Tap Search button
+                if (self._safe_tap("btn_search_blue", timeout=5) or
+                    self._safe_tap("btn_search_conquest", timeout=5)):
                     self.human.delay("slow")
 
-                    # Tap on found tile
+                    # Step 5: Tap the resource tile on map
+                    self.adb.tap(640, 400, offset=20)
+                    self.human.delay("normal")
+
+                    # Step 6: Tap Gather button on popup
                     if self._safe_tap("btn_gather", timeout=10):
                         self.human.delay("normal")
 
-                        # Select march
-                        if self._safe_tap("btn_march_confirm", timeout=5):
-                            log.info(f"Sent gatherers for {resource}")
+                        # Step 7: Confirm march (tap green/blue confirm button)
+                        time.sleep(1)
+                        # Try common confirm buttons
+                        if (self._safe_tap("btn_ok_green", timeout=5) or
+                            self._safe_tap("btn_claim_green", timeout=3)):
+                            log.info(f"✅ Sent gatherers for {resource}")
                             self.human.delay("normal")
+                            return True
+                        else:
+                            # Try tapping bottom-right where march button usually is
+                            self.adb.tap(1100, 650, offset=10)
+                            log.info(f"Sent gatherers for {resource} (alt confirm)")
                             return True
 
         # Go back to city
-        self._safe_tap("btn_main_city", timeout=5)
+        self._ensure_main_screen()
         return True
 
 
@@ -267,10 +299,15 @@ class CollectMailTask(BaseTask):
 
         self.human.delay("normal")
 
-        # Try "Claim All" button
-        if self.vision.tap_on("btn_claim_all", timeout=5):
+        # Try "Read & Claim All" button
+        if self.vision.tap_on("btn_read_claim_all", timeout=5):
             self.human.delay("slow")
             log.info("Claimed all mail rewards")
+        else:
+            # Try individual claim buttons
+            if self.vision.tap_on("btn_claim_green", timeout=3):
+                self.human.delay("normal")
+                log.info("Claimed mail reward")
 
         # Close mail
         self._safe_tap("btn_close_x", timeout=3)
@@ -292,17 +329,27 @@ class DailyQuestsTask(BaseTask):
         self.human.delay("normal")
 
         # Switch to daily tab
-        self._safe_tap("tab_daily", timeout=3)
+        self._safe_tap("tab_daily_quests", timeout=3)
         self.human.delay("fast")
 
-        # Collect available rewards
+        # Collect available rewards (look for green Claim buttons)
         collected = 0
         for _ in range(10):
             if self.vision.tap_on("btn_quest_claim", wait=False):
                 self.human.delay("fast")
                 collected += 1
+                time.sleep(1)  # Wait for claim animation
             else:
                 break
+
+        # Check for chest rewards at top
+        for chest in ["icon_chest_20", "icon_chest_40", "icon_chest_60", "icon_chest_80", "icon_chest_100"]:
+            if self.vision.tap_on(chest, wait=False, threshold=0.70):
+                self.human.delay("fast")
+                # Claim chest
+                if self.vision.tap_on("btn_claim_green", timeout=3):
+                    collected += 1
+                    self.human.delay("fast")
 
         log.info(f"Collected {collected} quest rewards")
 
@@ -313,22 +360,30 @@ class DailyQuestsTask(BaseTask):
 
 class AllianceHelpTask(BaseTask):
     task_id = "alliance_help"
-    task_name = "Alliance Help"
+    task_name = "Tribe Assist"
     priority = 4
     category = "alliance"
     estimated_time = 10
 
     def run(self, overrides):
-        """Help alliance members."""
-        if self.vision.tap_on("btn_alliance_help", wait=False, timeout=3):
-            self.human.delay("fast")
+        """Help tribe members (Tribe Assist)."""
+        # Open tribe screen
+        if not self._safe_tap("btn_alliance", timeout=5):
+            return True
 
-            # Tap help all
-            if self.vision.tap_on("btn_help_all", timeout=3):
-                self.human.delay("normal")
-                log.info("Helped all alliance members")
-                return True
+        self.human.delay("normal")
 
+        # Tap Assist button
+        if self._safe_tap("btn_tribe_assist", timeout=5):
+            self.human.delay("normal")
+            log.info("Opened Tribe Assist")
+
+            # The assist screen auto-helps when available
+            # Just wait and close
+            time.sleep(2)
+            self._safe_tap("btn_close_x", timeout=3)
+        
+        self._ensure_main_screen()
         return True
 
 
@@ -572,4 +627,3 @@ def print_task_summary():
             for t in tasks:
                 print(f"    ├─ {t.task_id}: {t.task_name} (priority {t.priority})")
     print()
-
