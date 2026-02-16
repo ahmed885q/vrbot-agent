@@ -11,3 +11,10 @@ config/rules.json
 dist/
 build/
 
+debug_screenshots/
+debug_screenshots.zip
+*.zip
+debug_screenshots/
+debug_screenshots/
+debug_screenshots.zip
+*.zip
