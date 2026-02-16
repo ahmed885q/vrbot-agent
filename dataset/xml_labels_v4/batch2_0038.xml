@@ -1,0 +1,35 @@
+<annotation>
+  <filename>batch2_0038.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>niflungs</name>
+    <bndbox>
+      <xmin>684</xmin>
+      <ymin>297</ymin>
+      <xmax>863</xmax>
+      <ymax>421</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>resource_bar</name>
+    <bndbox>
+      <xmin>673</xmin>
+      <ymin>0</ymin>
+      <xmax>1275</xmax>
+      <ymax>37</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>niflungs_leader</name>
+    <bndbox>
+      <xmin>513</xmin>
+      <ymin>161</ymin>
+      <xmax>603</xmax>
+      <ymax>287</ymax>
+    </bndbox>
+  </object>
+</annotation>

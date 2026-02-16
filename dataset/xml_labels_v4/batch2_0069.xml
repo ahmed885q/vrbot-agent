@@ -1,0 +1,26 @@
+<annotation>
+  <filename>batch2_0069.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>note_popup</name>
+    <bndbox>
+      <xmin>322</xmin>
+      <ymin>156</ymin>
+      <xmax>957</xmax>
+      <ymax>563</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>ok_btn</name>
+    <bndbox>
+      <xmin>650</xmin>
+      <ymin>464</ymin>
+      <xmax>912</xmax>
+      <ymax>515</ymax>
+    </bndbox>
+  </object>
+</annotation>

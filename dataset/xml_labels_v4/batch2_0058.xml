@@ -1,0 +1,17 @@
+<annotation>
+  <filename>batch2_0058.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>march_number</name>
+    <bndbox>
+      <xmin>1151</xmin>
+      <ymin>163</ymin>
+      <xmax>1242</xmax>
+      <ymax>479</ymax>
+    </bndbox>
+  </object>
+</annotation>

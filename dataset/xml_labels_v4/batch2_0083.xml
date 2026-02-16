@@ -1,0 +1,26 @@
+<annotation>
+  <filename>batch2_0083.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>niflungs</name>
+    <bndbox>
+      <xmin>223</xmin>
+      <ymin>23</ymin>
+      <xmax>319</xmax>
+      <ymax>120</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>niflungs</name>
+    <bndbox>
+      <xmin>615</xmin>
+      <ymin>340</ymin>
+      <xmax>757</xmax>
+      <ymax>556</ymax>
+    </bndbox>
+  </object>
+</annotation>

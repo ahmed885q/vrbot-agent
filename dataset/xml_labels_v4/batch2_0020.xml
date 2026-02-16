@@ -1,0 +1,17 @@
+<annotation>
+  <filename>batch2_0020.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>barracks_popup</name>
+    <bndbox>
+      <xmin>2</xmin>
+      <ymin>0</ymin>
+      <xmax>1278</xmax>
+      <ymax>720</ymax>
+    </bndbox>
+  </object>
+</annotation>

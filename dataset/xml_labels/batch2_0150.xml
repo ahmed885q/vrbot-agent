@@ -1,0 +1,9 @@
+<annotation>
+  <filename>batch2_0150.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>building_label</name><bndbox><xmin>737</xmin><ymin>417</ymin><xmax>875</xmax><ymax>535</ymax></bndbox></object>
+  <object><name>building_label</name><bndbox><xmin>579</xmin><ymin>226</ymin><xmax>817</xmax><ymax>385</ymax></bndbox></object>
+  <object><name>building_label</name><bndbox><xmin>581</xmin><ymin>283</ymin><xmax>816</xmax><ymax>383</ymax></bndbox></object>
+  <object><name>world_botn</name><bndbox><xmin>20</xmin><ymin>566</ymin><xmax>129</xmax><ymax>702</ymax></bndbox></object>
+  <object><name>building_label</name><bndbox><xmin>748</xmin><ymin>384</ymin><xmax>889</xmax><ymax>482</ymax></bndbox></object>
+</annotation>

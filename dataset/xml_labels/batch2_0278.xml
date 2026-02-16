@@ -1,0 +1,6 @@
+<annotation>
+  <filename>batch2_0278.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>building_label</name><bndbox><xmin>47</xmin><ymin>242</ymin><xmax>284</xmax><ymax>474</ymax></bndbox></object>
+  <object><name>world_botn</name><bndbox><xmin>19</xmin><ymin>575</ymin><xmax>129</xmax><ymax>703</ymax></bndbox></object>
+</annotation>

@@ -1,0 +1,26 @@
+<annotation>
+  <filename>batch2_0125.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>close_btn</name>
+    <bndbox>
+      <xmin>1212</xmin>
+      <ymin>54</ymin>
+      <xmax>1248</xmax>
+      <ymax>104</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>manage_cite_popup</name>
+    <bndbox>
+      <xmin>37</xmin>
+      <ymin>45</ymin>
+      <xmax>1277</xmax>
+      <ymax>681</ymax>
+    </bndbox>
+  </object>
+</annotation>

@@ -1,0 +1,5 @@
+<annotation>
+  <filename>batch2_0213.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>building_label</name><bndbox><xmin>600</xmin><ymin>328</ymin><xmax>760</xmax><ymax>544</ymax></bndbox></object>
+</annotation>

@@ -1,0 +1,5 @@
+<annotation>
+  <filename>batch2_0228.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>troop_slider</name><bndbox><xmin>804</xmin><ymin>128</ymin><xmax>1278</xmax><ymax>675</ymax></bndbox></object>
+</annotation>

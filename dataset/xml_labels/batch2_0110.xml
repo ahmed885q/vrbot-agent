@@ -1,0 +1,7 @@
+<annotation>
+  <filename>batch2_0110.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>close_btn</name><bndbox><xmin>1209</xmin><ymin>55</ymin><xmax>1251</xmax><ymax>103</ymax></bndbox></object>
+  <object><name>manage_cite_popup</name><bndbox><xmin>10</xmin><ymin>51</ymin><xmax>1252</xmax><ymax>678</ymax></bndbox></object>
+  <object><name>resource_bar</name><bndbox><xmin>767</xmin><ymin>3</ymin><xmax>1273</xmax><ymax>40</ymax></bndbox></object>
+</annotation>

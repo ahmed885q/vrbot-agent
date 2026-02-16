@@ -1,0 +1,26 @@
+<annotation>
+  <filename>batch2_0134.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>niflungs</name>
+    <bndbox>
+      <xmin>599</xmin>
+      <ymin>196</ymin>
+      <xmax>718</xmax>
+      <ymax>344</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>march_number</name>
+    <bndbox>
+      <xmin>1147</xmin>
+      <ymin>161</ymin>
+      <xmax>1244</xmax>
+      <ymax>495</ymax>
+    </bndbox>
+  </object>
+</annotation>

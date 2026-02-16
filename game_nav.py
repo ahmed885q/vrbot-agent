@@ -15,17 +15,17 @@ log = logging.getLogger("vrbot.nav")
 
 SCREENS = {
     "city": {
-        "markers": ["btn_compass", "btn_mail", "btn_shield"],
+        "markers": ["btn_compass", "btn_mail", "btn_shield", "btn_quests"],
         "toolbar": True,
         "description": "Main city view"
     },
     "world_map": {
-        "markers": ["btn_worldmap_eye", "btn_worldmap_search", "btn_worldmap_tools"],
+        "markers": ["btn_worldmap_search", "btn_worldmap_tools"],
         "toolbar": False,
         "description": "World/kingdom map"
     },
     "mail": {
-        "markers": ["screen_mail", "tab_mail_report"],
+        "markers": ["screen_mail_title", "btn_read_claim_all"],
         "toolbar": False,
         "description": "Mail screen"
     },
@@ -40,9 +40,9 @@ SCREENS = {
         "description": "Hero management"
     },
     "technology": {
-        "markers": ["screen_technology", "tab_tech_basic_internal"],
+        "markers": ["screen_research_title", "btn_research_queue_idle"],
         "toolbar": False,
-        "description": "Tribe technology tree"
+        "description": "Research/technology tree"
     },
     "daily_quests": {
         "markers": ["screen_daily_quests", "tab_daily_quests"],
@@ -55,9 +55,14 @@ SCREENS = {
         "description": "Staging Post quests"
     },
     "search_panel": {
-        "markers": ["tile_monster", "tile_farm"],
+        "markers": ["tile_farm_search", "tile_monster_search", "tile_sawmill_search"],
         "toolbar": False,
         "description": "World map search (resource tiles)"
+    },
+    "research": {
+        "markers": ["screen_research_title", "btn_research_queue1"],
+        "toolbar": False,
+        "description": "Research/Academy screen"
     },
     "upgrade_screen": {
         "markers": ["screen_upgrade_power"],
@@ -91,18 +96,29 @@ TOOLBAR = {
     "shield":   "btn_shield",
 }
 
+# Fixed toolbar button positions (fallback when template matching is unreliable)
+# Based on 1280x720 resolution testing
+TOOLBAR_POS = {
+    "mail":     (870, 660),
+    "quests":   (935, 660),
+    "alliance": (1020, 660),
+    "heroes":   (1085, 660),
+    "more":     (1145, 660),
+    "items":    (1200, 660),
+    "shield":   (1245, 660),
+}
+
 # ═══════════════════════════════════════════════════════════════
 # Resource Tile Templates
 # ═══════════════════════════════════════════════════════════════
 
 RESOURCE_TILES = {
-    "food":     "tile_farm",
-    "wood":     "tile_sawmill",
-    "stone":    "tile_quarry",
-    "gold":     "tile_gold_mine",
-    "monster":  "tile_monster",
-    "niflung":  "tile_niflung",
-    "shadowflame": "tile_shadowflame_assassin",
+    "food":     "tile_farm_search",
+    "wood":     "tile_sawmill_search",
+    "stone":    "tile_quarry_search",
+    "gold":     "tile_goldmine_search",
+    "monster":  "tile_monster_search",
+    "niflung":  "tile_niflung_search",
 }
 
 
@@ -121,17 +137,39 @@ class GameNavigator:
         """Detect which game screen we're currently on."""
         self.vision.capture(fresh=True)
 
+        # Check specific screens first (most unique markers)
+        # World map has unique buttons not found in city
+        if (self.vision.exists("btn_worldmap_search", threshold=0.78) or
+            self.vision.exists("btn_worldmap_tools", threshold=0.78)):
+            self._current_screen = "world_map"
+            log.debug("Screen detected: world_map")
+            return "world_map"
+
+        # City has compass button (not on world map)
+        if (self.vision.exists("btn_compass", threshold=0.78) or
+            self.vision.exists("btn_city_compass", threshold=0.78)):
+            self._current_screen = "city"
+            log.debug("Screen detected: city (compass found)")
+            return "city"
+
+        # Check other screens by markers
         for screen_name, info in SCREENS.items():
+            if screen_name in ("city", "world_map"):
+                continue  # Already checked
             markers = info["markers"]
-            matched = 0
             for marker in markers:
-                if self.vision.exists(marker, threshold=0.80):
-                    matched += 1
-            # Need at least 1 marker match
-            if matched >= 1:
-                self._current_screen = screen_name
-                log.debug(f"Screen detected: {screen_name} ({matched}/{len(markers)} markers)")
-                return screen_name
+                if self.vision.exists(marker, threshold=0.78):
+                    self._current_screen = screen_name
+                    log.debug(f"Screen detected: {screen_name}")
+                    return screen_name
+
+        # Fallback: if toolbar buttons visible but no compass/worldmap,
+        # check if it's city by toolbar presence
+        if (self.vision.exists("btn_mail", threshold=0.85) and
+            self.vision.exists("btn_shield", threshold=0.85)):
+            self._current_screen = "city"
+            log.debug("Screen detected: city (toolbar fallback)")
+            return "city"
 
         self._current_screen = "unknown"
         return "unknown"
@@ -157,14 +195,85 @@ class GameNavigator:
         if self.is_on_screen("city"):
             return True
 
-        # If on world map, tap city icon or zoom in
+        # Handle exit dialog or Chief Profile if visible
+        self._dismiss_exit_dialog()
+        self._close_chief_profile()
+
+        # If on world map, tap the city return button (bottom-left badge)
         if self.is_on_screen("world_map"):
-            # Double tap center to zoom into city
-            self.adb.tap(640, 400)
-            self.human.delay("fast")
-            self.adb.tap(640, 400)
-            if self.wait_for_screen("city", timeout=timeout):
+            # Method 1: Tap the city return badge (bottom-left)
+            if self.vision.tap_on("btn_return_city", wait=False, threshold=0.70):
+                log.info("Tapped city return button")
+                self.human.delay("normal")
+                if self.wait_for_screen("city", timeout=8):
+                    return True
+
+            # Method 2: Tap known position of return button
+            self.adb.tap(65, 655, offset=10)
+            self.human.delay("normal")
+            self._dismiss_exit_dialog()
+            self._close_chief_profile()
+            if self.wait_for_screen("city", timeout=5):
                 return True
+
+        # For other screens, try close buttons
+        for _ in range(5):
+            current = self.detect_screen()
+            if current == "city":
+                return True
+
+            self._dismiss_exit_dialog()
+            self._close_chief_profile()
+
+            # Close any popup/screen
+            if self.vision.tap_on("btn_close_x", wait=False):
+                self.human.delay("fast")
+                continue
+            if self.vision.tap_on("btn_popup_close_x", wait=False):
+                self.human.delay("fast")
+                continue
+            if self.vision.tap_on("btn_close_x_panel", wait=False):
+                self.human.delay("fast")
+                continue
+            if self.vision.tap_on("btn_back", wait=False):
+                self.human.delay("fast")
+                continue
+
+            # Android back (careful - might trigger exit dialog)
+            self.adb.go_back()
+            self.human.delay("fast")
+            self._dismiss_exit_dialog()
+
+        return self.is_on_screen("city")
+
+    def _dismiss_exit_dialog(self):
+        """If 'exit game' dialog appears, tap Cancel."""
+        time.sleep(0.3)
+        self.vision.capture(fresh=True)
+        if self.vision.exists("dialog_note_title", threshold=0.75):
+            log.info("Exit dialog detected — tapping Cancel")
+            if self.vision.tap_on("btn_cancel_blue", wait=False, threshold=0.70):
+                self.human.delay("fast")
+                return True
+            self.adb.tap(490, 485, offset=10)
+            self.human.delay("fast")
+            return True
+        return False
+
+    def _close_chief_profile(self):
+        """If Chief Profile screen is open, close it."""
+        time.sleep(0.3)
+        self.vision.capture(fresh=True)
+        # Chief Profile has "Personal Info", "Settings" etc on left side
+        # Best way: press Android back to close it
+        if self.vision.exists("icon_profile_avatar", threshold=0.85,
+                               region=(200, 100, 500, 500)):
+            log.info("Chief Profile detected — closing")
+            self.adb.go_back()
+            self.human.delay("fast")
+            self._dismiss_exit_dialog()
+            return True
+        return False
 
         # Try pressing back repeatedly
         for _ in range(5):
@@ -194,16 +303,18 @@ class GameNavigator:
         if self.is_on_screen("world_map"):
             return True
 
-        # From city, tap compass/minimap to open world map
+        # From city, tap compass button (bottom-left)
         if self.is_on_screen("city"):
-            if self.vision.tap_on("btn_compass", wait=False):
+            if (self.vision.tap_on("btn_city_compass", wait=False, threshold=0.70) or
+                self.vision.tap_on("btn_compass", wait=False, threshold=0.70)):
                 self.human.delay("normal")
                 if self.wait_for_screen("world_map", timeout=timeout):
                     return True
 
         # Try going to city first, then world map
         self.go_to_city()
-        if self.vision.tap_on("btn_compass", wait=False):
+        if (self.vision.tap_on("btn_city_compass", wait=False, threshold=0.70) or
+            self.vision.tap_on("btn_compass", wait=False, threshold=0.70)):
             self.human.delay("normal")
             return self.wait_for_screen("world_map", timeout=timeout)
 
@@ -214,40 +325,80 @@ class GameNavigator:
         if self.is_on_screen("mail"):
             return True
         self.go_to_city()
-        if self.vision.tap_on("btn_mail", wait=False, timeout=5):
+        time.sleep(0.5)
+        # btn_mail is in bottom toolbar, roughly at x=870-910, y=640-680
+        # Use region constraint to avoid matching heroes button
+        self.vision.capture(fresh=True)
+        result = self.vision.find("btn_mail", threshold=0.80,
+                                   region=(830, 620, 120, 80))
+        if result:
+            log.info(f"Mail button found at ({result[0]},{result[1]}) conf={result[2]:.1%}")
+            self.adb.tap(result[0], result[1], offset=5)
             self.human.delay("normal")
-            return self.wait_for_screen("mail", timeout=10)
-        return False
+            if self.wait_for_screen("mail", timeout=10):
+                return True
+        # Fallback: tap known mail button position
+        log.info("Fallback: tapping mail at (870, 660)")
+        self.adb.tap(870, 660, offset=5)
+        self.human.delay("normal")
+        return self.wait_for_screen("mail", timeout=10)
 
     def open_heroes(self):
         """Open hero management."""
         if self.is_on_screen("hero"):
             return True
         self.go_to_city()
-        if self.vision.tap_on("btn_heroes", wait=False, timeout=5):
-            self.human.delay("normal")
-            return self.wait_for_screen("hero", timeout=10)
-        return False
+        time.sleep(0.5)
+        # btn_heroes is at roughly x=1060-1110, y=640-680
+        self.vision.capture(fresh=True)
+        result = self.vision.find("btn_heroes", threshold=0.75,
+                                   region=(1040, 620, 100, 80))
+        if result:
+            log.info(f"Heroes button at ({result[0]},{result[1]})")
+            self.adb.tap(result[0], result[1], offset=5)
+        else:
+            log.info("Fallback: tapping heroes at (1085, 660)")
+            self.adb.tap(1085, 660, offset=5)
+        self.human.delay("normal")
+        return self.wait_for_screen("hero", timeout=10)
 
     def open_tribe(self):
         """Open tribe/alliance screen."""
         if self.is_on_screen("tribe"):
             return True
         self.go_to_city()
-        if self.vision.tap_on("btn_alliance", wait=False, timeout=5):
-            self.human.delay("normal")
-            return self.wait_for_screen("tribe", timeout=10)
-        return False
+        time.sleep(0.5)
+        # btn_alliance is at roughly x=1000-1040, y=640-680
+        self.vision.capture(fresh=True)
+        result = self.vision.find("btn_alliance", threshold=0.70,
+                                   region=(980, 620, 100, 80))
+        if result:
+            log.info(f"Alliance button at ({result[0]},{result[1]})")
+            self.adb.tap(result[0], result[1], offset=5)
+        else:
+            log.info("Fallback: tapping alliance at (1020, 660)")
+            self.adb.tap(1020, 660, offset=5)
+        self.human.delay("normal")
+        return self.wait_for_screen("tribe", timeout=10)
 
     def open_daily_quests(self):
         """Open daily quests."""
         if self.is_on_screen("daily_quests"):
             return True
         self.go_to_city()
-        if self.vision.tap_on("btn_quests", wait=False, timeout=5):
-            self.human.delay("normal")
-            return self.wait_for_screen("daily_quests", timeout=10)
-        return False
+        time.sleep(0.5)
+        # btn_quests is at roughly x=910-960, y=640-680
+        self.vision.capture(fresh=True)
+        result = self.vision.find("btn_quests", threshold=0.80,
+                                   region=(890, 620, 100, 80))
+        if result:
+            log.info(f"Quests button at ({result[0]},{result[1]})")
+            self.adb.tap(result[0], result[1], offset=5)
+        else:
+            log.info("Fallback: tapping quests at (935, 660)")
+            self.adb.tap(935, 660, offset=5)
+        self.human.delay("normal")
+        return self.wait_for_screen("daily_quests", timeout=10)
 
     def open_items(self):
         """Open items/inventory."""

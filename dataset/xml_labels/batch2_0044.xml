@@ -1,0 +1,7 @@
+<annotation>
+  <filename>batch2_0044.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>close_btn</name><bndbox><xmin>1208</xmin><ymin>57</ymin><xmax>1250</xmax><ymax>103</ymax></bndbox></object>
+  <object><name>troop_slider</name><bndbox><xmin>616</xmin><ymin>159</ymin><xmax>1094</xmax><ymax>524</ymax></bndbox></object>
+  <object><name>secondary_commander</name><bndbox><xmin>378</xmin><ymin>127</ymin><xmax>580</xmax><ymax>553</ymax></bndbox></object>
+</annotation>

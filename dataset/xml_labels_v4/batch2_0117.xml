@@ -1,0 +1,17 @@
+<annotation>
+  <filename>batch2_0117.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>more_btn</name>
+    <bndbox>
+      <xmin>413</xmin>
+      <ymin>628</ymin>
+      <xmax>465</xmax>
+      <ymax>691</ymax>
+    </bndbox>
+  </object>
+</annotation>

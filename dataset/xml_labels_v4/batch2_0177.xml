@@ -1,0 +1,35 @@
+<annotation>
+  <filename>batch2_0177.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>march_number</name>
+    <bndbox>
+      <xmin>1149</xmin>
+      <ymin>161</ymin>
+      <xmax>1244</xmax>
+      <ymax>490</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>niflungs_leader</name>
+    <bndbox>
+      <xmin>138</xmin>
+      <ymin>355</ymin>
+      <xmax>302</xmax>
+      <ymax>503</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>resource_bar</name>
+    <bndbox>
+      <xmin>679</xmin>
+      <ymin>0</ymin>
+      <xmax>1273</xmax>
+      <ymax>36</ymax>
+    </bndbox>
+  </object>
+</annotation>

@@ -1,0 +1,5 @@
+<annotation>
+  <filename>batch2_0284.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>commission_popup</name><bndbox><xmin>1</xmin><ymin>0</ymin><xmax>1263</xmax><ymax>718</ymax></bndbox></object>
+</annotation>

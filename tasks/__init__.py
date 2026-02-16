@@ -75,7 +75,8 @@ class BaseTask(ABC):
         """Navigate back to main city screen."""
         for _ in range(max_tries):
             # Check for city screen markers (real templates)
-            if (self.vision.exists("btn_compass", threshold=0.80) or
+            if (self.vision.exists("btn_compass", threshold=0.78) or
+                self.vision.exists("btn_city_compass", threshold=0.78) or
                 self.vision.exists("btn_mail", threshold=0.80) or
                 self.vision.exists("btn_shield", threshold=0.80)):
                 return True
@@ -226,10 +227,10 @@ class GatherResourcesTask(BaseTask):
     estimated_time = 60
 
     TILE_MAP = {
-        "food":  "tile_farm",
-        "wood":  "tile_sawmill",
-        "stone": "tile_quarry",
-        "gold":  "tile_gold_mine",
+        "food":  "tile_farm_search",
+        "wood":  "tile_sawmill_search",
+        "stone": "tile_quarry_search",
+        "gold":  "tile_goldmine_search",
     }
 
     def run(self, overrides):
@@ -254,8 +255,9 @@ class GatherResourcesTask(BaseTask):
                 self.human.delay("fast")
 
                 # Step 4: Tap Search button
-                if (self._safe_tap("btn_search_blue", timeout=5) or
-                    self._safe_tap("btn_search_conquest", timeout=5)):
+                if (self._safe_tap("btn_search_resource", timeout=5) or
+                    self._safe_tap("btn_search_panel", timeout=3) or
+                    self._safe_tap("btn_search_blue", timeout=3)):
                     self.human.delay("slow")
 
                     # Step 5: Tap the resource tile on map
@@ -263,7 +265,10 @@ class GatherResourcesTask(BaseTask):
                     self.human.delay("normal")
 
                     # Step 6: Tap Gather button on popup
-                    if self._safe_tap("btn_gather", timeout=10):
+                    if (self._safe_tap("btn_gather_resource", timeout=10) or
+                        self._safe_tap("btn_gather_farm", timeout=3) or
+                        self._safe_tap("btn_gather_quarry", timeout=3) or
+                        self._safe_tap("btn_gather", timeout=3)):
                         self.human.delay("normal")
 
                         # Step 7: Confirm march (tap green/blue confirm button)
@@ -367,8 +372,8 @@ class AllianceHelpTask(BaseTask):
 
     def run(self, overrides):
         """Help tribe members (Tribe Assist)."""
-        # Open tribe screen
-        if not self._safe_tap("btn_alliance", timeout=5):
+        # Open tribe screen (alliance button needs lower threshold)
+        if not self.vision.tap_on("btn_alliance", timeout=5, threshold=0.70):
             return True
 
         self.human.delay("normal")

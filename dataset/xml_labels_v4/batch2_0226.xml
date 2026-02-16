@@ -1,0 +1,35 @@
+<annotation>
+  <filename>batch2_0226.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>close_btn</name>
+    <bndbox>
+      <xmin>1210</xmin>
+      <ymin>63</ymin>
+      <xmax>1247</xmax>
+      <ymax>113</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>troop_slider</name>
+    <bndbox>
+      <xmin>725</xmin>
+      <ymin>128</ymin>
+      <xmax>1237</xmax>
+      <ymax>518</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>ok_btn</name>
+    <bndbox>
+      <xmin>991</xmin>
+      <ymin>593</ymin>
+      <xmax>1215</xmax>
+      <ymax>643</ymax>
+    </bndbox>
+  </object>
+</annotation>

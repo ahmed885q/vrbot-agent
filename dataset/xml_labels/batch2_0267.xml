@@ -1,0 +1,5 @@
+<annotation>
+  <filename>batch2_0267.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>resource_bar</name><bndbox><xmin>572</xmin><ymin>0</ymin><xmax>1097</xmax><ymax>34</ymax></bndbox></object>
+</annotation>

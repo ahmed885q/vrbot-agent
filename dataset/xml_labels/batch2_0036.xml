@@ -1,0 +1,7 @@
+<annotation>
+  <filename>batch2_0036.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>close_btn</name><bndbox><xmin>1208</xmin><ymin>57</ymin><xmax>1250</xmax><ymax>103</ymax></bndbox></object>
+  <object><name>troop_slider</name><bndbox><xmin>615</xmin><ymin>160</ymin><xmax>1092</xmax><ymax>521</ymax></bndbox></object>
+  <object><name>create_squad_popup</name><bndbox><xmin>28</xmin><ymin>41</ymin><xmax>1242</xmax><ymax>689</ymax></bndbox></object>
+</annotation>

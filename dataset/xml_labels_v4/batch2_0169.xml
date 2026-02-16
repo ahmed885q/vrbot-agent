@@ -1,0 +1,17 @@
+<annotation>
+  <filename>batch2_0169.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>world_botn</name>
+    <bndbox>
+      <xmin>16</xmin>
+      <ymin>576</ymin>
+      <xmax>128</xmax>
+      <ymax>705</ymax>
+    </bndbox>
+  </object>
+</annotation>

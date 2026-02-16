@@ -1,0 +1,17 @@
+<annotation>
+  <filename>batch2_0198.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>recover_energy_popup</name>
+    <bndbox>
+      <xmin>1</xmin>
+      <ymin>0</ymin>
+      <xmax>1280</xmax>
+      <ymax>720</ymax>
+    </bndbox>
+  </object>
+</annotation>

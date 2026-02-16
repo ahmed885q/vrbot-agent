@@ -1,0 +1,35 @@
+<annotation>
+  <filename>batch2_0168.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>march_number</name>
+    <bndbox>
+      <xmin>1147</xmin>
+      <ymin>158</ymin>
+      <xmax>1244</xmax>
+      <ymax>555</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>world_botn</name>
+    <bndbox>
+      <xmin>17</xmin>
+      <ymin>575</ymin>
+      <xmax>126</xmax>
+      <ymax>704</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>city_icon</name>
+    <bndbox>
+      <xmin>16</xmin>
+      <ymin>575</ymin>
+      <xmax>127</xmax>
+      <ymax>704</ymax>
+    </bndbox>
+  </object>
+</annotation>

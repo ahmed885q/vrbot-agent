@@ -1,0 +1,26 @@
+<annotation>
+  <filename>batch2_0100.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>tribe_popup</name>
+    <bndbox>
+      <xmin>8</xmin>
+      <ymin>0</ymin>
+      <xmax>1280</xmax>
+      <ymax>720</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>research_arrow</name>
+    <bndbox>
+      <xmin>0</xmin>
+      <ymin>0</ymin>
+      <xmax>1280</xmax>
+      <ymax>720</ymax>
+    </bndbox>
+  </object>
+</annotation>

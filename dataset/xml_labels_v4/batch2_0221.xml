@@ -1,0 +1,26 @@
+<annotation>
+  <filename>batch2_0221.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>close_btn</name>
+    <bndbox>
+      <xmin>515</xmin>
+      <ymin>416</ymin>
+      <xmax>607</xmax>
+      <ymax>511</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>technology_popup</name>
+    <bndbox>
+      <xmin>105</xmin>
+      <ymin>0</ymin>
+      <xmax>1277</xmax>
+      <ymax>522</ymax>
+    </bndbox>
+  </object>
+</annotation>

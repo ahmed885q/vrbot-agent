@@ -1,0 +1,6 @@
+<annotation>
+  <filename>batch2_0169.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>prestige_shop_btn</name><bndbox><xmin>381</xmin><ymin>415</ymin><xmax>440</xmax><ymax>547</ymax></bndbox></object>
+  <object><name>world_botn</name><bndbox><xmin>17</xmin><ymin>579</ymin><xmax>130</xmax><ymax>703</ymax></bndbox></object>
+</annotation>

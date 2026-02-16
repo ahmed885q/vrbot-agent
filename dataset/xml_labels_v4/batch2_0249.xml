@@ -1,0 +1,35 @@
+<annotation>
+  <filename>batch2_0249.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>war_popup</name>
+    <bndbox>
+      <xmin>18</xmin>
+      <ymin>43</ymin>
+      <xmax>1275</xmax>
+      <ymax>685</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>close_btn</name>
+    <bndbox>
+      <xmin>1211</xmin>
+      <ymin>53</ymin>
+      <xmax>1249</xmax>
+      <ymax>106</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>auto_rally_btn</name>
+    <bndbox>
+      <xmin>435</xmin>
+      <ymin>605</ymin>
+      <xmax>843</xmax>
+      <ymax>658</ymax>
+    </bndbox>
+  </object>
+</annotation>

@@ -1,0 +1,35 @@
+<annotation>
+  <filename>batch2_0239.png</filename>
+  <size>
+    <width>1280</width>
+    <height>720</height>
+    <depth>3</depth>
+  </size>
+  <object>
+    <name>march_number</name>
+    <bndbox>
+      <xmin>1146</xmin>
+      <ymin>158</ymin>
+      <xmax>1242</xmax>
+      <ymax>482</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>resource_bar</name>
+    <bndbox>
+      <xmin>741</xmin>
+      <ymin>0</ymin>
+      <xmax>1272</xmax>
+      <ymax>37</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>world_botn</name>
+    <bndbox>
+      <xmin>18</xmin>
+      <ymin>567</ymin>
+      <xmax>128</xmax>
+      <ymax>709</ymax>
+    </bndbox>
+  </object>
+</annotation>

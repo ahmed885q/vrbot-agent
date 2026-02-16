@@ -1,0 +1,5 @@
+<annotation>
+  <filename>batch2_0140.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>hero_list</name><bndbox><xmin>1153</xmin><ymin>11</ymin><xmax>1253</xmax><ymax>708</ymax></bndbox></object>
+</annotation>

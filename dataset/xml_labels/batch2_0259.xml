@@ -1,0 +1,7 @@
+<annotation>
+  <filename>batch2_0259.png</filename>
+  <size><width>1280</width><height>720</height><depth>3</depth></size>
+  <object><name>staging_post_popup</name><bndbox><xmin>5</xmin><ymin>0</ymin><xmax>1279</xmax><ymax>720</ymax></bndbox></object>
+  <object><name>quest_icon</name><bndbox><xmin>747</xmin><ymin>347</ymin><xmax>814</xmax><ymax>422</ymax></bndbox></object>
+  <object><name>quest_icon</name><bndbox><xmin>819</xmin><ymin>97</ymin><xmax>906</xmax><ymax>189</ymax></bndbox></object>
+</annotation>
