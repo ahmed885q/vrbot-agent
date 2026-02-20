@@ -453,7 +453,7 @@ class TestRunner:
         FLOW: Open mail → tap System tab → tap Read & Claim All → Back to close
         Mail icon: right side at (1235, 585)
         System tab: sidebar at (85, 200)
-        Read & Claim All: bottom at (310, 658)
+        Read & Claim All: bottom at (390, 645)
         """
         print("\n" + "─" * 55)
         print("  TEST: Mail Collection")
@@ -500,8 +500,8 @@ class TestRunner:
         time.sleep(1.5)
 
         # ── STEP 4: Tap "Read & Claim All" (bottom of mail) ──
-        print("  Tapping 'Read & Claim All' at (310, 658)...")
-        adb_tap(310, 658)
+        print("  Tapping 'Read & Claim All' at (390, 645)...")
+        adb_tap(390, 645)
         time.sleep(2)
 
         self.record("mail_claim_all", True, "System → Read & Claim All")
