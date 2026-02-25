@@ -1,43 +1,63 @@
-"""Task: Alliance Helps - Help alliance members"""
+"""Task: Alliance Helps — Open tribe → Assist tab → Help All
+Cooldown: 4 hours
+"""
+from tasks.base_task import BaseTask
+
+ALLIANCE_BTN = (1100, 685)
+ASSIST_TAB = (694, 690)
 
 
-class TaskHelps:
+class TaskHelps(BaseTask):
     name = "Alliance Helps"
-
-    def __init__(self, bot):
-        self.bot = bot
+    tag = "helps"
+    cooldown_hours = 4
 
     def run(self):
+        if not self._cooldown_ok():
+            return True
+
         bot = self.bot
         bot.go_to_city()
         bot.wait(2)
 
+        # Open Alliance
         print("  [helps] Opening tribe...")
-        bot.tap(1100, 685, jitter=False)
-        bot.wait(3)
+        bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
+        bot.wait(4)
 
-        # Tap Assist tab (3rd from left in bottom bar)
+        # Verify we're in alliance screen
+        s = bot.detect_screen()
+        screen = s.get("screen", "").lower() if s else ""
+        if "city" in screen:
+            print("  [helps] Alliance didn't open, retrying...")
+            bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
+            bot.wait(4)
+
+        # Tap Assist tab
         print("  [helps] Tapping Assist tab...")
-        bot.tap(694, 690, jitter=True)
+        bot.tap(ASSIST_TAB[0], ASSIST_TAB[1], jitter=True)
         bot.wait(3)
 
-        img = bot.screenshot_b64()
-        result = bot.ask_ai(
-            "Viking Rise alliance screen (1280x720). "
-            "Look for a button that says 'Help All' or 'Assist All' or a hand icon. "
-            "It could be a large button in the center/right of the screen. "
-            "Also look for individual 'Help' buttons next to member requests. "
-            '{"found": true, "x": 640, "y": 400}\nReply ONLY JSON.',
-            img, 80
-        )
-        if result and result.get("found"):
-            bot.tap(result["x"], result["y"])
-            bot.wait(2)
-            print("  [helps] Helped!")
-        else:
-            print("  [helps] No pending helps found.")
+        # Look for Help All button (try twice)
+        helped = False
+        for attempt in range(2):
+            found = self._find_and_tap_hybrid(
+                ["help_all", "assist"],
+                "Find a 'Help All' or 'Assist All' button (usually large, "
+                "center/right area). Also look for individual Help buttons.",
+                wait_after=2,
+            )
+            if found:
+                helped = True
+                print("  [helps] ✔ Helped alliance!")
+                break
+            bot.wait(1)
+
+        if not helped:
+            print("  [helps] No pending helps.")
 
         bot.adb_back()
-        bot.wait(1)
-        bot.go_to_city()
+        bot.wait(2)
+        self._safe_close()
+        self._save_cooldown()
         return True

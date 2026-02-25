@@ -1,143 +1,123 @@
-"""Task: Auto Kill Niflung - Continuous Loop
-Runs every ~1 minute until manually stopped.
+"""Task: Auto Kill Niflung — Continuous Loop
+Runs every ~2 minutes until manually stopped.
 Anti-ban: random delays between actions.
 """
 
 import random
 import time
+from tasks.base_task import BaseTask
 
 MAGNIFY_ICON = (155, 525)
 NIFLUNG_CAT = (380, 655)
 NIFLUNG_SEARCH = (380, 490)
-ATTACK_BTN = (950, 462)
-CREATE_BTN = (940, 170)
+ATTACK_BTN = (950, 510)
+CREATE_BTN = (933, 173)
 MARCH_BTN = (985, 640)
 
-# ============ CONFIG ============
-WAIT_BETWEEN_ATTACKS = 60        # 1 minute between each attack
-WAIT_RANDOM_EXTRA = (-10, 15)    # ±random seconds for anti-ban
-# ================================
+WAIT_BETWEEN_ATTACKS = 120  # 2 min
+WAIT_RANDOM_EXTRA = (-15, 20)
 
 
-class TaskNiflung:
+class TaskNiflung(BaseTask):
     name = "Auto Kill Niflung"
+    tag = "niflung"
+    cooldown_hours = 0  # self-managed loop
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.total_kills = 0
 
     def _human_wait(self, base_min=2, base_max=4):
-        delay = random.uniform(base_min, base_max)
-        self.bot.wait(delay)
+        self.bot.wait(random.uniform(base_min, base_max))
 
     def _ensure_world_map(self):
-        """Reliably get to world map: city first, then world map."""
         bot = self.bot
-
-        # Close any popups with single back
         bot.adb_back()
         bot.wait(1)
-
-        # Go to city (clean state)
         bot.go_to_city()
         bot.wait(2)
-
-        # Now go to world map
-        if not bot.go_to_world_map():
-            # Retry once
-            print("  [niflung] Retry: go_to_world_map...")
-            bot.go_to_city()
-            bot.wait(2)
-            if not bot.go_to_world_map():
-                return False
+        if bot.go_to_world_map():
+            return True
+        bot.go_to_city()
         bot.wait(2)
-        return True
+        return bot.go_to_world_map()
 
-    def _kill_one(self):
-        """Send one Niflung attack march."""
+    def _kill_one(self, kill_num):
         bot = self.bot
         self.total_kills += 1
-        print(f"\n  [niflung] === Attack #{self.total_kills} ===")
+        print(f"\n  [niflung] === Attack #{kill_num} (total: {self.total_kills}) ===")
 
-        # Step 1: Open search panel
-        print("  [niflung] Opening search panel...")
+        # Open search panel
         bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
         self._human_wait(2.5, 4)
 
-        # Step 2: Select Niflung category
-        print("  [niflung] Selecting Niflung...")
+        # Select Niflung category
         bot.tap(NIFLUNG_CAT[0], NIFLUNG_CAT[1], jitter=False)
         self._human_wait(1.5, 3)
 
-        # Step 3: Search
-        print("  [niflung] Tapping Search...")
+        # Search
         bot.tap(NIFLUNG_SEARCH[0], NIFLUNG_SEARCH[1], jitter=False)
         self._human_wait(5, 8)
 
-        # Step 4: Attack
-        print("  [niflung] Tapping Attack...")
+        # Attack
         bot.tap(ATTACK_BTN[0], ATTACK_BTN[1], jitter=False)
         self._human_wait(2, 4)
 
-        # Step 5: Create
-        print("  [niflung] Tapping Create...")
+        # Create
         bot.tap(CREATE_BTN[0], CREATE_BTN[1], jitter=False)
         self._human_wait(2, 4)
 
-        # Step 6: March
-        print("  [niflung] Tapping March...")
+        # March
         bot.tap(MARCH_BTN[0], MARCH_BTN[1], jitter=False)
         self._human_wait(3, 5)
 
-        print(f"  [niflung] ✔ Attack #{self.total_kills} sent!")
-        return True
+        # Verify
+        s = bot.detect_screen()
+        screen = s.get("screen", "").lower() if s else ""
+        if "world" in screen or "city" in screen:
+            print(f"  [niflung] ✔ Attack #{kill_num} sent!")
+            return True
+        else:
+            print(f"  [niflung] ⚠ Attack might have failed (screen: {screen})")
+            bot.adb_back()
+            bot.wait(2)
+            return False
 
     def run(self):
-        bot = self.bot
         start_time = time.time()
 
         print(f"  [niflung] ╔══════════════════════════════════════╗")
         print(f"  [niflung] ║  Auto Niflung Killer Started         ║")
-        print(f"  [niflung] ║  Interval: ~1 min | Stop: Ctrl+C    ║")
+        print(f"  [niflung] ║  Loop ~{WAIT_BETWEEN_ATTACKS}s | Stop: Ctrl+C        ║")
         print(f"  [niflung] ╚══════════════════════════════════════╝")
 
+        kill_num = 0
         while True:
             try:
-                # Get to world map reliably
+                kill_num += 1
+
                 if not self._ensure_world_map():
                     print("  [niflung] ✗ Failed to reach world map, retrying...")
-                    bot.wait(5)
+                    self.bot.wait(5)
                     continue
 
-                # Send attack
-                self._kill_one()
+                self._kill_one(kill_num)
 
-                # Wait ~1 minute
+                # Wait between attacks
                 extra = random.randint(*WAIT_RANDOM_EXTRA)
-                wait_time = WAIT_BETWEEN_ATTACKS + extra
-                elapsed_h = (time.time() - start_time) / 3600
-
-                print(f"\n  [niflung] ⏱ Total kills: {self.total_kills} | Running: {elapsed_h:.1f}h")
-                print(f"  [niflung] 💤 Waiting {wait_time}s before next attack...")
-
-                # Go to city during wait
-                bot.go_to_city()
-                bot.wait(wait_time)
+                wait_time = max(30, WAIT_BETWEEN_ATTACKS + extra)
+                print(f"  [niflung] 💤 Waiting {wait_time}s...")
+                self.bot.go_to_city()
+                self.bot.wait(wait_time)
 
             except KeyboardInterrupt:
                 break
             except Exception as e:
                 print(f"  [niflung] ✗ Error: {e}")
-                bot.go_to_city()
-                bot.wait(10)
+                self.bot.go_to_city()
+                self.bot.wait(10)
 
-        # Final stats
         elapsed = (time.time() - start_time) / 3600
-        print(f"\n  [niflung] ╔══════════════════════════════════════╗")
-        print(f"  [niflung] ║  Auto Niflung Stopped                ║")
-        print(f"  [niflung] ║  Total kills: {self.total_kills:<24}║")
-        print(f"  [niflung] ║  Duration: {elapsed:.1f}h{' '*(23-len(f'{elapsed:.1f}h'))}║")
-        print(f"  [niflung] ╚══════════════════════════════════════╝")
-
-        bot.go_to_city()
+        print(f"\n  [niflung] ║  Stopped: {self.total_kills} kills in {elapsed:.1f}h  ║")
+        self.bot.go_to_city()
         return True

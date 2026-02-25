@@ -1,85 +1,44 @@
-class TaskConstruction:
-    name = 'Construction'
+"""Task: Construction — Find upgradable building → upgrade, use speedups."""
 
-    def __init__(self, bot):
-        self.bot = bot
+from tasks.base_task import BuildingTask
 
-    def _find_building(self):
-        '''Search for building, swipe if not found'''
-        for attempt in range(3):
-            print(f'  [construct] Searching for building (attempt {attempt+1})...')
-            img = self.bot.screenshot_b64()
-            result = self.bot.ask_ai(
-                'You are looking at a Viking Rise city screen. '
-                'Find the building with a construction/upgrade hammer icon or any building showing an upgrade arrow. '
-                'Look for buildings with icons or labels. '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 500, "y": 350} '
-                'Not found: {"found": false}',
-                img
-            )
-            if result and result.get('found'):
-                return result
-            # Swipe to look around
-            if attempt == 0:
-                self.bot.swipe(640, 360, 400, 200)
-            elif attempt == 1:
-                self.bot.swipe(400, 200, 800, 500)
-            self.bot.wait(2)
-        return None
+
+class TaskConstruction(BuildingTask):
+    name = "Construction"
+    tag = "construction"
+    cooldown_hours = 1
+    building_desc = (
+        "a building with a GREEN ARROW ↑ icon or hammer/construction icon above it. "
+        "This means it is ready to upgrade. Ignore buildings without icons."
+    )
+    action_desc = "an Upgrade or Build button (green or blue)"
+    confirm_desc = "a Confirm or Upgrade button"
 
     def run(self):
-        print('  [construct] Starting...')
-        result = self._find_building()
-        if not result:
-            print('  [construct] Building not found.')
-            self.bot.go_to_city()
-            return False
+        """Override to add speedup usage after construction starts."""
+        result = super().run()
 
-        print(f'  [construct] Found at ({result["x"]}, {result["y"]}), tapping...')
-        self.bot.tap(result['x'], result['y'])
-        self.bot.wait(4)
+        # After construction starts, try to use regular speedups
+        bot = self.bot
+        bot.go_to_city()
+        bot.wait(2)
 
-        # Look for action button
-        print('  [construct] Looking for action...')
-        img = self.bot.screenshot_b64()
-        action = self.bot.ask_ai(
-            'You are in a building menu. Find an Upgrade, Build, or Construction button. '
-            'Respond JSON ONLY. '
-            'Found: {"found": true, "x": 640, "y": 500} '
-            'Not found: {"found": false}',
-            img
+        # Check for active construction with speedup option
+        found = self._find_and_tap(
+            "Find a building under construction with a timer/hourglass icon. "
+            "Tap the building to see speedup options.",
+            wait_after=3,
         )
-
-        if action and action.get('found'):
-            print(f'  [construct] Tapping action...')
-            self.bot.tap(action['x'], action['y'])
-            self.bot.wait(3)
-
-            # Confirm if needed
-            img2 = self.bot.screenshot_b64()
-            confirm = self.bot.ask_ai(
-                'Is there a Confirm, OK, Train, Upgrade, or Start button? '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 640, "y": 500} '
-                'Not found: {"found": false}',
-                img2
+        if found:
+            self._find_and_tap(
+                "Find a 'Speed Up' or 'Free' speedup button.",
+                wait_after=2,
             )
-            if confirm and confirm.get('found'):
-                self.bot.tap(confirm['x'], confirm['y'])
-                self.bot.wait(3)
-            print('  [construct] Done!')
-        else:
-            print('  [construct] No action available.')
+            self._find_and_tap(
+                "Find a 'Use' button to apply construction speed-up items.",
+                wait_after=2,
+            )
+            self._find_and_tap("Find 'Confirm' button.", wait_after=2)
+            self._safe_close()
 
-        # Close
-        print('  [construct] Closing...')
-        self.bot.tap(35, 25)
-        self.bot.wait(3)
-        s = self.bot.detect_screen()
-        if s and 'city' not in s.get('screen', '').lower():
-            self.bot.tap(35, 25)
-            self.bot.wait(2)
-            self.bot.go_to_city()
-        return True
-
+        return result

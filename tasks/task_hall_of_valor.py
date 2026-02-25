@@ -1,62 +1,34 @@
-import json
-import os
+"""Task: Hall of Valor - Free Summon (Hero + Skill)
+
+Strategy:
+  1. Go to city -> zoom in -> tap buildings one by one
+  2. After each tap: check if still on city (recovery if entered wrong building)
+  3. If popup visible -> read name -> if Hall of Valor -> enter summon
+  4. Dismiss popups by tapping grass, use back only for full screens
+"""
+
 import time
+from tasks.base_task import BaseTask, cooldown_ok, cooldown_save
 
 
-class TaskHallOfValor:
-    """
-    Hall of Valor — Free Summon (Hero + Skill)
-
-    Strategy:
-      1. Zoom in → tap buildings → check popup name via AI (text reading)
-      2. Once found, try enter buttons from rightmost to left (NO AI for coordinates)
-      3. Inside summon screen: fixed coordinates for everything
-    """
+class TaskHallOfValor(BaseTask):
     name = 'Hall of Valor'
+    tag = 'hall_of_valor'
+    cooldown_hours = 24
 
     TOUCH_DEV = '/dev/input/event2'
 
-    # ── Summon screen coordinates (FIXED — 1280×720) ────────────────────
     TAB_HERO          = (175, 148)
     TAB_SKILL         = (175, 245)
     FREE_SUMMON_BTN   = (645, 615)
-    RETURN_BTN        = (100, 25)
     BACK_ARROW        = (30, 25)
-
-    COOLDOWN_HOURS    = 24
-    COOLDOWN_FILE     = '.hall_of_valor_last_run.json'
+    DISMISS_SPOT      = (200, 550)
 
     SUMMON_TABS = [
         ('Hero Summon',  TAB_HERO),
         ('Skill Summon', TAB_SKILL),
     ]
 
-    def __init__(self, bot):
-        self.bot = bot
-
-    # ── Cooldown ────────────────────────────────────────────────────────
-    def _cooldown_ok(self):
-        path = self.COOLDOWN_FILE
-        if not os.path.exists(path):
-            return True
-        try:
-            with open(path, 'r') as f:
-                data = json.load(f)
-            last = data.get('last_run', 0)
-            elapsed = time.time() - last
-            hours_left = self.COOLDOWN_HOURS - (elapsed / 3600)
-            if hours_left > 0:
-                print(f'  [valor] Cooldown active — {hours_left:.1f}h remaining.')
-                return False
-            return True
-        except Exception:
-            return True
-
-    def _save_cooldown(self):
-        with open(self.COOLDOWN_FILE, 'w') as f:
-            json.dump({'last_run': time.time()}, f)
-
-    # ── Pinch-to-Zoom via sendevent ─────────────────────────────────────
     def _zoom_in(self, times=3):
         d = self.TOUCH_DEV
         print(f'  [valor] Zooming in ({times}x)...')
@@ -74,191 +46,212 @@ class TaskHallOfValor:
             cmds.append(f'sendevent {d} 1 330 0; sendevent {d} 0 0 0')
             self.bot._adb('shell', '; '.join(cmds))
             time.sleep(0.5)
-        print(f'  [valor] Zoom done.')
 
-    # ── Check if we're on summon screen ─────────────────────────────────
-    def _is_summon_screen(self):
-        img = self.bot.screenshot_b64()
-        result = self.bot.ask_ai(
-            'Is this a SUMMON screen? It should show tabs on the left side '
-            '(like "Hero Summon", "Skill Summon") and summon cards/buttons. '
-            'Respond JSON ONLY: {"summon": true} or {"summon": false}',
-            img
-        )
-        return result and result.get('summon', False)
+    def _ensure_city(self):
+        for _ in range(5):
+            img = self.bot.screenshot_b64()
+            result = self.bot.ask_ai(
+                'What screen is this? Respond JSON ONLY: '
+                '{"screen": "city"} if main city view, '
+                '{"screen": "popup"} if building popup with name, '
+                '{"screen": "other"} if any other screen.',
+                img
+            )
+            if result:
+                screen = result.get('screen', '')
+                if screen == 'city':
+                    return 'city'
+                elif screen == 'popup':
+                    return 'popup'
+                else:
+                    self.bot._adb("shell", "input", "keyevent", "4")
+                    self.bot.wait(2)
+        return 'unknown'
 
-    # ── Tap and check if popup says "Hall of Valor" ─────────────────────
     def _tap_and_check(self, x, y):
-        """Tap location, check if popup name = Hall of Valor. Returns True/False."""
         self.bot.tap(x, y, jitter=False)
         self.bot.wait(2)
 
         img = self.bot.screenshot_b64()
         result = self.bot.ask_ai(
-            'Look at this Viking Rise screenshot (1280x720). '
-            'Is there a building popup showing the name "Hall of Valor"? '
-            'A building popup has the building name in a banner at the top '
-            'and circular action buttons in a row below. '
-            'Respond JSON ONLY: '
-            '{"match": true} if popup says "Hall of Valor", '
-            '{"match": false} if no popup or different building name.',
+            'Viking Rise screenshot (1280x720). What do you see? JSON ONLY:\n'
+            '1. {"screen": "city_popup", "name": "<building name>"} - building popup\n'
+            '2. {"screen": "city"} - city with no popup\n'
+            '3. {"screen": "building_interior"} - inside a building\n'
+            '4. {"screen": "summon"} - Hall of Valor summon screen',
             img
         )
-        if result and result.get('match'):
-            return True
 
-        # Dismiss wrong popup
-        self.bot.tap(50, 50, jitter=False)
-        self.bot.wait(1)
-        return False
+        if not result:
+            return 'unknown', None
 
-    # ── Enter summon screen by trying button positions ──────────────────
-    def _enter_summon_from_popup(self, building_x):
-        """
-        After Hall of Valor popup is confirmed, try tapping the Enter/Summon
-        button. Buttons are in a row at y≈420, spaced ~130px apart.
-        The rightmost button is the Enter button.
+        screen = result.get('screen', '')
 
-        We calculate candidate positions based on building_x and try from
-        rightmost to leftmost until summon screen appears.
-        """
-        # Button row Y is approximately 120px below center of popup area
-        btn_y = 420
+        if screen == 'city_popup':
+            name = result.get('name', '').lower()
+            if 'hall of valor' in name or 'valor' in name:
+                print(f'  [valor] ✔ Found Hall of Valor!')
+                return 'found', result
+            else:
+                print(f'  [valor] Found: {result.get("name")} - not it.')
+                self.bot.tap(*self.DISMISS_SPOT, jitter=False)
+                self.bot.wait(1)
+                return 'wrong_building', result
 
-        # The 4 buttons are roughly centered around building_x+50,
-        # spanning ~390px total. Try candidates from rightmost inward.
-        # Also include absolute positions that cover most scenarios.
-        candidates = []
+        elif screen == 'summon':
+            print(f'  [valor] ✔ Entered summon screen directly!')
+            return 'summon', result
 
-        # Calculated from building position (4 buttons, ~130px spacing)
-        for offset in [390, 260, 130]:
-            cx = building_x + offset
-            if 100 < cx < 1250:
-                candidates.append((cx, btn_y))
+        elif screen == 'building_interior':
+            print(f'  [valor] Wrong building interior, going back...')
+            self.bot._adb("shell", "input", "keyevent", "4")
+            self.bot.wait(2)
+            self._ensure_city()
+            return 'wrong_interior', result
 
-        # Absolute fallback positions (cover common button locations)
-        for abs_x in [1140, 1020, 900, 780]:
-            if (abs_x, btn_y) not in candidates:
-                candidates.append((abs_x, btn_y))
+        elif screen == 'city':
+            return 'empty', result
 
-        for bx, by in candidates:
-            print(f'  [valor] Trying enter button at ({bx}, {by})...')
-            self.bot.tap(bx, by, jitter=False)
+        return 'unknown', result
+
+    def _enter_summon(self, bx, by):
+        img = self.bot.screenshot_b64()
+        result = self.bot.ask_ai(
+            'Viking Rise building popup (1280x720). '
+            'Find the RIGHTMOST circular action button (Enter button). '
+            'Respond JSON ONLY: {"x": <number>, "y": <number>}',
+            img
+        )
+
+        if result and 'x' in result:
+            ex, ey = result['x'], result['y']
+            print(f'  [valor] AI found Enter at ({ex}, {ey})...')
+            self.bot.tap(ex, ey, jitter=False)
             self.bot.wait(4)
 
-            if self._is_summon_screen():
-                print('  [valor] Entered summon screen!')
+            img2 = self.bot.screenshot_b64()
+            r2 = self.bot.ask_ai(
+                'Is this a SUMMON screen with Hero/Skill tabs? '
+                'JSON ONLY: {"summon": true} or {"summon": false}',
+                img2
+            )
+            if r2 and r2.get('summon'):
                 return True
 
-            # Check if popup is still there or dismissed
-            # If on city screen, re-tap building
+            self.bot.tap(bx, by, jitter=False)
+            self.bot.wait(2)
+
+        # Fallback positions
+        for ex, ey in [(bx+200, 420), (bx+130, 420), (bx+260, 420),
+                        (1140, 420), (1020, 420), (900, 420)]:
+            if ex < 100 or ex > 1250:
+                continue
+            self.bot.tap(ex, ey, jitter=False)
+            self.bot.wait(4)
+
             img = self.bot.screenshot_b64()
-            result = self.bot.ask_ai(
-                'Is there still a "Hall of Valor" building popup with circular buttons visible? '
-                'Respond JSON ONLY: {"popup": true} or {"popup": false}',
+            r = self.bot.ask_ai(
+                'Is this a SUMMON screen? JSON ONLY: '
+                '{"summon": true} or {"summon": false}',
                 img
             )
-            if not (result and result.get('popup')):
-                # Popup gone — either entered summon or dismissed
-                # Quick check if summon loaded
-                if self._is_summon_screen():
-                    return True
-                print('  [valor] Popup dismissed, trying to re-tap building...')
-                self.bot.tap(building_x, 300, jitter=False)
-                self.bot.wait(2)
+            if r and r.get('summon'):
+                return True
+
+            self.bot.tap(bx, by, jitter=False)
+            self.bot.wait(2)
 
         return False
 
-    # ── Step 1: Find building ───────────────────────────────────────────
-    def _find_building(self):
-        self.bot.go_to_city()
-        self.bot.wait(2)
-
-        self._zoom_in(3)
-        self.bot.wait(2)
-
-        # Phase 1: Current view
-        phase1_taps = [
-            (950, 180), (1050, 250), (850, 150),
-            (1100, 350), (750, 200),
-        ]
-
-        print('  [valor] Phase 1: Checking current view...')
-        for x, y in phase1_taps:
-            print(f'  [valor] Tapping ({x}, {y})...')
-            if self._tap_and_check(x, y):
-                return x  # return building x for button calculation
-
-        # Phase 2: Pan and check
-        pan_and_taps = [
-            ((640, 360, 400, 200), [(640, 350), (750, 300), (500, 400), (850, 250), (900, 350)]),
-            ((640, 360, 850, 500), [(640, 350), (500, 250), (750, 400), (400, 300), (640, 200)]),
-            ((640, 360, 300, 360), [(640, 350), (500, 300), (800, 250), (640, 200), (750, 400)]),
-            ((640, 360, 980, 360), [(640, 350), (500, 300), (800, 400), (640, 200), (400, 350)]),
-        ]
-
-        for i, (swipe, taps) in enumerate(pan_and_taps):
-            print(f'  [valor] Phase 2.{i+1}: Panning...')
-            self.bot.swipe(*swipe)
-            self.bot.wait(2)
-
-            for x, y in taps:
-                print(f'  [valor] Tapping ({x}, {y})...')
-                if self._tap_and_check(x, y):
-                    return x
-
-        return None
-
-    # ── Check if Free Summon available ──────────────────────────────────
     def _is_free_available(self):
         img = self.bot.screenshot_b64()
         result = self.bot.ask_ai(
-            'Look at the BOTTOM CENTER of this summon screen. '
-            'Is there a button that says exactly "Free Summon"? '
-            'Or does it show "Next Free:" with a countdown timer, '
-            'or paid buttons like "Summon x1" with gem icon? '
-            'Respond JSON ONLY: '
-            '{"free": true} if "Free Summon" visible, '
-            '{"free": false} if timer or paid only.',
+            'Bottom of summon screen: is there a "Free Summon" button? '
+            'Or countdown/paid buttons? '
+            'JSON ONLY: {"free": true} or {"free": false}',
             img
         )
         return result and result.get('free', False)
 
-    # ── Do free summon ──────────────────────────────────────────────────
     def _do_free_summon(self, tab_name):
-        print(f'  [valor] Free {tab_name} available! Summoning...')
+        print(f'  [valor] Free {tab_name}! Summoning...')
         self.bot.tap(*self.FREE_SUMMON_BTN)
         self.bot.wait(10)
         self.bot.tap(640, 360)
         self.bot.wait(3)
-        self.bot.tap(*self.RETURN_BTN)
-        self.bot.wait(3)
 
-    # ── Main run ────────────────────────────────────────────────────────
+    def _find_building(self):
+        self.bot.go_to_city()
+        self.bot.wait(2)
+        self._zoom_in(3)
+        self.bot.wait(2)
+
+        phase1 = [
+            (640, 280), (780, 220), (500, 320),
+            (880, 320), (420, 220), (740, 170),
+            (1000, 280), (340, 360), (560, 180),
+            (900, 180),
+        ]
+
+        print('  [valor] Phase 1: Checking current view...')
+        for x, y in phase1:
+            status, result = self._tap_and_check(x, y)
+            if status in ('found', 'summon'):
+                return x, y
+
+        pans = [
+            ('right', (640, 360, 200, 360)),
+            ('left',  (640, 360, 1080, 360)),
+            ('up',    (640, 360, 640, 600)),
+            ('down',  (640, 360, 640, 120)),
+        ]
+
+        taps_per_pan = [
+            (640, 280), (780, 220), (500, 320),
+            (880, 320), (420, 220), (560, 180),
+            (1000, 280),
+        ]
+
+        for direction, swipe_coords in pans:
+            print(f'  [valor] Panning {direction}...')
+            self.bot.swipe(*swipe_coords)
+            self.bot.wait(2)
+
+            for x, y in taps_per_pan:
+                status, result = self._tap_and_check(x, y)
+                if status in ('found', 'summon'):
+                    return x, y
+
+        return None, None
+
     def run(self):
-        print('  [valor] Starting...')
-
         if not self._cooldown_ok():
-            return False
+            return True
 
-        # Step 1 — Find building
-        building_x = self._find_building()
-        if building_x is None:
-            print('  [valor] Building not found after all attempts.')
+        bx, by = self._find_building()
+
+        if bx is None:
+            print('  [valor] Building not found.')
             self.bot.go_to_city()
             return False
 
-        print(f'  [valor] Found Hall of Valor! (building_x={building_x})')
+        # Check if already in summon screen
+        img = self.bot.screenshot_b64()
+        r = self.bot.ask_ai(
+            'Is this a SUMMON screen with Hero/Skill tabs? '
+            'JSON ONLY: {"summon": true} or {"summon": false}',
+            img
+        )
+        already_in = r and r.get('summon')
 
-        # Step 2 — Enter summon screen (try buttons from right to left)
-        if not self._enter_summon_from_popup(building_x):
-            print('  [valor] Could not enter summon screen.')
-            self.bot._adb("shell", "input", "keyevent", "4")
-            self.bot.wait(1)
-            self.bot.go_to_city()
-            return False
+        if not already_in:
+            if not self._enter_summon(bx, by):
+                print('  [valor] Could not enter summon screen.')
+                self.bot.tap(*self.DISMISS_SPOT, jitter=False)
+                self.bot.wait(1)
+                self.bot.go_to_city()
+                return False
 
-        # Step 3 — Free Summon on each tab
         summoned = False
         for tab_name, tab_coords in self.SUMMON_TABS:
             print(f'  [valor] Checking {tab_name}...')
@@ -269,20 +262,17 @@ class TaskHallOfValor:
                 self._do_free_summon(tab_name)
                 summoned = True
             else:
-                print(f'  [valor] {tab_name} — on cooldown, skipping.')
+                print(f'  [valor] {tab_name} - on cooldown.')
 
-        # Step 4 — Exit
-        print('  [valor] Closing...')
         self.bot.tap(*self.BACK_ARROW)
         self.bot.wait(2)
         self.bot._adb("shell", "input", "keyevent", "4")
-        self.bot.wait(2)
+        self.bot.wait(1)
         self.bot.go_to_city()
 
         self._save_cooldown()
         if summoned:
-            print('  [valor] Done! Free summons claimed.')
+            print('  [valor] ✔ Free summons claimed!')
         else:
-            print('  [valor] No free summons available right now.')
-
+            print('  [valor] No free summons available.')
         return True

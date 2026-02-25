@@ -1,85 +1,49 @@
-class TaskResearch:
-    name = 'Research'
+"""Task: Research — Start research and use speed-up items."""
 
-    def __init__(self, bot):
-        self.bot = bot
+from tasks.base_task import BuildingTask
 
-    def _find_building(self):
-        '''Search for building, swipe if not found'''
-        for attempt in range(3):
-            print(f'  [research] Searching for building (attempt {attempt+1})...')
-            img = self.bot.screenshot_b64()
-            result = self.bot.ask_ai(
-                'You are looking at a Viking Rise city screen. '
-                'Find the Research Academy or Academy building (often has a book or scroll icon). '
-                'Look for buildings with icons or labels. '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 500, "y": 350} '
-                'Not found: {"found": false}',
-                img
-            )
-            if result and result.get('found'):
-                return result
-            # Swipe to look around
-            if attempt == 0:
-                self.bot.swipe(640, 360, 400, 200)
-            elif attempt == 1:
-                self.bot.swipe(400, 200, 800, 500)
-            self.bot.wait(2)
-        return None
+
+class TaskResearch(BuildingTask):
+    name = "Research"
+    tag = "research"
+    cooldown_hours = 1
+    building_desc = (
+        "the Academy or Research building — it looks like a large hall or library "
+        "building, often with a book or scroll icon. May have a green arrow if "
+        "research is available."
+    )
+    action_desc = "a 'Research' or 'Study' button on an available tech (green/blue)"
+    confirm_desc = "a 'Confirm' or 'Research' button"
 
     def run(self):
-        print('  [research] Starting...')
-        result = self._find_building()
-        if not result:
-            print('  [research] Building not found.')
-            self.bot.go_to_city()
-            return False
+        result = super().run()
 
-        print(f'  [research] Found at ({result["x"]}, {result["y"]}), tapping...')
-        self.bot.tap(result['x'], result['y'])
-        self.bot.wait(4)
+        # After starting research, use speedups
+        bot = self.bot
+        bot.go_to_city()
+        bot.wait(2)
 
-        # Look for action button
-        print('  [research] Looking for action...')
-        img = self.bot.screenshot_b64()
-        action = self.bot.ask_ai(
-            'You are in the Research Academy. Find a Research or Study button to start research. '
-            'Respond JSON ONLY. '
-            'Found: {"found": true, "x": 640, "y": 500} '
-            'Not found: {"found": false}',
-            img
+        # Check for active research with speedup option
+        found = self._find_and_tap(
+            "Find the Academy building or a research timer icon.",
+            wait_after=3,
         )
-
-        if action and action.get('found'):
-            print(f'  [research] Tapping action...')
-            self.bot.tap(action['x'], action['y'])
-            self.bot.wait(3)
-
-            # Confirm if needed
-            img2 = self.bot.screenshot_b64()
-            confirm = self.bot.ask_ai(
-                'Is there a Confirm, OK, Train, Upgrade, or Start button? '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 640, "y": 500} '
-                'Not found: {"found": false}',
-                img2
+        if found:
+            ok = self._find_and_tap(
+                "Find a 'Speed Up' or hourglass button for research.",
+                wait_after=3,
             )
-            if confirm and confirm.get('found'):
-                self.bot.tap(confirm['x'], confirm['y'])
-                self.bot.wait(3)
-            print('  [research] Done!')
-        else:
-            print('  [research] No action available.')
+            if ok:
+                # Use research speed items
+                for _ in range(3):
+                    used = self._find_and_tap(
+                        "Find a 'Use' button next to a research speed-up item.",
+                        wait_after=2,
+                    )
+                    if not used:
+                        break
+                    self._find_and_tap("Find 'Confirm' button.", wait_after=2)
 
-        # Close
-        print('  [research] Closing...')
-        self.bot.tap(35, 25)
-        self.bot.wait(3)
-        s = self.bot.detect_screen()
-        if s and 'city' not in s.get('screen', '').lower():
-            self.bot.tap(35, 25)
-            self.bot.wait(2)
-            self.bot.go_to_city()
-        return True
+            self._safe_close()
 
+        return result
