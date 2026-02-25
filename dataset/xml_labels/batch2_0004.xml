@@ -1,7 +1,0 @@
-<annotation>
-  <filename>batch2_0004.png</filename>
-  <size><width>1280</width><height>720</height><depth>3</depth></size>
-  <object><name>building_label</name><bndbox><xmin>764</xmin><ymin>518</ymin><xmax>924</xmax><ymax>706</ymax></bndbox></object>
-  <object><name>resource_bar</name><bndbox><xmin>797</xmin><ymin>0</ymin><xmax>1272</xmax><ymax>39</ymax></bndbox></object>
-  <object><name>world_botn</name><bndbox><xmin>20</xmin><ymin>563</ymin><xmax>129</xmax><ymax>704</ymax></bndbox></object>
-</annotation>

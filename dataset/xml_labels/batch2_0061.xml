@@ -1,7 +1,0 @@
-<annotation>
-  <filename>batch2_0061.png</filename>
-  <size><width>1280</width><height>720</height><depth>3</depth></size>
-  <object><name>niflungs</name><bndbox><xmin>937</xmin><ymin>352</ymin><xmax>1017</xmax><ymax>419</ymax></bndbox></object>
-  <object><name>niflungs</name><bndbox><xmin>173</xmin><ymin>589</ymin><xmax>276</xmax><ymax>679</ymax></bndbox></object>
-  <object><name>hero_list</name><bndbox><xmin>1153</xmin><ymin>8</ymin><xmax>1254</xmax><ymax>590</ymax></bndbox></object>
-</annotation>

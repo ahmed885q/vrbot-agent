@@ -1,6 +1,0 @@
-<annotation>
-  <filename>batch2_0230.png</filename>
-  <size><width>1280</width><height>720</height><depth>3</depth></size>
-  <object><name>close_btn</name><bndbox><xmin>1208</xmin><ymin>52</ymin><xmax>1250</xmax><ymax>103</ymax></bndbox></object>
-  <object><name>resource_bar</name><bndbox><xmin>1008</xmin><ymin>597</ymin><xmax>1236</xmax><ymax>641</ymax></bndbox></object>
-</annotation>

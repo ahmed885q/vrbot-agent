@@ -1,7 +1,0 @@
-<annotation>
-  <filename>batch2_0082.png</filename>
-  <size><width>1280</width><height>720</height><depth>3</depth></size>
-  <object><name>resource_bar</name><bndbox><xmin>651</xmin><ymin>0</ymin><xmax>1269</xmax><ymax>38</ymax></bndbox></object>
-  <object><name>resource_bar</name><bndbox><xmin>674</xmin><ymin>0</ymin><xmax>1144</xmax><ymax>35</ymax></bndbox></object>
-  <object><name>resource_bar</name><bndbox><xmin>824</xmin><ymin>0</ymin><xmax>1272</xmax><ymax>41</ymax></bndbox></object>
-</annotation>

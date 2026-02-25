@@ -1,5 +1,0 @@
-<annotation>
-  <filename>batch2_0280.png</filename>
-  <size><width>1280</width><height>720</height><depth>3</depth></size>
-  <object><name>world_botn</name><bndbox><xmin>18</xmin><ymin>579</ymin><xmax>130</xmax><ymax>703</ymax></bndbox></object>
-</annotation>

@@ -1,7 +1,0 @@
-<annotation>
-  <filename>batch2_0261.png</filename>
-  <size><width>1280</width><height>720</height><depth>3</depth></size>
-  <object><name>niflungs</name><bndbox><xmin>758</xmin><ymin>404</ymin><xmax>908</xmax><ymax>571</ymax></bndbox></object>
-  <object><name>niflungs</name><bndbox><xmin>963</xmin><ymin>316</ymin><xmax>1062</xmax><ymax>410</ymax></bndbox></object>
-  <object><name>niflungs</name><bndbox><xmin>962</xmin><ymin>305</ymin><xmax>1137</xmax><ymax>436</ymax></bndbox></object>
-</annotation>

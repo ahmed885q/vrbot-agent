@@ -1,9 +1,9 @@
 """
-VRBOT Config - 16 Tasks + Hybrid YOLO
+VRBOT Config - 37 Tasks + Hybrid YOLO
 """
 # --- ADB ---
 ADB_EXE = r"C:\LDPlayer\LDPlayer9\adb.exe"
-ADB_DEVICE = "127.0.0.1:5555"
+ADB_DEVICE = "emulator-5554"
 
 # --- AI Provider ---
 AI_PROVIDER = "openai"  # "openai" or "anthropic"
@@ -33,9 +33,9 @@ NAV_MAX_RETRIES = 15
 # --- Task Settings ---
 TROOP_ROTATION = ['infantry', 'lancer', 'archer']
 
-# --- 16 Tasks ONLY ---
+# --- ALL 37 Tasks ---
 TASKS_ENABLED = {
-    # Quick Collections
+    # ── Quick Collections ──
     "daily_gifts": True,
     "rewards": True,
     "mail_rewards": True,
@@ -43,18 +43,48 @@ TASKS_ENABLED = {
     "tribe_gifts": True,
     "prosperity": True,
 
-    # Buildings
-    "construction": True,       # Upgrade
+    # ── Buildings ──
+    "construction": True,
     "research": True,
+    "train_troops": True,
     "hall_of_valor": True,
+    "divination": True,
+    "smithy": True,
+    "upgrade_chief_hall": True,
+    "chief_hall": True,
+    "expansion": True,
+
+    # ── Economy ──
+    "errands": True,
+    "commissions": True,
+    "farmer_appointments": True,
+    "recruit_farmers": True,
+    "village_champions": True,
+
+    # ── Heroes ──
+    "hero_xp": True,
+    "hero_training": True,
+    "account_items": True,
+
+    # ── World Map ──
+    "gather": True,
+    "niflung": True,
+    "kill_monster": True,
+    "rally_niflung": True,
     "clear_forest": True,
+    "cinderbone": True,
+    "staging_post": True,
+    "reclaim_midgard": True,
 
-    # World Map
-    "gather": True,             # Farming / Gather resources
-    "niflung": True,            # Kill Niflung
-    "kill_monster": True,       # Kill Monster
-    "rally_niflung": True,      # Rally Niflung Leader
+    # ── Events ──
+    "leidolf": True,
+    "festival_flames": True,
+    "chapter": True,
+    "promo_codes": True,
 
-    # Alliance
+    # ── Defense ──
+    "shield": True,
+
+    # ── Alliance ──
     "tribe_tech": True,
 }
