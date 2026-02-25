@@ -1,66 +1,77 @@
-class TaskReclaimMidgard:
-    name = 'Reclaim Midgard'
+"""Task: Reclaim Midgard — Battle monsters, unlock sentry towers,
+sacrificial stones, villages, and Odin statue."""
 
-    def __init__(self, bot):
-        self.bot = bot
+from tasks.base_task import BaseTask
+
+
+class TaskReclaimMidgard(BaseTask):
+    name = "Reclaim Midgard"
+    tag = "reclaim_midgard"
+    cooldown_hours = 4
 
     def run(self):
-        print('  [midgard] Switching to world map...')
-        # Tap world map button (compass bottom-left)
-        self.bot.tap(100, 655)
-        self.bot.wait(4)
+        if not self._cooldown_ok():
+            return True
 
-        s = self.bot.detect_screen()
-        screen = s.get('screen', '').lower() if s else ''
-        if 'world' not in screen and 'map' not in screen:
-            print('  [midgard] Not on world map.')
-            self.bot.go_to_city()
-            return False
+        bot = self.bot
+        bot.go_to_city()
+        bot.wait(2)
 
-        print('  [midgard] Searching...')
-        img = self.bot.screenshot_b64()
-        result = self.bot.ask_ai(
-            'You are on the Viking Rise world map. '
-            'Find a Reclaim Midgard event area or special zone. '
-            'Respond JSON ONLY. '
-            'Found: {"found": true, "x": 640, "y": 360} '
-            'Not found: {"found": false}',
-            img
+        # Open Reclaim Midgard panel
+        print(f"  [{self.tag}] Opening Reclaim Midgard...")
+        found = self._find_and_tap(
+            "Find the 'Reclaim Midgard' or world exploration icon. "
+            "It may be a map icon, compass, or globe on the right side panel.",
+            wait_after=4,
         )
-
-        if result and result.get('found'):
-            print(f'  [midgard] Found, tapping...')
-            self.bot.tap(result['x'], result['y'])
-            self.bot.wait(4)
-
-            img = self.bot.screenshot_b64()
-            action = self.bot.ask_ai(
-                'Find a Fight, Enter, or Challenge button. '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 640, "y": 500} '
-                'Not found: {"found": false}',
-                img
+        if not found:
+            # Try world map approach
+            if not bot.go_to_world_map():
+                print(f"  [{self.tag}] Cannot access Reclaim Midgard.")
+                return True
+            found = self._find_and_tap(
+                "Find a fog area, locked zone, or 'Explore' icon on the world map.",
+                wait_after=4,
             )
-            if action and action.get('found'):
-                self.bot.tap(action['x'], action['y'])
-                self.bot.wait(4)
 
-                # Confirm march
-                img2 = self.bot.screenshot_b64()
-                march = self.bot.ask_ai(
-                    'Is there a March, Attack, Gather, or Confirm button? '
-                    'Respond JSON ONLY. '
-                    'Found: {"found": true, "x": 640, "y": 600} '
-                    'Not found: {"found": false}',
-                    img2
+        if not found:
+            print(f"  [{self.tag}] No Reclaim Midgard content found.")
+            bot.go_to_city()
+            return True
+
+        # Process available actions
+        actions = 0
+        targets = [
+            "a monster or enemy camp that can be attacked",
+            "a sentry tower that can be unlocked or activated",
+            "a sacrificial stone that can be unlocked",
+            "a village that can be unlocked or liberated",
+            "an Odin statue or shrine that can be activated",
+        ]
+
+        for target in targets:
+            ok = self._find_and_tap(
+                f"Find {target}. Look for glowing or actionable elements.",
+                wait_after=3,
+            )
+            if ok:
+                # Try to complete action
+                self._find_and_tap(
+                    "Find an 'Attack', 'Unlock', 'Activate', 'Explore', or 'March' button.",
+                    wait_after=3,
                 )
-                if march and march.get('found'):
-                    self.bot.tap(march['x'], march['y'])
-                    self.bot.wait(3)
-                    print('  [midgard] Marching!')
+                self._find_and_tap(
+                    "Find a 'Confirm', 'March', or 'Send' button.",
+                    wait_after=3,
+                )
+                actions += 1
+                bot.wait(2)
+
+        if actions:
+            print(f"  [{self.tag}] ✔ Completed {actions} Midgard action(s)!")
         else:
-            print('  [midgard] Target not found on map.')
+            print(f"  [{self.tag}] No Midgard actions available.")
 
-        self.bot.go_to_city()
+        bot.go_to_city()
+        self._save_cooldown()
         return True
-

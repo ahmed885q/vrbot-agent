@@ -1,56 +1,66 @@
-class TaskChapter:
-    name = 'Chapter'
+"""Task: Chapter Completion — Auto-complete chapters through 17.
+Opens quest/chapter panel, claims completed steps, advances story."""
 
-    def __init__(self, bot):
-        self.bot = bot
+from tasks.base_task import BaseTask
+
+
+class TaskChapter(BaseTask):
+    name = "Chapter Completion"
+    tag = "chapter"
+    cooldown_hours = 2
+
+    MAX_CHAPTER = 17
 
     def run(self):
-        print('  [chapter] Looking for icon...')
-        img = self.bot.screenshot_b64()
-        result = self.bot.ask_ai(
-            'You are looking at a Viking Rise city screen. '
-            'Find the Chapter, Story, or Campaign icon on the screen. '
-            'Respond JSON ONLY. '
-            'Found: {"found": true, "x": 640, "y": 400} '
-            'Not found: {"found": false}',
-            img
+        if not self._cooldown_ok():
+            return True
+
+        bot = self.bot
+        bot.go_to_city()
+        bot.wait(2)
+
+        # Open chapter/quest panel — bottom-right quest icon
+        print(f"  [{self.tag}] Opening chapter panel...")
+        found = self._find_and_tap(
+            "Find the Chapter or Quest icon on the bottom toolbar or right side. "
+            "It may look like a scroll, book, or checklist icon.",
+            wait_after=4,
         )
+        if not found:
+            # Try fixed position for quest icon
+            bot.tap(1230, 530, jitter=True)
+            bot.wait(4)
 
-        if not result or not result.get('found'):
-            print('  [chapter] Icon not found.')
-            return False
-
-        print(f'  [chapter] Tapping...')
-        self.bot.tap(result['x'], result['y'])
-        self.bot.wait(4)
-
-        # Look for action
-        print('  [chapter] Looking for action...')
-        for i in range(3):
-            img = self.bot.screenshot_b64()
-            action = self.bot.ask_ai(
-                'Find a Start, Continue, Claim, or Next button. '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 640, "y": 500} '
-                'Not found: {"found": false}',
-                img
+        # Try to claim and advance multiple steps
+        claimed = 0
+        for step in range(15):
+            # Look for a Go/Claim/Complete button
+            ok = self._find_and_tap(
+                "Find a green 'Go', 'Claim', 'Complete', or 'Collect' button "
+                "in the chapter/quest panel. Ignore grayed-out buttons.",
+                wait_after=3,
             )
-            if action and action.get('found'):
-                print(f'  [chapter] Action {i+1}...')
-                self.bot.tap(action['x'], action['y'])
-                self.bot.wait(3)
-                self.bot.tap(640, 400)
-                self.bot.wait(2)
-            else:
+            if not ok:
                 break
+            claimed += 1
 
-        print('  [chapter] Closing...')
-        self.bot.tap(35, 25)
-        self.bot.wait(3)
-        s = self.bot.detect_screen()
-        if s and 'city' not in s.get('screen', '').lower():
-            self.bot.tap(35, 25)
-            self.bot.wait(2)
-            self.bot.go_to_city()
+            # Dismiss any reward popup
+            bot.tap(640, 400, jitter=False)
+            bot.wait(2)
+
+            # Check if story cutscene — skip it
+            skip = self._find_and_tap(
+                "Find a 'Skip' or 'X' button to skip cutscene or close dialog.",
+                wait_after=2,
+            )
+            if skip:
+                bot.wait(1)
+
+        if claimed:
+            print(f"  [{self.tag}] ✔ Completed {claimed} chapter step(s)!")
+        else:
+            print(f"  [{self.tag}] No chapter steps available.")
+
+        self._safe_close()
+        self._save_cooldown()
         return True
-

@@ -1,66 +1,58 @@
-class TaskStagingPost:
-    name = 'Staging Post'
+"""Task: Staging Post — Claim rewards except the red battle icon."""
 
-    def __init__(self, bot):
-        self.bot = bot
+from tasks.base_task import BaseTask
+
+
+class TaskStagingPost(BaseTask):
+    name = "Staging Post"
+    tag = "staging_post"
+    cooldown_hours = 6
 
     def run(self):
-        print('  [staging] Switching to world map...')
-        # Tap world map button (compass bottom-left)
-        self.bot.tap(100, 655)
-        self.bot.wait(4)
+        if not self._cooldown_ok():
+            return True
 
-        s = self.bot.detect_screen()
-        screen = s.get('screen', '').lower() if s else ''
-        if 'world' not in screen and 'map' not in screen:
-            print('  [staging] Not on world map.')
-            self.bot.go_to_city()
-            return False
+        bot = self.bot
+        bot.go_to_city()
+        bot.wait(2)
 
-        print('  [staging] Searching...')
-        img = self.bot.screenshot_b64()
-        result = self.bot.ask_ai(
-            'You are on the Viking Rise world map. '
-            'Find a Staging Post or rally point on the map. '
-            'Respond JSON ONLY. '
-            'Found: {"found": true, "x": 640, "y": 360} '
-            'Not found: {"found": false}',
-            img
+        # Find staging post
+        print(f"  [{self.tag}] Looking for Staging Post...")
+        found = self._find_and_tap(
+            "Find the Staging Post building — it looks like a military tent, "
+            "outpost, or campfire structure. May be near the city edge.",
+            wait_after=4,
         )
+        if not found:
+            print(f"  [{self.tag}] Staging Post not found.")
+            return True
 
-        if result and result.get('found'):
-            print(f'  [staging] Found, tapping...')
-            self.bot.tap(result['x'], result['y'])
-            self.bot.wait(4)
-
-            img = self.bot.screenshot_b64()
-            action = self.bot.ask_ai(
-                'Find a Join, Rally, or Attack button. '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 640, "y": 500} '
-                'Not found: {"found": false}',
-                img
+        # Claim available rewards (skip red battle icons)
+        claimed = 0
+        for _ in range(5):
+            img = bot.screenshot_b64()
+            result = bot.ask_ai(
+                "Viking Rise Staging Post (1280x720). Find a claimable reward "
+                "button (green 'Claim' or 'Collect'). IMPORTANT: Do NOT tap "
+                "any RED battle/attack icons — skip those completely. "
+                '{"found": true, "x": 640, "y": 400} or {"found": false}\n'
+                "Respond ONLY JSON.",
+                img, 80,
             )
-            if action and action.get('found'):
-                self.bot.tap(action['x'], action['y'])
-                self.bot.wait(4)
+            if not result or not result.get("found"):
+                break
 
-                # Confirm march
-                img2 = self.bot.screenshot_b64()
-                march = self.bot.ask_ai(
-                    'Is there a March, Attack, Gather, or Confirm button? '
-                    'Respond JSON ONLY. '
-                    'Found: {"found": true, "x": 640, "y": 600} '
-                    'Not found: {"found": false}',
-                    img2
-                )
-                if march and march.get('found'):
-                    self.bot.tap(march['x'], march['y'])
-                    self.bot.wait(3)
-                    print('  [staging] Marching!')
+            bot.tap(result["x"], result["y"])
+            bot.wait(3)
+            claimed += 1
+            bot.tap(640, 400, jitter=False)
+            bot.wait(2)
+
+        if claimed:
+            print(f"  [{self.tag}] ✔ Claimed {claimed} staging post reward(s)!")
         else:
-            print('  [staging] Target not found on map.')
+            print(f"  [{self.tag}] No rewards available.")
 
-        self.bot.go_to_city()
+        self._safe_close()
+        self._save_cooldown()
         return True
-

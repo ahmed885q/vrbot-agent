@@ -1,58 +1,64 @@
-class TaskAccountItems:
-    name = 'Account Items'
+"""Task: Account Items — Use resource chests from inventory
+Cooldown: 24 hours
+"""
+from tasks.base_task import BaseTask
 
-    def __init__(self, bot):
-        self.bot = bot
+ITEMS_BTN = (970, 665)
+
+
+class TaskAccountItems(BaseTask):
+    name = "Account Items"
+    tag = "account_items"
+    cooldown_hours = 24
 
     def run(self):
-        print('  [items] Opening items...')
-        self.bot.tap(970, 665)
-        self.bot.wait(4)
+        if not self._cooldown_ok():
+            return True
 
-        # Check Resources tab for usable items
-        print('  [items] Checking for usable resource items...')
-        img = self.bot.screenshot_b64()
-        result = self.bot.ask_ai(
-            'You are on an inventory/items screen. '
-            'Look at the Resources tab. Are there any resource chests or items to open/use? '
-            'Find any item with a Use button. '
-            'Respond JSON ONLY. '
-            'Found: {"found": true, "x": 400, "y": 300} '
-            'Not found: {"found": false}',
-            img
-        )
+        bot = self.bot
+        bot.go_to_city()
+        bot.wait(2)
 
-        if result and result.get('found'):
-            self.bot.tap(result['x'], result['y'])
-            self.bot.wait(2)
-            # Look for Use button
-            img2 = self.bot.screenshot_b64()
-            use = self.bot.ask_ai(
-                'Is there a Use or Open button? Respond JSON ONLY. '
-                'Found: {"found": true, "x": 1050, "y": 590} '
-                'Not found: {"found": false}',
-                img2
+        print("  [items] Opening items...")
+        bot.tap(ITEMS_BTN[0], ITEMS_BTN[1], jitter=False)
+        bot.wait(4)
+
+        # Verify opened
+        s = bot.detect_screen()
+        if s and s.get("screen", "").lower() == "city":
+            print("  [items] Items didn't open.")
+            return False
+
+        # Find and use resource items (up to 3)
+        used = 0
+        for i in range(3):
+            print(f"  [items] Looking for usable item ({i + 1})...")
+            found = self._find_and_tap(
+                "You are on an inventory/items screen. "
+                "Find a resource chest, speedup item, or usable item. "
+                "Look for items with a green highlight or 'Use' label.",
+                wait_after=2,
             )
-            if use and use.get('found'):
-                self.bot.tap(use['x'], use['y'])
-                self.bot.wait(2)
-                print('  [items] Used item!')
+            if found:
+                use_ok = self._find_and_tap_hybrid(
+                    ["use", "activate"],
+                    "Find the Use or Open button.",
+                    wait_after=2,
+                )
+                if use_ok:
+                    used += 1
+                    bot.tap(640, 400, jitter=False)  # dismiss popup
+                    bot.wait(2)
+                else:
+                    break
+            else:
+                break
+
+        if used:
+            print(f"  [items] ✔ Used {used} item(s)!")
         else:
-            print('  [items] No usable items.')
+            print("  [items] No usable items.")
 
-        # Close
-        img = self.bot.screenshot_b64()
-        close = self.bot.ask_ai(
-            'Find the X or Close button. Respond JSON ONLY. '
-            'Example: {"found": true, "x": 1230, "y": 77} '
-            'Not found: {"found": false}',
-            img
-        )
-        if close and close.get('found'):
-            self.bot.tap(close['x'], close['y'])
-            self.bot.wait(3)
-        s = self.bot.detect_screen()
-        if s and 'city' not in s.get('screen', '').lower():
-            self.bot.go_to_city()
+        self._safe_close()
+        self._save_cooldown()
         return True
-

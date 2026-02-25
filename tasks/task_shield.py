@@ -1,87 +1,76 @@
-class TaskShield:
-    name = 'Shield'
+"""Task: Shield — Check and activate peace shield
+Cooldown: 8 hours
+"""
+from tasks.base_task import BaseTask
 
-    def __init__(self, bot):
-        self.bot = bot
+ITEMS_BTN = (970, 665)
+
+
+class TaskShield(BaseTask):
+    name = "Shield"
+    tag = "shield"
+    cooldown_hours = 8
 
     def run(self):
-        print('  [shield] Checking shield status...')
-        img = self.bot.screenshot_b64()
-        result = self.bot.ask_ai(
-            'You are looking at a Viking Rise city screen. '
-            'Is there a peace shield dome/bubble over the city or a shield timer? '
-            'Respond JSON ONLY. '
-            'Active: {"shield_active": true} '
-            'Not active: {"shield_active": false}',
-            img
-        )
-
-        if result and result.get('shield_active'):
-            print('  [shield] Shield already active!')
+        if not self._cooldown_ok():
             return True
 
-        # Open Items bag at (970, 665)
-        print('  [shield] Opening items...')
-        self.bot.tap(970, 665)
-        self.bot.wait(4)
+        bot = self.bot
+        bot.go_to_city()
+        bot.wait(2)
 
-        s = self.bot.detect_screen()
-        screen = s.get('screen', '').lower() if s else ''
-        print(f'  [shield] Screen: {screen}')
+        # Check if shield already active
+        print("  [shield] Checking shield status...")
+        img = bot.screenshot_b64()
+        result = bot.ask_ai(
+            "Viking Rise city (1280x720). "
+            "Is there a peace shield dome/bubble over the city or a shield timer? "
+            '{"shield_active": true} or {"shield_active": false}\n'
+            "Respond ONLY JSON.",
+            img, 60,
+        )
+        if result and result.get("shield_active"):
+            print("  [shield] ✔ Shield already active!")
+            self._save_cooldown()
+            return True
 
-        if 'city' in screen:
-            print('  [shield] Items did not open.')
+        # Open Items bag
+        print("  [shield] Opening items...")
+        bot.tap(ITEMS_BTN[0], ITEMS_BTN[1], jitter=False)
+        bot.wait(4)
+
+        # Verify items opened
+        s = bot.detect_screen()
+        if s and s.get("screen", "").lower() == "city":
+            print("  [shield] Items didn't open.")
             return False
 
-        # Find shield item using AI
-        print('  [shield] Looking for shield item...')
-        img = self.bot.screenshot_b64()
-        shield_item = self.bot.ask_ai(
-            'You are looking at an inventory/items screen. '
-            'Find a Peace Shield, Protection Shield, or any Shield item. '
-            'Respond JSON ONLY. '
-            'Found: {"found": true, "x": 400, "y": 300} '
-            'Not found: {"found": false}',
-            img
+        # Find shield item
+        print("  [shield] Looking for shield item...")
+        shield_found = self._find_and_tap(
+            "You are on an inventory screen. "
+            "Find a Peace Shield or Protection Shield item. "
+            "Look in the items/resources list.",
+            wait_after=3,
         )
 
-        if shield_item and shield_item.get('found'):
-            print('  [shield] Found shield, tapping...')
-            self.bot.tap(shield_item['x'], shield_item['y'])
-            self.bot.wait(3)
-
-            img = self.bot.screenshot_b64()
-            use_btn = self.bot.ask_ai(
-                'Is there a Use or Activate button? '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 640, "y": 500} '
-                'Not found: {"found": false}',
-                img
+        if shield_found:
+            # Tap Use button
+            use_found = self._find_and_tap_hybrid(
+                ["use", "activate"],
+                "Find the Use or Activate button.",
+                wait_after=3,
             )
-            if use_btn and use_btn.get('found'):
-                self.bot.tap(use_btn['x'], use_btn['y'])
-                self.bot.wait(3)
-                print('  [shield] Shield activated!')
+            if use_found:
+                # Confirm if needed
+                bot.tap(640, 400, jitter=False)
+                bot.wait(2)
+                print("  [shield] ✔ Shield activated!")
             else:
-                print('  [shield] Use button not found.')
+                print("  [shield] Use button not found.")
         else:
-            print('  [shield] No shield items available.')
+            print("  [shield] No shield items available.")
 
-        # Close - AI find X button
-        print('  [shield] Closing...')
-        img = self.bot.screenshot_b64()
-        close = self.bot.ask_ai(
-            'Find the X or Close button. '
-            'Respond JSON ONLY. '
-            'Example: {"found": true, "x": 1200, "y": 50} '
-            'Not found: {"found": false}',
-            img
-        )
-        if close and close.get('found'):
-            self.bot.tap(close['x'], close['y'])
-            self.bot.wait(3)
-
-        s = self.bot.detect_screen()
-        if s and 'city' not in s.get('screen', '').lower():
-            self.bot.go_to_city()
+        self._safe_close()
+        self._save_cooldown()
         return True

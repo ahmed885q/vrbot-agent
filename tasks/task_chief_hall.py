@@ -1,85 +1,90 @@
-class TaskChiefHall:
-    name = 'Chief Hall'
+"""Task: Chief Hall — Fast construction to level 22.
+Only builds what is needed. Elite tier costs extra."""
 
-    def __init__(self, bot):
-        self.bot = bot
+from tasks.base_task import BaseTask
 
-    def _find_building(self):
-        '''Search for building, swipe if not found'''
-        for attempt in range(3):
-            print(f'  [chief] Searching for building (attempt {attempt+1})...')
-            img = self.bot.screenshot_b64()
-            result = self.bot.ask_ai(
-                'You are looking at a Viking Rise city screen. '
-                'Find the Chief Hall or main castle/palace building (the largest building in the center). '
-                'Look for buildings with icons or labels. '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 500, "y": 350} '
-                'Not found: {"found": false}',
-                img
-            )
-            if result and result.get('found'):
-                return result
-            # Swipe to look around
-            if attempt == 0:
-                self.bot.swipe(640, 360, 400, 200)
-            elif attempt == 1:
-                self.bot.swipe(400, 200, 800, 500)
-            self.bot.wait(2)
-        return None
 
-    def run(self):
-        print('  [chief] Starting...')
-        result = self._find_building()
-        if not result:
-            print('  [chief] Building not found.')
-            self.bot.go_to_city()
+class TaskChiefHall(BaseTask):
+    name = "Chief Hall Rush"
+    tag = "chief_hall"
+    cooldown_hours = 1
+
+    TARGET_LEVEL = 22
+
+    def _use_speedups(self):
+        """Look for and use construction speedups."""
+        bot = self.bot
+        # Look for speedup button in construction queue
+        found = self._find_and_tap(
+            "Find a 'Speed Up' or hourglass/clock button for construction.",
+            wait_after=3,
+        )
+        if not found:
             return False
 
-        print(f'  [chief] Found at ({result["x"]}, {result["y"]}), tapping...')
-        self.bot.tap(result['x'], result['y'])
-        self.bot.wait(4)
-
-        # Look for action button
-        print('  [chief] Looking for action...')
-        img = self.bot.screenshot_b64()
-        action = self.bot.ask_ai(
-            'You are in the Chief Hall. Find an Upgrade, Manage, or Info button. '
-            'Respond JSON ONLY. '
-            'Found: {"found": true, "x": 640, "y": 500} '
-            'Not found: {"found": false}',
-            img
+        # Use free speedup first
+        self._find_and_tap(
+            "Find 'Free' speed up button or 'Use' button for construction speedups.",
+            wait_after=2,
         )
-
-        if action and action.get('found'):
-            print(f'  [chief] Tapping action...')
-            self.bot.tap(action['x'], action['y'])
-            self.bot.wait(3)
-
-            # Confirm if needed
-            img2 = self.bot.screenshot_b64()
-            confirm = self.bot.ask_ai(
-                'Is there a Confirm, OK, Train, Upgrade, or Start button? '
-                'Respond JSON ONLY. '
-                'Found: {"found": true, "x": 640, "y": 500} '
-                'Not found: {"found": false}',
-                img2
+        # Use item speedups
+        for _ in range(3):
+            ok = self._find_and_tap(
+                "Find a 'Use' button next to a construction speed-up item.",
+                wait_after=2,
             )
-            if confirm and confirm.get('found'):
-                self.bot.tap(confirm['x'], confirm['y'])
-                self.bot.wait(3)
-            print('  [chief] Done!')
-        else:
-            print('  [chief] No action available.')
-
-        # Close
-        print('  [chief] Closing...')
-        self.bot.tap(35, 25)
-        self.bot.wait(3)
-        s = self.bot.detect_screen()
-        if s and 'city' not in s.get('screen', '').lower():
-            self.bot.tap(35, 25)
-            self.bot.wait(2)
-            self.bot.go_to_city()
+            if not ok:
+                break
+            # Confirm
+            self._find_and_tap(
+                "Find a green 'Confirm' or 'Use' button.",
+                wait_after=2,
+            )
         return True
 
+    def run(self):
+        if not self._cooldown_ok():
+            return True
+
+        bot = self.bot
+        bot.go_to_city()
+        bot.wait(2)
+
+        # Find Chief Hall building
+        print(f"  [{self.tag}] Looking for Chief Hall...")
+        found = self._find_and_tap(
+            "Find the Chief Hall / Town Center / main large building in the center "
+            "of the city. It is usually the biggest building.",
+            wait_after=4,
+        )
+        if not found:
+            print(f"  [{self.tag}] Chief Hall not found.")
+            return False
+
+        # Check if upgrade available
+        upgraded = self._find_and_tap(
+            "Find an 'Upgrade' button (green or blue) for the Chief Hall.",
+            wait_after=4,
+        )
+        if upgraded:
+            # Confirm upgrade
+            self._find_and_tap(
+                "Find a 'Confirm' or 'Upgrade' confirmation button (green).",
+                wait_after=3,
+            )
+            print(f"  [{self.tag}] ✔ Chief Hall upgrade started!")
+
+            # Use speedups
+            self._use_speedups()
+        else:
+            # Maybe prerequisites needed
+            print(f"  [{self.tag}] Upgrade not available — may need prerequisites.")
+            # Check info to see what's needed
+            self._find_and_tap(
+                "Find an 'Info' or 'Requirements' tab to see what buildings are needed.",
+                wait_after=3,
+            )
+
+        self._safe_close()
+        self._save_cooldown()
+        return True
