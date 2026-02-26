@@ -87,4 +87,13 @@ TASKS_ENABLED = {
 
     # ── Alliance ──
     "tribe_tech": True,
+    "city_rush": False,
+    "community_events": False,
+    "conquer_island": False,
+    "gather_supplies": False,
+    "market_trade": False,
+    "rebate_pack": False,
+    "surprise_gift": False,
+    "toy_shop": False,
+    "tribe_gold_tile": False,
 }

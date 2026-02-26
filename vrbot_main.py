@@ -113,6 +113,21 @@ TASK_MAP = {
 
     # Alliance
     "tribe_tech":          ("tasks.task_tribe_tech",          "TaskTribeTech"),
+    "tribe_gold_tile":     ("tasks.task_tribe_gold_tile",     "TaskTribeGoldTile"),
+
+    # Economy (extra)
+    "market_trade":        ("tasks.task_market_trade",        "TaskMarketTrade"),
+
+    # Events (extra)
+    "community_events":    ("tasks.task_community_events",    "TaskCommunityEvents"),
+    "conquer_island":      ("tasks.task_conquer_island",      "TaskConquerIsland"),
+    "gather_supplies":     ("tasks.task_gather_supplies",     "TaskGatherSupplies"),
+    "rebate_pack":         ("tasks.task_rebate_pack",         "TaskRebatePack"),
+    "surprise_gift":       ("tasks.task_surprise_gift",       "TaskSurpriseGift"),
+    "toy_shop":            ("tasks.task_toy_shop",            "TaskToyShop"),
+
+    # Meta
+    "city_rush":           ("tasks.task_city_rush",           "TaskCityRush"),
 }
 
 # Original sequential order (kept for --classic mode)
@@ -131,16 +146,24 @@ TASK_ORDER = [
 
     # Phase 5: World Map (combat)
     "gather", "niflung", "kill_monster", "staging_post",
-    "clear_forest", "cinderbone", "reclaim_midgard",
+    "clear_forest", "reclaim_midgard",
 
     # Phase 6: Events
     "leidolf", "festival_flames", "promo_codes", "chapter",
+    "community_events", "conquer_island", "gather_supplies",
+    "rebate_pack", "surprise_gift", "toy_shop", "cinderbone",
 
     # Phase 7: Strategy (upgrades)
     "chief_hall", "upgrade_chief_hall", "expansion", "tribe_tech",
 
-    # Phase 8: Rally (alliance)
+    # Phase 8: Economy (extra)
+    "market_trade", "tribe_gold_tile",
+
+    # Phase 9: Rally (alliance)
     "rally_niflung",
+
+    # Phase 10: Meta
+    "city_rush",
 
     # Last: Defense
     "shield",
@@ -164,6 +187,7 @@ TASK_PRIORITY = {
     "niflung":             PRI_HIGH,
     "kill_monster":        PRI_HIGH,
     "rally_niflung":       PRI_HIGH,
+    "tribe_gold_tile":     PRI_HIGH,
 
     # NORMAL — production & economy
     "construction":        PRI_NORMAL,
@@ -185,6 +209,8 @@ TASK_PRIORITY = {
     "expansion":           PRI_NORMAL,
     "tribe_tech":          PRI_NORMAL,
     "prosperity":          PRI_NORMAL,
+    "market_trade":        PRI_NORMAL,
+    "city_rush":           PRI_NORMAL,
 
     # LOW — quick collections & events
     "daily_gifts":         PRI_LOW,
@@ -200,6 +226,12 @@ TASK_PRIORITY = {
     "festival_flames":     PRI_LOW,
     "chapter":             PRI_LOW,
     "promo_codes":         PRI_LOW,
+    "community_events":    PRI_LOW,
+    "conquer_island":      PRI_LOW,
+    "gather_supplies":     PRI_LOW,
+    "rebate_pack":         PRI_LOW,
+    "surprise_gift":       PRI_LOW,
+    "toy_shop":            PRI_LOW,
 }
 
 PRI_NAMES = {1: "CRITICAL", 2: "HIGH", 3: "NORMAL", 4: "LOW"}
