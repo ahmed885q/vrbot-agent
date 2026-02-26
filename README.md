@@ -1,95 +1,88 @@
-# VRBOT Agent v2.0
+# VRBOT Enhanced Modules v1.0.0
 
-Viking Rise automation bot — LDPlayer + ADB + OpenCV + Anti-Ban + Multi-Account Rotation
+## 4 تحسينات متكاملة لمحرك VRBOT
 
-## Architecture
+### ✅ 1. State Machine (`state_machine.py`)
+نظام حالات متقدم لتنفيذ المهام بشكل أذكى:
+- كل مهمة تمر بحالات: `INITIALIZING → NAVIGATING → DETECTING → EXECUTING → VERIFYING → COMPLETED`
+- إدارة تلقائية للأخطاء مع timeout و retry
+- Recovery تلقائي عند حدوث مشاكل
+- سهل التوسع: فقط أضف states و transitions جديدة
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    VRBOT Agent v2.0                           │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌─────────┐  ┌─────────┐  ┌──────────┐  ┌──────────────┐  │
-│  │   ADB   │  │ Vision  │  │ Anti-Ban │  │   Rotation   │  │
-│  │Controller│  │ (OpenCV)│  │(Humanizer│  │  (Accounts)  │  │
-│  └────┬────┘  └────┬────┘  └────┬─────┘  └──────┬───────┘  │
-│       │            │            │                │           │
-│  ┌────┴────────────┴────────────┴────────────────┴───────┐  │
-│  │              Scheduler + Rules Engine                  │  │
-│  └───────────────────────┬───────────────────────────────┘  │
-│                          │                                   │
-│  ┌───────────────────────┴───────────────────────────────┐  │
-│  │           Tasks (Viking Rise Actions)                  │  │
-│  │  Collect · Build · Train · Gather · Mail · Quests     │  │
-│  │  Alliance · Shield · Research · Hero · Tribe · Trial  │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                          │                                   │
-│  ┌───────────────────────┴───────────────────────────────┐  │
-│  │              WebSocket Client → Hub → Dashboard        │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────┘
-         │                                    │
-    ┌────┴────┐                         ┌─────┴─────┐
-    │ LDPlayer│                         │  VRBOT.me │
-    │Emulator │                         │ Dashboard │
-    └─────────┘                         └───────────┘
-```
+### ✅ 2. Captcha Detection (`captcha_detector.py`)  
+كشف وإدارة الـ captcha/verification:
+- Template matching لأنواع الـ captcha المعروفة
+- YOLO detection كبديل للأنواع الجديدة
+- Heuristic detection (كشف ذكي للـ popups الغريبة)
+- إشعارات عبر Discord/Telegram webhook
+- حفظ screenshots عند كشف captcha
+- إحصائيات لتحسين الـ anti-ban
 
-## Quick Start
+### ✅ 3. Auto-Restart (`health_monitor.py`)
+مراقبة صحة اللعبة وإعادة تشغيل تلقائي:
+- كشف: crash, freeze, ANR, فقدان اتصال ADB
+- Recovery متدرج: `tap → back → force_stop → restart → clear_cache → restart_emulator`
+- دعم LDPlayer (local) و Redroid/Docker (cloud)
+- مراقبة في الخلفية كـ thread مستقل
+- إحصائيات uptime
 
-1. Install Python 3.10+ and LDPlayer 9
-2. Run `install.bat`
-3. Start LDPlayer and open Viking Rise
-4. Run `start.bat`
+### ✅ 4. Random Task Scheduler (`task_scheduler.py`)
+جدولة ذكية مع سلوك بشري لـ anti-ban:
+- ترتيب عشوائي للمهام ضمن نفس الأولوية
+- تأخيرات عشوائية بين المهام (2-8 ثانية)
+- فترات راحة تلقائية (كل 8 دورات)
+- نسبة 5% فترات توقف طويلة (15-45 ثانية)
+- إزاحة عشوائية للنقرات (±5 pixels)
+- أولويات: CRITICAL > HIGH > NORMAL > LOW
+- جدولة: EVERY_CYCLE, PERIODIC, DAILY, ON_DEMAND
 
-## Project Structure
+---
 
-```
-vrbot-agent/
-├── main.py              # Entry point
-├── config/
-│   ├── settings.py      # Configuration manager
-│   ├── accounts.example.json
-│   └── vrbot_config.json (auto-generated)
-├── adb/
-│   └── controller.py    # LDPlayer ADB control + multi-instance
-├── ocr/
-│   └── vision.py        # OpenCV template matching + OCR
-├── antiban/
-│   └── humanizer.py     # Human behavior simulation
-├── rotation/
-│   └── manager.py       # Multi-account rotation (GnBots-style)
-├── rules/
-│   └── engine.py        # Per-account task rules
-├── scheduler/
-│   └── __init__.py      # Priority task scheduler
-├── tasks/
-│   └── __init__.py      # Viking Rise tasks (13 tasks)
-├── ws/
-│   └── __init__.py      # WebSocket client for Dashboard
-├── templates/           # Template images for matching
-├── screenshots/         # Debug screenshots
-├── logs/                # Log files
-├── install.bat
-├── start.bat
-└── requirements.txt
+## 🔧 التركيب
+
+```bash
+# انسخ الملفات إلى مجلد vrbot-agent/
+cp state_machine.py captcha_detector.py health_monitor.py task_scheduler.py vrbot_enhanced.py /path/to/vrbot-agent/
 ```
 
-## Features
+## 🚀 الاستخدام
 
-- **ADB Control**: Full LDPlayer control (tap, swipe, screenshot)
-- **OpenCV Vision**: Template matching + multi-scale + OCR
-- **Anti-Ban**: Human-like delays, fatigue system, sleep hours, random idle
-- **Rotation**: Multi-account cycling (GnBots-style)
-- **Rules Engine**: Per-account task scheduling and overrides
-- **WebSocket**: Real-time dashboard monitoring
-- **13 Tasks**: Collect, Build, Train, Gather, Mail, Quests, Alliance, Shield, Research, Hero, Tribe, Viking Trial
+```python
+from vrbot_enhanced import VRBotEnhanced
 
-## Adding Templates
+bot = VRBotEnhanced(
+    adb_controller=adb,
+    device_serial="emulator-5554",
+    farm_id="farm_001",
+    config={
+        'captcha': {'captcha_webhook_url': 'https://discord.webhook/...'},
+        'health': {'freeze_threshold': 30},
+    }
+)
 
-Place PNG screenshots of game buttons/UI in the `templates/` folder:
-- `btn_upgrade_confirm.png`
-- `btn_train.png`
-- `icon_resource_ready.png`
-- etc.
+bot.register_tasks({
+    'GatherResource': gather_task.run,
+    'HuntMonster': hunt_task.run,
+    'TrainTroops': train_task.run,
+    # ... باقي المهام
+})
 
+bot.start()  # يبدأ التشغيل مع كل التحسينات!
+```
+
+## 📊 المعمارية
+
+```
+VRBotEnhanced
+├── TaskScheduler (ترتيب عشوائي، anti-ban)
+│   └── VRBotTask → StateMachine (states → transitions)
+├── CaptchaDetector (مسح الشاشة للتحقق)
+│   └── ScreenGuard (حماية متكاملة)
+└── GameHealthMonitor (إعادة تشغيل تلقائي)
+    └── Recovery (tap → back → restart → emulator)
+```
+
+## 📦 المصادر المُلهمة
+- [Dylan-Zheng/Rise-of-Kingdoms-Bot](https://github.com/Dylan-Zheng/Rise-of-Kingdoms-Bot) - Pass verification, random tasks
+- [GabrielAgrela/OSROKBOT](https://github.com/GabrielAgrela/OSROKBOT) - State machine, captcha detection
+- [mibho/autoclient](https://github.com/mibho/autoclient) - Multi-instance management, auto-restart

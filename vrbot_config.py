@@ -96,4 +96,12 @@ TASKS_ENABLED = {
     "surprise_gift": False,
     "toy_shop": False,
     "tribe_gold_tile": False,
+
+    # ── Maintenance (v5.1) ──
+    "wall_repair": True,
+    "heal_troops": True,
+    "troop_upgrade": True,
+    "gather_boost": True,
+    "map_explore": False,
+    "intelligence_rewards": True,
 }

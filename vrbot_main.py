@@ -128,6 +128,14 @@ TASK_MAP = {
 
     # Meta
     "city_rush":           ("tasks.task_city_rush",           "TaskCityRush"),
+
+    # v5.1 — Competitor-inspired tasks
+    "wall_repair":         ("tasks.task_wall_repair",         "TaskWallRepair"),
+    "heal_troops":         ("tasks.task_heal_troops",         "TaskHealTroops"),
+    "troop_upgrade":       ("tasks.task_troop_upgrade",       "TaskTroopUpgrade"),
+    "gather_boost":        ("tasks.task_gather_boost",        "TaskGatherBoost"),
+    "map_explore":         ("tasks.task_map_explore",         "TaskMapExplore"),
+    "intelligence_rewards":("tasks.task_intelligence_rewards","TaskIntelligenceRewards"),
 }
 
 # Original sequential order (kept for --classic mode)
@@ -162,7 +170,11 @@ TASK_ORDER = [
     # Phase 9: Rally (alliance)
     "rally_niflung",
 
-    # Phase 10: Meta
+    # Phase 10: Maintenance (v5.1)
+    "wall_repair", "heal_troops", "troop_upgrade",
+    "gather_boost", "map_explore", "intelligence_rewards",
+
+    # Phase 11: Meta
     "city_rush",
 
     # Last: Defense
@@ -232,6 +244,14 @@ TASK_PRIORITY = {
     "rebate_pack":         PRI_LOW,
     "surprise_gift":       PRI_LOW,
     "toy_shop":            PRI_LOW,
+
+    # v5.1 — Competitor-inspired tasks
+    "wall_repair":         PRI_NORMAL,
+    "heal_troops":         PRI_HIGH,
+    "troop_upgrade":       PRI_NORMAL,
+    "gather_boost":        PRI_NORMAL,
+    "map_explore":         PRI_LOW,
+    "intelligence_rewards":PRI_LOW,
 }
 
 PRI_NAMES = {1: "CRITICAL", 2: "HIGH", 3: "NORMAL", 4: "LOW"}
