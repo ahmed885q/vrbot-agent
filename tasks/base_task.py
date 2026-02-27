@@ -1,13 +1,8 @@
 """
-VRBOT Base Task Classes
-=======================
-Shared utilities for all tasks: cooldown, safe_close, verification.
-
-Classes:
-    BaseTask      — cooldown + safe_close + verify helpers
-    BuildingTask  — find building in city → action → confirm → close
-    WorldMapTask  — go to world map → find target → action → march
-    EventTask     — find event icon in city → claim rewards
+VRBOT Base Task Classes v5.3
+=============================
+Updated: Uses 4-layer hybrid detection (Template → YOLO → OpenAI → Claude)
+All tasks inherit these optimized methods.
 """
 
 import os
@@ -15,13 +10,12 @@ import json
 import time
 
 
-# ── Cooldown helper (standalone, works without inheritance) ──────────
+# ── Cooldown helper ──────────────────────────────────────────
 
 COOLDOWN_DIR = os.path.dirname(__file__)
 
 
 def cooldown_ok(tag, hours):
-    """Return True if enough time has passed since last run."""
     if hours <= 0:
         return True
     path = os.path.join(COOLDOWN_DIR, f".cd_{tag}.json")
@@ -45,19 +39,19 @@ def cooldown_save(tag):
         json.dump({"t": time.time()}, f)
 
 
-# ══════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════
 #  BaseTask
-# ══════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════
 
 class BaseTask:
     name = "Base"
     tag = "base"
-    cooldown_hours = 0  # 0 = no cooldown
+    cooldown_hours = 0
 
     def __init__(self, bot):
         self.bot = bot
 
-    # ── Cooldown ─────────────────────────────────────────────────────
+    # ── Cooldown ─────────────────────────────────────────────
 
     def _cooldown_ok(self):
         return cooldown_ok(self.tag, self.cooldown_hours)
@@ -65,10 +59,10 @@ class BaseTask:
     def _save_cooldown(self):
         cooldown_save(self.tag)
 
-    # ── Safe close (reliable return to city) ─────────────────────────
+    # ── Safe close (hybrid: template → YOLO → AI → back) ────
 
-    def _safe_close(self, max_attempts=4):
-        """Try multiple strategies to close current screen and return to city."""
+    def _safe_close(self, max_attempts=5):
+        """Close current screen and return to city. Uses template/YOLO first."""
         bot = self.bot
         for attempt in range(max_attempts):
             s = bot.detect_screen()
@@ -76,14 +70,15 @@ class BaseTask:
             if screen == "city":
                 return True
 
-            if attempt == 0:
-                # Try X button at common positions
-                bot.tap(35, 25, jitter=False)
-                bot.wait(2)
-            elif attempt == 1:
+            if attempt < 2:
+                # Try template/YOLO close button first (free)
+                closed = bot.close_popup()
+                if closed:
+                    continue
+            if attempt == 2:
                 bot.adb_back()
                 bot.wait(2)
-            elif attempt == 2:
+            elif attempt == 3:
                 bot.adb_back()
                 bot.wait(1)
                 bot.adb_back()
@@ -93,26 +88,24 @@ class BaseTask:
                 return True
         return False
 
-    # ── Verify screen ────────────────────────────────────────────────
+    # ── Verify screen ────────────────────────────────────────
 
     def _on_screen(self, expected):
-        """Quick screen check without burning API calls unnecessarily."""
         s = self.bot.detect_screen()
         if not s:
             return False
         return expected in s.get("screen", "").lower()
 
-    # ── Find and tap with retry ──────────────────────────────────────
+    # ── Find and tap — HYBRID (template → YOLO → AI) ────────
 
     def _find_and_tap(self, prompt, wait_after=3, retries=1):
-        """Use AI to locate element, tap it, return True if found."""
+        """Use hybrid detection to find and tap element. Template → YOLO → AI."""
         bot = self.bot
         for attempt in range(retries):
             img = bot.screenshot_b64()
             result = bot.ask_ai(
                 f"Viking Rise (1280x720). {prompt}\n"
-                'Respond ONLY JSON: {"found": true, "x": 640, "y": 400} '
-                'or {"found": false}',
+                '{"found": true, "x": 640, "y": 400} or {"found": false}. JSON ONLY.',
                 img, 80
             )
             if result and result.get("found"):
@@ -123,13 +116,15 @@ class BaseTask:
                 bot.wait(1)
         return False
 
-    def _find_and_tap_hybrid(self, yolo_classes, ai_prompt, wait_after=3):
-        """Try YOLO first, then AI. Returns True if found and tapped."""
+    def _find_and_tap_hybrid(self, yolo_classes, ai_prompt, wait_after=3,
+                              tmpl_names=None):
+        """4-layer detection: Template → YOLO → AI. Returns True if tapped."""
         bot = self.bot
         result = bot.hybrid_find(
             yolo_classes,
             f"Viking Rise (1280x720). {ai_prompt}\n"
-            '{"found": true, "x": 640, "y": 400} or {"found": false}\nJSON ONLY.',
+            '{"found": true, "x": 640, "y": 400} or {"found": false}. JSON ONLY.',
+            tmpl_names=tmpl_names,
         )
         if result and result.get("found"):
             bot.tap(result["x"], result["y"])
@@ -137,29 +132,39 @@ class BaseTask:
             return True
         return False
 
+    def _tap_button(self, button_type, wait_after=3):
+        """Find and tap a standard button using hybrid_find_button."""
+        bot = self.bot
+        result = bot.hybrid_find_button(button_type)
+        if result and result.get("found"):
+            bot.tap(result["x"], result["y"])
+            bot.wait(wait_after)
+            return True
+        return False
 
-# ══════════════════════════════════════════════════════════════════════
-#  BuildingTask — find building in city → action → confirm
-# ══════════════════════════════════════════════════════════════════════
+    def _close_all_popups(self, max_tries=3):
+        """Close multiple stacked popups."""
+        for _ in range(max_tries):
+            if not self.bot.close_popup():
+                break
+            self.bot.wait(1)
+
+
+# ═════════════════════════════════════════════════════════════
+#  BuildingTask
+# ═════════════════════════════════════════════════════════════
 
 class BuildingTask(BaseTask):
-    """
-    Override these in subclass:
-        building_desc  — what to tell AI to look for
-        action_desc    — what button to press inside building
-        confirm_desc   — optional confirm button description
-    """
     building_desc = "a building with an upgrade icon"
     action_desc = "an Upgrade or Build button"
     confirm_desc = "a Confirm, OK, or Start button"
 
     def _find_building(self):
-        """Search city for the building, swiping to look around."""
         bot = self.bot
         swipe_patterns = [
-            None,                          # attempt 0: no swipe
-            (640, 360, 400, 200),          # attempt 1: swipe up-left
-            (400, 200, 800, 500),          # attempt 2: swipe down-right
+            None,
+            (640, 360, 400, 200),
+            (400, 200, 800, 500),
         ]
         for attempt, swipe in enumerate(swipe_patterns):
             if swipe:
@@ -169,9 +174,7 @@ class BuildingTask(BaseTask):
             img = bot.screenshot_b64()
             result = bot.ask_ai(
                 f"Viking Rise city (1280x720). Find {self.building_desc}. "
-                "Look for buildings, icons, or bubbles. "
-                '{"found": true, "x": 500, "y": 350} or {"found": false}\n'
-                "Respond ONLY JSON.",
+                '{"found": true, "x": 500, "y": 350} or {"found": false}. JSON ONLY.',
                 img, 80,
             )
             if result and result.get("found"):
@@ -181,32 +184,28 @@ class BuildingTask(BaseTask):
     def run(self):
         tag = self.tag
         if not self._cooldown_ok():
-            return True  # cooldown active, skip gracefully
+            return True
 
         bot = self.bot
         bot.go_to_city()
         bot.wait(2)
 
-        # Step 1: Find building
         result = self._find_building()
         if not result:
             print(f"  [{tag}] Building not found.")
             return False
 
-        # Step 2: Tap building
         print(f"  [{tag}] Found at ({result['x']}, {result['y']}), tapping...")
         bot.tap(result["x"], result["y"])
         bot.wait(4)
 
-        # Step 3: Verify we left city (building menu opened)
         s = bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if screen == "city":
-            print(f"  [{tag}] Building didn't open, retrying tap...")
             bot.tap(result["x"], result["y"])
             bot.wait(4)
 
-        # Step 4: Find action button
+        # Action button — try hybrid first
         print(f"  [{tag}] Looking for action...")
         found_action = self._find_and_tap(
             f"You are in a building menu. Find {self.action_desc}.",
@@ -214,11 +213,10 @@ class BuildingTask(BaseTask):
         )
 
         if found_action:
-            # Step 5: Confirm if needed
-            found_confirm = self._find_and_tap(
-                f"Find {self.confirm_desc} (green or blue button).",
-                wait_after=3,
-            )
+            # Confirm — try template/YOLO first (free)
+            found_confirm = self._tap_button("confirm", wait_after=3)
+            if not found_confirm:
+                found_confirm = self._tap_button("ok", wait_after=3)
             if found_confirm:
                 print(f"  [{tag}] ✔ Action confirmed!")
             else:
@@ -226,22 +224,16 @@ class BuildingTask(BaseTask):
         else:
             print(f"  [{tag}] No action available.")
 
-        # Step 6: Close and return
         self._safe_close()
         self._save_cooldown()
         return True
 
 
-# ══════════════════════════════════════════════════════════════════════
-#  WorldMapTask — go to world map → find → action → march
-# ══════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════
+#  WorldMapTask
+# ═════════════════════════════════════════════════════════════
 
 class WorldMapTask(BaseTask):
-    """
-    Override these:
-        target_desc  — what to find on world map
-        action_desc  — what button after tapping target
-    """
     target_desc = "a target"
     action_desc = "an Attack or Rally button"
 
@@ -251,7 +243,6 @@ class WorldMapTask(BaseTask):
         bot.wait(2)
         if bot.go_to_world_map():
             return True
-        # Retry
         bot.go_to_city()
         bot.wait(2)
         return bot.go_to_world_map()
@@ -262,13 +253,11 @@ class WorldMapTask(BaseTask):
             return True
 
         bot = self.bot
-
         if not self._ensure_world_map():
             print(f"  [{tag}] Cannot reach world map.")
             bot.go_to_city()
             return False
 
-        # Find target (try 2 angles)
         found = False
         for attempt in range(2):
             if attempt == 1:
@@ -279,8 +268,7 @@ class WorldMapTask(BaseTask):
             img = bot.screenshot_b64()
             result = bot.ask_ai(
                 f"Viking Rise world map (1280x720). Find {self.target_desc}. "
-                '{"found": true, "x": 500, "y": 300} or {"found": false}\n'
-                "Respond ONLY JSON.",
+                '{"found": true, "x": 500, "y": 300} or {"found": false}. JSON ONLY.',
                 img, 80,
             )
             if result and result.get("found"):
@@ -291,27 +279,26 @@ class WorldMapTask(BaseTask):
             print(f"  [{tag}] Target not found.")
             bot.go_to_city()
             self._save_cooldown()
-            return True  # not an error, just nothing to do
+            return True
 
-        # Tap target
         bot.tap(result["x"], result["y"])
         bot.wait(3)
 
-        # Action button
-        action_found = self._find_and_tap(
-            f"Find {self.action_desc} in the popup.",
-            wait_after=3,
-        )
+        # Action — try hybrid button first
+        action_found = self._tap_button("attack", wait_after=3)
+        if not action_found:
+            action_found = self._find_and_tap(
+                f"Find {self.action_desc} in the popup.", wait_after=3)
+
         if action_found:
-            # March / confirm
-            march_found = self._find_and_tap(
-                "Find a March, Send, Create, or Confirm button.",
-                wait_after=3,
-            )
+            march_found = self._tap_button("march", wait_after=3)
+            if not march_found:
+                march_found = self._tap_button("create", wait_after=2)
+                if march_found:
+                    self._tap_button("march", wait_after=3)
             if march_found:
                 print(f"  [{tag}] ✔ March sent!")
             else:
-                # Try fixed march position
                 bot.tap(960, 615, jitter=False)
                 bot.wait(2)
                 print(f"  [{tag}] ✔ Attempted march.")
@@ -323,17 +310,11 @@ class WorldMapTask(BaseTask):
         return True
 
 
-# ══════════════════════════════════════════════════════════════════════
-#  EventTask — find event icon → claim rewards
-# ══════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════
+#  EventTask
+# ═════════════════════════════════════════════════════════════
 
 class EventTask(BaseTask):
-    """
-    Override:
-        icon_desc   — what event icon to find
-        claim_desc  — what buttons to press
-        max_claims  — how many claim attempts
-    """
     icon_desc = "an event icon"
     claim_desc = "a Claim, Collect, or Open button"
     max_claims = 3
@@ -347,7 +328,6 @@ class EventTask(BaseTask):
         bot.go_to_city()
         bot.wait(2)
 
-        # Find icon
         print(f"  [{tag}] Looking for icon...")
         found = self._find_and_tap(
             f"Find {self.icon_desc} on the city screen. "
@@ -356,18 +336,19 @@ class EventTask(BaseTask):
         )
         if not found:
             print(f"  [{tag}] Icon not found.")
-            return True  # event might not be active
+            return True
 
-        # Claim loop
         claimed = 0
         for i in range(self.max_claims):
-            ok = self._find_and_tap(
-                f"Find {self.claim_desc} (green or highlighted).",
-                wait_after=3,
-            )
+            # Try template first (free), then AI
+            ok = self._tap_button("claim", wait_after=3)
+            if not ok:
+                ok = self._find_and_tap(
+                    f"Find {self.claim_desc} (green or highlighted).",
+                    wait_after=3,
+                )
             if ok:
                 claimed += 1
-                # Dismiss reward popup
                 bot.tap(640, 400, jitter=False)
                 bot.wait(2)
             else:

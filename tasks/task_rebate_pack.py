@@ -1,5 +1,4 @@
-"""Task: Rebate Pack Event — Claim rebate packs (new account)."""
-
+"""Task: Rebate Pack Event — Claim rebate packs for new accounts."""
 from tasks.base_task import EventTask
 
 
@@ -7,9 +6,6 @@ class TaskRebatePack(EventTask):
     name = "Rebate Pack"
     tag = "rebate_pack"
     cooldown_hours = 24
-    icon_desc = (
-        "the Rebate Pack or New Player event icon — a special offer, gift, "
-        "or pack icon with a discount badge. Usually in the events panel"
-    )
-    claim_desc = "a 'Claim', 'Collect', 'Free', or 'Redeem' button"
+    icon_desc = "Rebate Pack event icon — a gift box or discount icon on the right side panel"
+    claim_desc = "a Claim, Collect, or Open button (green or orange)"
     max_claims = 3
