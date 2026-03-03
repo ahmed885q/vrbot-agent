@@ -115,7 +115,7 @@ class Bot:
             x += random.randint(-COORDINATE_JITTER, COORDINATE_JITTER)
             y += random.randint(-COORDINATE_JITTER, COORDINATE_JITTER)
         x, y = max(0, min(1279, x)), max(0, min(719, y))
-        self._adb("shell", "input", "tap", str(x), str(y))
+        self._adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "50")
         self._last_tap_time = time.time()
         print(f"    tap ({x},{y})")
 
@@ -643,7 +643,7 @@ class Bot:
                 print(f"  [nav] STUCK on {s} ({same_screen_count}x)")
                 if s == "world_map":
                     print("  [nav] Trying home button positions...")
-                    for hx, hy in [(97, 654), (47, 643), (60, 654), (130, 654)]:
+                    for hx, hy in [(72, 636), (97, 654), (47, 643), (60, 654)]:
                         self.tap(hx, hy, jitter=False)
                         time.sleep(2)
                         check = self.detect_screen()
@@ -678,7 +678,7 @@ class Bot:
             elif s == "world_map":
                 # Home button = bottom-left (same as world map toggle)
                 print("  [nav] Tapping home button...")
-                self.tap(97, 654, jitter=False)
+                self.tap(72, 636, jitter=False)
                 time.sleep(2)
 
             elif s == "action_menu":
