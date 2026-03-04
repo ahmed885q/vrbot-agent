@@ -1,3 +1,29 @@
+"""
+VRBOT Task Runner - Run individual tasks for testing.
+
+Usage: python run_task.py helps
+"""
+
+import sys
+from vrbot_core import Bot
+
+TASK_MAP = {
+    # Phase 2: Quick Collections
+    "helps": ("tasks.task_helps", "TaskHelps"),
+    "tribe_gifts": ("tasks.task_tribe_gifts", "TaskTribeGifts"),
+    "mail_rewards": ("tasks.task_mail_rewards", "TaskMailRewards"),
+    "daily_gifts": ("tasks.task_daily_gifts", "TaskDailyGifts"),
+    "rewards": ("tasks.task_rewards", "TaskRewards"),
+    "shield": ("tasks.task_shield", "TaskShield"),
+    # Phase 3: Production
+    "construction": ("tasks.task_construction", "TaskConstruction"),
+    "research": ("tasks.task_research", "TaskResearch"),
+    "train_troops": ("tasks.task_train_troops", "TaskTrainTroops"),
+    "prosperity": ("tasks.task_prosperity", "TaskProsperity"),
+    # Phase 4: Economy
+    "errands": ("tasks.task_errands", "TaskErrands"),
+    "commissions": ("tasks.task_commissions", "TaskCommissions"),
+    "farmer_appointments": ("tasks.task_farmer_appointments", "TaskFarmerAppointments"),
     "recruit_farmers": ("tasks.task_recruit_farmers", "TaskRecruitFarmers"),
     "village_champions": ("tasks.task_village_champions", "TaskVillageChampions"),
     # Phase 5: Heroes
@@ -34,27 +60,3 @@ def run(task_name):
         return
     module_name, class_name = TASK_MAP[task_name]
     mod = __import__(module_name, fromlist=[class_name])
-    cls = getattr(mod, class_name)
-    bot = Bot()
-    print("  [setup] Navigating to city...")
-    bot.go_to_city()
-    bot.wait(1)
-    print(f"\n  Running: {cls.name}")
-    print("=" * 50)
-    task = cls(bot)
-    success = task.run()
-    print("=" * 50)
-    print(f"  Result: {'OK' if success else 'FAIL'}")
-    bot.go_to_city()
-
-def main():
-    if len(sys.argv) < 2 or sys.argv[1] == "--list":
-        print("  Available tasks:")
-        for name in TASK_MAP:
-            print(f"    {name}")
-        return
-    run(sys.argv[1])
-
-if __name__ == "__main__":
-    main()
-
