@@ -33,7 +33,7 @@ import re
 from base_task import BaseTask
 
 
-# -- Upgrade Requirements Table --
+# ── Upgrade Requirements Table ──────────────────────────────────────────────
 # Format: target_level -> { "buildings": [(name, level), ...], "food": int, "wood": int, "stone": int }
 CHIEF_HALL_REQUIREMENTS = {
     2:  {"buildings": [("Infantry Barracks", 1)],
@@ -94,7 +94,7 @@ class TaskCityRush(BaseTask):
     max_steps = 500
     max_stuck = 15
 
-    # -- Lifecycle --
+    # ── Lifecycle ────────────────────────────────────────────────────────────
 
     def setup(self, bot):
         """Initialize task state"""
@@ -112,7 +112,7 @@ class TaskCityRush(BaseTask):
         """Main step - called repeatedly by the task scheduler"""
         self.step_counter += 1
 
-        # -- Detect current level --
+        # ── Detect current level ────────────────────────────────────────
         if self.step_counter % 5 == 1:
             detected = self._detect_chief_hall_level(bot)
             if detected and detected != self.current_level:
@@ -121,16 +121,16 @@ class TaskCityRush(BaseTask):
                 print(f"[CITY_RUSH] Chief Hall Level: {old} -> {detected}")
                 self.stuck_count = 0
 
-        # -- Done? --
+        # ── Done? ───────────────────────────────────────────────────────
         if self.current_level >= self.target_level:
             print(f"[CITY_RUSH] TARGET REACHED! Chief Hall Level {self.current_level}")
             return "done"
 
-        # -- Handle popups first --
+        # ── Handle popups first ─────────────────────────────────────────
         if self._handle_popups(bot):
             return
 
-        # -- Phase routing --
+        # ── Phase routing ───────────────────────────────────────────────
         if self.current_level < 5:
             self.phase = "tutorial"
             self._handle_tutorial(bot)
@@ -141,68 +141,223 @@ class TaskCityRush(BaseTask):
             self.phase = "rush"
             self._handle_rush_phase(bot)
 
-    # -- Phase 1: Tutorial (Lv 1-5) --
+    # ── Phase 1: Tutorial (Lv 1-5) ──────────────────────────────────────────
 
     def _handle_tutorial(self, bot):
-        """Follow tutorial arrows and prompts"""
+        """
+        Handle tutorial and early chapter quests (Chapter 1-5).
+        Viking Rise tutorial flow:
+          - Chapter quests guide the player through building, gathering, training
+          - Highlighted/glowing elements show what to tap next
+          - Must complete chapter tasks to progress
+          - After Chapter 4-5, tutorial ends and free play begins
+        """
         screenshot = bot.screenshot_b64()
 
-        # Look for highlighted / glowing tutorial elements
+        # ── Step 1: Handle any tutorial overlay / highlighted elements ──
         arrows = bot.yolo_find("tutorial_arrow", screenshot)
         if arrows:
             print("[CITY_RUSH] Tutorial arrow found - tapping")
             bot.tap(arrows[0][0], arrows[0][1])
-            time.sleep(1)
-            return
-
-        # Look for "agree" / "confirm" / "next" buttons
-        for label in ["button_confirm", "button_agree", "button_next"]:
-            btns = bot.yolo_find(label, screenshot)
-            if btns:
-                print(f"[CITY_RUSH] Tutorial button '{label}' found - tapping")
-                bot.tap(btns[0][0], btns[0][1])
-                time.sleep(1)
-                return
-
-        # Look for upgrade button in tutorial
-        upgrade_btns = bot.yolo_find("button_upgrade", screenshot)
-        if upgrade_btns:
-            print("[CITY_RUSH] Upgrade button found - tapping for tutorial")
-            bot.tap(upgrade_btns[0][0], upgrade_btns[0][1])
             time.sleep(1.5)
             return
 
-        # Ask AI to understand the tutorial state
-        print("[CITY_RUSH] Asking AI about tutorial state")
-        prompt = (
-            "Analyze this Viking Rise game screen. What does the tutorial want me to do? "
-            "Look for: arrows, highlighted areas, tutorial text, buttons. "
-            "Respond with ONE of:\n"
-            "  tutorial_tap: <x> <y>   (coordinates to tap)\n"
-            "  tutorial_done           (tutorial is finished)\n"
-            "  city_view               (we are in city, no tutorial)"
-        )
-        ai_response = bot.ask_ai(prompt, screenshot)
-        print(f"[CITY_RUSH] AI: {ai_response}")
-
-        if "tutorial_tap" in ai_response.lower():
-            coords = re.findall(r'(\d+)', ai_response)
-            if len(coords) >= 2:
-                bot.tap(int(coords[0]), int(coords[1]))
-                time.sleep(1)
+        # ── Step 2: Handle confirm/agree/next/ok buttons ──
+        for label in ["button_confirm", "button_agree", "button_next",
+                       "button_ok", "button_claim", "button_collect"]:
+            btns = bot.yolo_find(label, screenshot)
+            if btns:
+                print(f"[CITY_RUSH] Button '{label}' found - tapping")
+                bot.tap(btns[0][0], btns[0][1])
+                time.sleep(1.5)
                 return
 
-        if "tutorial_done" in ai_response.lower() or "city_view" in ai_response.lower():
-            self.phase = "growth"
-            print("[CITY_RUSH] Tutorial complete, entering growth phase")
+        # ── Step 3: Handle upgrade/build buttons ──
+        upgrade_btns = bot.yolo_find("button_upgrade", screenshot)
+        if upgrade_btns:
+            print("[CITY_RUSH] Upgrade button found - tapping")
+            bot.tap(upgrade_btns[0][0], upgrade_btns[0][1])
+            time.sleep(2)
             return
 
-        # Fallback: tap center
-        print("[CITY_RUSH] No tutorial element found - tapping center")
-        bot.tap(540, 960)
+        build_btns = bot.yolo_find("button_build", screenshot)
+        if build_btns:
+            print("[CITY_RUSH] Build button found - tapping")
+            bot.tap(build_btns[0][0], build_btns[0][1])
+            time.sleep(2)
+            return
+
+        # ── Step 4: Handle speedup (free) button for instant builds ──
+        speedup_btns = bot.yolo_find("button_speedup", screenshot)
+        if speedup_btns:
+            bot.tap(speedup_btns[0][0], speedup_btns[0][1])
+            time.sleep(1)
+            screenshot2 = bot.screenshot_b64()
+            free_btns = bot.yolo_find("button_free", screenshot2)
+            if free_btns:
+                print("[CITY_RUSH] Free speedup found - using it")
+                bot.tap(free_btns[0][0], free_btns[0][1])
+                time.sleep(1)
+            return
+
+        # ── Step 5: Use AI to analyze current screen and decide action ──
+        print("[CITY_RUSH] Asking AI to analyze tutorial/chapter screen")
+        prompt = (
+            "You are controlling Viking Rise game. Analyze this screen carefully.\n"
+            "The game is in early tutorial/chapter phase. Look for:\n"
+            "1. Chapter quest list on the left (e.g. 'Gather 200 Lumber', 'Build Chief Hall')\n"
+            "2. Any glowing/highlighted buildings or areas to tap\n"
+            "3. Any buttons (Upgrade, Build, Train, Gather, Go, etc.)\n"
+            "4. Any popup dialogs with buttons\n"
+            "5. Resource gathering tiles on world map\n"
+            "6. Chief Hall or other buildings that can be tapped\n\n"
+            "What is the SINGLE BEST action to progress? Reply with EXACTLY ONE of:\n"
+            "  tap: <x> <y>          (tap at these coordinates)\n"
+            "  build_chief_hall      (tap Chief Hall to upgrade it)\n"
+            "  go_to_city            (need to go back to city view)\n"
+            "  go_to_map             (need to go to world map for gathering)\n"
+            "  wait_building         (a building is being constructed, wait)\n"
+            "  tutorial_done         (no more tutorial, free play mode)\n"
+            "  skip_dialog           (close a dialog/popup first)"
+        )
+        ai_response = bot.ask_ai(prompt, screenshot)
+        print(f"[CITY_RUSH] AI tutorial: {ai_response}")
+        response_lower = ai_response.lower()
+
+        # Parse AI response
+        if "tap:" in response_lower:
+            coords = re.findall(r'(\d+)', ai_response)
+            if len(coords) >= 2:
+                x, y = int(coords[0]), int(coords[1])
+                print(f"[CITY_RUSH] AI says tap ({x}, {y})")
+                bot.tap(x, y)
+                time.sleep(1.5)
+                return
+
+        if "build_chief_hall" in response_lower:
+            print("[CITY_RUSH] AI says build Chief Hall")
+            self._tap_chief_hall_and_upgrade(bot)
+            return
+
+        if "go_to_city" in response_lower:
+            print("[CITY_RUSH] AI says go to city")
+            bot.go_to_city()
+            time.sleep(2)
+            return
+
+        if "go_to_map" in response_lower:
+            print("[CITY_RUSH] AI says go to world map for gathering")
+            self._tutorial_gather(bot)
+            return
+
+        if "wait_building" in response_lower:
+            print("[CITY_RUSH] Building in progress - checking speedup")
+            self._use_speedups(bot)
+            time.sleep(3)
+            return
+
+        if "tutorial_done" in response_lower:
+            self.phase = "growth"
+            print("[CITY_RUSH] Tutorial complete! Entering growth phase")
+            return
+
+        if "skip_dialog" in response_lower:
+            print("[CITY_RUSH] Closing dialog")
+            bot.key("back")
+            time.sleep(1)
+            return
+
+        # ── Step 6: Fallback - try tapping chapter quest or center ──
+        self.stuck_count += 1
+        if self.stuck_count % 3 == 0:
+            # Try tapping the first chapter quest on the left side
+            print("[CITY_RUSH] Stuck - tapping chapter quest area")
+            bot.tap(200, 340)
+            time.sleep(1.5)
+        elif self.stuck_count % 3 == 1:
+            # Try tapping Chief Hall (center of city)
+            print("[CITY_RUSH] Stuck - tapping Chief Hall center")
+            bot.tap(540, 700)
+            time.sleep(1.5)
+        else:
+            # Go back to city
+            print("[CITY_RUSH] Stuck - going to city")
+            bot.go_to_city()
+            time.sleep(2)
+
+        if self.stuck_count > 20:
+            print("[CITY_RUSH] Too many stuck iterations, forcing growth phase")
+            self.phase = "growth"
+
+    def _tap_chief_hall_and_upgrade(self, bot):
+        """Tap Chief Hall building and try to upgrade it"""
+        bot.go_to_city()
+        time.sleep(1)
+        # Chief Hall is usually in the center of the city
+        bot.tap(540, 700)
+        time.sleep(1.5)
+
+        screenshot = bot.screenshot_b64()
+        # Look for upgrade button
+        upgrade_btns = bot.yolo_find("button_upgrade", screenshot)
+        if upgrade_btns:
+            print("[CITY_RUSH] Tapping upgrade on Chief Hall")
+            bot.tap(upgrade_btns[0][0], upgrade_btns[0][1])
+            time.sleep(1)
+            # Confirm if needed
+            screenshot2 = bot.screenshot_b64()
+            confirm_btns = bot.yolo_find("button_confirm", screenshot2)
+            if confirm_btns:
+                bot.tap(confirm_btns[0][0], confirm_btns[0][1])
+                time.sleep(1)
+            return
+
+        # AI fallback to find upgrade button
+        prompt = (
+            "I tapped on Chief Hall. Where is the Upgrade or Build button? "
+            "Reply: tap: <x> <y>"
+        )
+        response = bot.ask_ai(prompt, screenshot)
+        coords = re.findall(r'(\d+)', response)
+        if len(coords) >= 2:
+            bot.tap(int(coords[0]), int(coords[1]))
+            time.sleep(1.5)
+
+    def _tutorial_gather(self, bot):
+        """Handle gathering during tutorial - go to map and find resource"""
+        # Tap map button (usually bottom-left)
+        bot.tap(60, 600)
+        time.sleep(2)
+
+        screenshot = bot.screenshot_b64()
+        prompt = (
+            "I'm on the Viking Rise world map during tutorial. "
+            "I need to find a resource tile (farm for food, lumber camp for wood) to gather from. "
+            "Find the nearest one and tell me where to tap. "
+            "Reply: tap: <x> <y>"
+        )
+        response = bot.ask_ai(prompt, screenshot)
+        coords = re.findall(r'(\d+)', response)
+        if len(coords) >= 2:
+            bot.tap(int(coords[0]), int(coords[1]))
+            time.sleep(1.5)
+
+            # Look for gather/march button
+            screenshot2 = bot.screenshot_b64()
+            for btn_label in ["button_gather", "button_march", "button_go"]:
+                btns = bot.yolo_find(btn_label, screenshot2)
+                if btns:
+                    print(f"[CITY_RUSH] Tapping {btn_label} to gather")
+                    bot.tap(btns[0][0], btns[0][1])
+                    time.sleep(1)
+                    break
+
+        # Go back to city after starting gather
+        time.sleep(2)
+        bot.go_to_city()
         time.sleep(1)
 
-    # -- Phase 2: Growth (Lv 5-10) --
+    # ── Phase 2: Growth (Lv 5-10) ───────────────────────────────────────────
 
     def _handle_growth_phase(self, bot):
         """
@@ -240,7 +395,7 @@ class TaskCityRush(BaseTask):
 
         time.sleep(3)
 
-    # -- Phase 3: Rush (Lv 10-17) --
+    # ── Phase 3: Rush (Lv 10-17) ────────────────────────────────────────────
 
     def _handle_rush_phase(self, bot):
         """
@@ -278,7 +433,7 @@ class TaskCityRush(BaseTask):
 
         time.sleep(3)
 
-    # -- Prerequisite System --
+    # ── Prerequisite System ─────────────────────────────────────────────────
 
     def _check_and_upgrade_prerequisites(self, bot, reqs):
         """
@@ -415,7 +570,7 @@ class TaskCityRush(BaseTask):
             if self._navigate_to_building(bot, sub_building):
                 self._tap_upgrade_building(bot, sub_building)
 
-    # -- Chief Hall Upgrade --
+    # ── Chief Hall Upgrade ──────────────────────────────────────────────────
 
     def _detect_chief_hall_level(self, bot):
         """Detect current Chief Hall level using multiple methods"""
@@ -496,7 +651,7 @@ class TaskCityRush(BaseTask):
         print("[CITY_RUSH] Could not find Chief Hall upgrade button")
         return False
 
-    # -- Resource & Speedup Management --
+    # ── Resource & Speedup Management ───────────────────────────────────────
 
     def _check_resources_low(self, bot, next_level):
         """Check if resources are too low for the next upgrade"""
@@ -611,7 +766,7 @@ class TaskCityRush(BaseTask):
         response = bot.ask_ai(prompt, screenshot)
         return "yes" in response.lower()
 
-    # -- Popup Handling --
+    # ── Popup Handling ──────────────────────────────────────────────────────
 
     def _handle_popups(self, bot):
         """Handle random popups. Returns True if handled."""
@@ -642,4 +797,3 @@ class TaskCityRush(BaseTask):
                 return True
 
         return False
-
