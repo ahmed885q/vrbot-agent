@@ -5,6 +5,7 @@ Usage: python run_task.py helps
 """
 
 import sys
+import importlib
 from vrbot_core import Bot
 
 TASK_MAP = {
@@ -60,3 +61,5 @@ def run(task_name):
         return
     module_name, class_name = TASK_MAP[task_name]
     mod = __import__(module_name, fromlist=[class_name])
+        # Force reload to pick up code changes without worker restart
+    importlib.reload(mod)
