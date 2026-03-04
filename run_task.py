@@ -1,27 +1,3 @@
-"""
-VRBOT Task Runner - Run individual tasks for testing.
-Usage: python run_task.py helps
-"""
-import sys
-from vrbot_core import Bot
-
-TASK_MAP = {
-    # Phase 2: Quick Collections
-    "helps": ("tasks.task_helps", "TaskHelps"),
-    "tribe_gifts": ("tasks.task_tribe_gifts", "TaskTribeGifts"),
-    "mail_rewards": ("tasks.task_mail_rewards", "TaskMailRewards"),
-    "daily_gifts": ("tasks.task_daily_gifts", "TaskDailyGifts"),
-    "rewards": ("tasks.task_rewards", "TaskRewards"),
-    "shield": ("tasks.task_shield", "TaskShield"),
-    # Phase 3: Production
-    "construction": ("tasks.task_construction", "TaskConstruction"),
-    "research": ("tasks.task_research", "TaskResearch"),
-    "train_troops": ("tasks.task_train_troops", "TaskTrainTroops"),
-    "prosperity": ("tasks.task_prosperity", "TaskProsperity"),
-    # Phase 4: Economy
-    "errands": ("tasks.task_errands", "TaskErrands"),
-    "commissions": ("tasks.task_commissions", "TaskCommissions"),
-    "farmer_appointments": ("tasks.task_farmer_appointments", "TaskFarmerAppointments"),
     "recruit_farmers": ("tasks.task_recruit_farmers", "TaskRecruitFarmers"),
     "village_champions": ("tasks.task_village_champions", "TaskVillageChampions"),
     # Phase 5: Heroes
@@ -48,6 +24,7 @@ TASK_MAP = {
     "expansion": ("tasks.task_expansion", "TaskExpansion"),
     "tribe_tech": ("tasks.task_tribe_tech", "TaskTribeTech"),
     "chapter": ("tasks.task_chapter", "TaskChapter"),
+    "city_rush": ("tasks.task_city_rush_v2", "TaskCityRush"),
 }
 
 def run(task_name):
@@ -80,3 +57,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
