@@ -7,7 +7,7 @@ Usage:
     bot = Bot()
     bot.tap(500, 300)
     screen = bot.detect_screen()
-"""
+"""h
 import subprocess, os, sys, time, json, base64, re, random, io
 import numpy as np
 from PIL import Image
@@ -653,11 +653,9 @@ class Bot:
                     self.adb_back()
                     time.sleep(1)
                 elif s == "exit_popup":
-                    # Press Back to dismiss, then tap outside
-                    self._adb("shell", "input", "keyevent", "4")
-                    time.sleep(1.5)
-                    self.tap(640, 360, jitter=False)
-                    time.sleep(1)
+                                        # Tap Cancel button to dismiss exit dialog
+                                        self.tap(350, 470, jitter=False)
+                                        time.sleep(1.5)
                 else:
                     self.adb_back()
                     time.sleep(2)
@@ -667,9 +665,9 @@ class Bot:
             # === SCREEN HANDLERS (FIXED COORDS - NO API) ===
 
             if s == "exit_popup":
-                # Just press Back to dismiss exit dialog
-                self._adb("shell", "input", "keyevent", "4")
-                time.sleep(1.5)
+                            # Tap Cancel button to dismiss exit dialog (not Back which re-triggers it)
+                            self.tap(350, 470, jitter=False)
+                            time.sleep(1.5)
 
             elif s in ("speedup_popup", "resource_popup"):
                 self.tap(50, 50, jitter=False)
