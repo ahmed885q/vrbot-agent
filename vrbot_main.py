@@ -1,4 +1,4 @@
-"""
+﻿"""
 VRBOT Main v5.0 — Enhanced Engine
 ===================================
 Drop-in replacement with 4 built-in improvements:
@@ -55,6 +55,7 @@ log = logging.getLogger("vrbot")
 
 from vrbot_core import Bot
 from vrbot_config import TASKS_ENABLED
+from smart_retry import SmartRetry
 
 # ═══════════════════════════════════════════════════════════════════
 # Task Registry — 37 tasks (unchanged from original)
@@ -352,6 +353,7 @@ class CaptchaGuard:
 
     def __init__(self, bot, webhook_url=None):
         self.bot = bot
+        self.smart_retry = SmartRetry(bot=self.bot)
         self.webhook_url = webhook_url  # Discord/Telegram webhook
         self.active = False
         self.total_detected = 0
@@ -451,6 +453,7 @@ class HealthGuard:
 
     def __init__(self, bot):
         self.bot = bot
+        self.smart_retry = SmartRetry(bot=self.bot)
         self.healthy = True
         self.total_restarts = 0
         self._last_hash = None
@@ -460,6 +463,7 @@ class HealthGuard:
         # Load ADB config
         try:
             from vrbot_config import ADB_EXE, ADB_DEVICE
+from smart_retry import SmartRetry
             self._exe = ADB_EXE
             self._dev = ADB_DEVICE
         except Exception:
@@ -809,3 +813,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
