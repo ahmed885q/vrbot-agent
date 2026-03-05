@@ -31,7 +31,7 @@ try:
 except ImportError:
     requests = None
 
-SERVER_URL = "http://localhost:8000"
+SERVER_URL = "https://vrbot.me"
 CONFIG_FILE = "vrbot_license.json"
 VERSION = "5.0.0"
 
@@ -59,53 +59,137 @@ def save_cfg(d):
 
 ALL_TASKS = {
     "Quick Collections": [
-        ("daily_gifts",  "Daily Gifts"),
-        ("rewards",      "Quest Rewards"),
-        ("mail_rewards", "Mail Rewards"),
-        ("helps",        "Alliance Helps"),
-        ("tribe_gifts",  "Tribe Gifts"),
-        ("prosperity",   "Prosperity"),
+        ("daily_gifts",          "Daily Gifts"),
+        ("rewards",              "Quest Rewards"),
+        ("mail_rewards",         "Mail Rewards"),
+        ("helps",                "Alliance Helps"),
+        ("tribe_gifts",          "Tribe Gifts"),
+        ("prosperity",           "Prosperity"),
+        ("promo_codes",          "Promo Codes"),
+        ("surprise_gift",        "Surprise Gift"),
+        ("account_items",        "Account Items"),
+        ("intelligence_rewards", "Intelligence Rewards"),
+        ("rebate_pack",          "Rebate Pack"),
     ],
     "Buildings": [
-        ("construction",  "Upgrade Building"),
-        ("research",      "Research"),
-        ("hall_of_valor", "Hall of Valor"),
-        ("clear_forest",  "Clear Forest"),
+        ("construction",         "Upgrade Building"),
+        ("upgrade_chief_hall",   "Upgrade Chief Hall"),
+        ("research",             "Research"),
+        ("hall_of_valor",        "Hall of Valor"),
+        ("clear_forest",         "Clear Forest"),
+        ("train_troops",         "Train Troops"),
+        ("heal_troops",          "Heal Troops"),
+        ("troop_upgrade",        "Troop Upgrade"),
+        ("wall_repair",          "Wall Repair"),
+        ("smithy",               "Smithy"),
+        ("chief_hall",           "Chief Hall"),
     ],
     "World Map": [
-        ("gather",        "Gather Resources"),
-        ("niflung",       "Kill Niflung"),
-        ("kill_monster",  "Kill Monster"),
-        ("rally_niflung", "Rally Niflung Leader"),
+        ("gather",               "Gather Resources"),
+        ("niflung",              "Kill Niflung"),
+        ("kill_monster",         "Kill Monster"),
+        ("rally_niflung",        "Rally Niflung Leader"),
+        ("gather_boost",         "Gather Boost"),
+        ("gather_supplies",      "Gather Supplies"),
+        ("map_explore",          "Map Explore"),
+        ("conquer_island",       "Conquer Island"),
+        ("reclaim_midgard",      "Reclaim Midgard"),
+        ("expansion",            "Expansion"),
     ],
     "Alliance": [
-        ("tribe_tech", "Tribe Technology"),
+        ("tribe_tech",           "Tribe Technology"),
+        ("tribe_gold_tile",      "Tribe Gold Tile"),
+        ("staging_post",         "Staging Post"),
+    ],
+    "Heroes & Events": [
+        ("hero_training",        "Hero Training"),
+        ("hero_xp",              "Hero XP"),
+        ("leidolf",              "Leidolf"),
+        ("divination",           "Divination"),
+        ("village_champions",    "Village Champions"),
+        ("farmer_appointments",  "Farmer Appointments"),
+        ("recruit_farmers",      "Recruit Farmers"),
+    ],
+    "Events & Activities": [
+        ("cinderbone",           "Cinderbone"),
+        ("festival_flames",      "Festival Flames"),
+        ("city_rush",            "City Rush"),
+        ("community_events",     "Community Events"),
+        ("chapter",              "Chapter"),
+        ("commissions",          "Commissions"),
+        ("errands",              "Errands"),
+        ("market_trade",         "Market Trade"),
+        ("toy_shop",             "Toy Shop"),
+        ("shield",               "Shield"),
     ],
 }
 
 TASK_MAP = {
-    "daily_gifts":   ("tasks.task_daily_gifts",   "TaskDailyGifts"),
-    "rewards":       ("tasks.task_rewards",       "TaskRewards"),
-    "mail_rewards":  ("tasks.task_mail_rewards",  "TaskMailRewards"),
-    "helps":         ("tasks.task_helps",         "TaskHelps"),
-    "tribe_gifts":   ("tasks.task_tribe_gifts",   "TaskTribeGifts"),
-    "prosperity":    ("tasks.task_prosperity",    "TaskProsperity"),
-    "construction":  ("tasks.task_construction",  "TaskConstruction"),
-    "research":      ("tasks.task_research",      "TaskResearch"),
-    "hall_of_valor": ("tasks.task_hall_of_valor", "TaskHallOfValor"),
-    "clear_forest":  ("tasks.task_clear_forest",  "TaskClearForest"),
-    "gather":        ("tasks.task_gather",        "TaskGather"),
-    "niflung":       ("tasks.task_niflung",       "TaskNiflung"),
-    "kill_monster":  ("tasks.task_kill_monster",   "TaskKillMonster"),
-    "rally_niflung": ("tasks.task_rally_niflung", "TaskRallyNiflung"),
-    "tribe_tech":    ("tasks.task_tribe_tech",    "TaskTribeTech"),
+    "daily_gifts":          ("tasks.task_daily_gifts",          "TaskDailyGifts"),
+    "rewards":              ("tasks.task_rewards",              "TaskRewards"),
+    "mail_rewards":         ("tasks.task_mail_rewards",         "TaskMailRewards"),
+    "helps":                ("tasks.task_helps",                "TaskHelps"),
+    "tribe_gifts":          ("tasks.task_tribe_gifts",          "TaskTribeGifts"),
+    "prosperity":           ("tasks.task_prosperity",           "TaskProsperity"),
+    "promo_codes":          ("tasks.task_promo_codes",          "TaskPromoCodes"),
+    "surprise_gift":        ("tasks.task_surprise_gift",        "TaskSurpriseGift"),
+    "account_items":        ("tasks.task_account_items",        "TaskAccountItems"),
+    "intelligence_rewards": ("tasks.task_intelligence_rewards", "TaskIntelligenceRewards"),
+    "rebate_pack":          ("tasks.task_rebate_pack",          "TaskRebatePack"),
+    "construction":         ("tasks.task_construction",         "TaskConstruction"),
+    "upgrade_chief_hall":   ("tasks.task_upgrade_chief_hall",   "TaskUpgradeChiefHall"),
+    "research":             ("tasks.task_research",             "TaskResearch"),
+    "hall_of_valor":        ("tasks.task_hall_of_valor",        "TaskHallOfValor"),
+    "clear_forest":         ("tasks.task_clear_forest",         "TaskClearForest"),
+    "train_troops":         ("tasks.task_train_troops",         "TaskTrainTroops"),
+    "heal_troops":          ("tasks.task_heal_troops",          "TaskHealTroops"),
+    "troop_upgrade":        ("tasks.task_troop_upgrade",        "TaskTroopUpgrade"),
+    "wall_repair":          ("tasks.task_wall_repair",          "TaskWallRepair"),
+    "smithy":               ("tasks.task_smithy",               "TaskSmithy"),
+    "chief_hall":           ("tasks.task_chief_hall",           "TaskChiefHall"),
+    "gather":               ("tasks.task_gather",               "TaskGather"),
+    "niflung":              ("tasks.task_niflung",              "TaskNiflung"),
+    "kill_monster":         ("tasks.task_kill_monster",         "TaskKillMonster"),
+    "rally_niflung":        ("tasks.task_rally_niflung",        "TaskRallyNiflung"),
+    "gather_boost":         ("tasks.task_gather_boost",         "TaskGatherBoost"),
+    "gather_supplies":      ("tasks.task_gather_supplies",      "TaskGatherSupplies"),
+    "map_explore":          ("tasks.task_map_explore",          "TaskMapExplore"),
+    "conquer_island":       ("tasks.task_conquer_island",       "TaskConquerIsland"),
+    "reclaim_midgard":      ("tasks.task_reclaim_midgard",      "TaskReclaimMidgard"),
+    "expansion":            ("tasks.task_expansion",            "TaskExpansion"),
+    "tribe_tech":           ("tasks.task_tribe_tech",           "TaskTribeTech"),
+    "tribe_gold_tile":      ("tasks.task_tribe_gold_tile",      "TaskTribeGoldTile"),
+    "staging_post":         ("tasks.task_staging_post",         "TaskStagingPost"),
+    "hero_training":        ("tasks.task_hero_training",        "TaskHeroTraining"),
+    "hero_xp":              ("tasks.task_hero_xp",              "TaskHeroXp"),
+    "leidolf":              ("tasks.task_leidolf",              "TaskLeidolf"),
+    "divination":           ("tasks.task_divination",           "TaskDivination"),
+    "village_champions":    ("tasks.task_village_champions",    "TaskVillageChampions"),
+    "farmer_appointments":  ("tasks.task_farmer_appointments",  "TaskFarmerAppointments"),
+    "recruit_farmers":      ("tasks.task_recruit_farmers",      "TaskRecruitFarmers"),
+    "cinderbone":           ("tasks.task_cinderbone",           "TaskCinderbone"),
+    "festival_flames":      ("tasks.task_festival_flames",      "TaskFestivalFlames"),
+    "city_rush":            ("tasks.task_city_rush",            "TaskCityRush"),
+    "community_events":     ("tasks.task_community_events",     "TaskCommunityEvents"),
+    "chapter":              ("tasks.task_chapter",              "TaskChapter"),
+    "commissions":          ("tasks.task_commissions",          "TaskCommissions"),
+    "errands":              ("tasks.task_errands",              "TaskErrands"),
+    "market_trade":         ("tasks.task_market_trade",         "TaskMarketTrade"),
+    "toy_shop":             ("tasks.task_toy_shop",             "TaskToyShop"),
+    "shield":               ("tasks.task_shield",               "TaskShield"),
 }
 
 # Priority: 2=HIGH (combat), 3=NORMAL (production), 4=LOW (collections)
 TASK_PRI = {
     "gather": 2, "niflung": 2, "kill_monster": 2, "rally_niflung": 2,
+    "gather_boost": 2, "gather_supplies": 2, "map_explore": 2,
+    "conquer_island": 2, "reclaim_midgard": 2, "expansion": 2,
     "construction": 3, "research": 3, "helps": 3, "tribe_tech": 3,
     "hall_of_valor": 3, "clear_forest": 3, "prosperity": 3,
+    "train_troops": 3, "heal_troops": 3, "troop_upgrade": 3,
+    "wall_repair": 3, "smithy": 3, "chief_hall": 3,
+    "upgrade_chief_hall": 3, "tribe_gold_tile": 3, "staging_post": 3,
+    "hero_training": 3, "hero_xp": 3, "leidolf": 3,
     # everything else defaults to 4
 }
 
@@ -429,7 +513,7 @@ class VRBotGUI(QMainWindow):
 
     def _build(self):
         self.setWindowTitle(f"VRBOT v{VERSION}")
-        self.setMinimumSize(850, 680)
+        self.setMinimumSize(900, 780)
         self.setStyleSheet(STYLESHEET)
 
         central = QWidget()
@@ -454,8 +538,8 @@ class VRBotGUI(QMainWindow):
         lic_group = QGroupBox("License")
         lic_layout = QHBoxLayout(lic_group)
         self.lic_input = QLineEdit()
-        self.lic_input.setPlaceholderText("VRBOT-XXXX-XXXX-XXXX")
-        self.lic_input.setMaxLength(20)
+        self.lic_input.setPlaceholderText("Enter your farm token")
+        self.lic_input.setMaxLength(40)
         lic_layout.addWidget(self.lic_input)
         act_btn = QPushButton("Activate")
         act_btn.clicked.connect(self.activate)

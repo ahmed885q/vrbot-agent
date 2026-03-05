@@ -1,5 +1,5 @@
 """
-VRBOT Config - 37 Tasks + Hybrid YOLO
+VRBOT Config v5.2 — Optimized Settings
 """
 # --- ADB ---
 ADB_EXE = r"C:\LDPlayer\LDPlayer9\adb.exe"
@@ -13,19 +13,19 @@ CLAUDE_MODEL = "claude-sonnet-4-20250514"
 # --- YOLO ONNX (FREE - runs locally, no PyTorch needed) ---
 YOLO_ENABLED = True
 YOLO_MODEL_PATH = "models/best.onnx"
-YOLO_CONFIDENCE = 0.45
+YOLO_CONFIDENCE = 0.40  # lowered from 0.45 → catches more buttons
 
 # --- Paths ---
 DEBUG_DIR = "debug_screenshots"
 
-# --- Anti-Ban ---
+# --- Anti-Ban (tuned for safety) ---
 TAP_DELAY_MIN = 0.5
 TAP_DELAY_MAX = 2.0
 TASK_DELAY_MIN = 5
 TASK_DELAY_MAX = 15
 COORDINATE_JITTER = 3
-SESSION_BREAK_INTERVAL = 40
-SESSION_BREAK_DURATION = 60
+SESSION_BREAK_INTERVAL = 40   # minutes
+SESSION_BREAK_DURATION = 60   # seconds
 
 # --- Navigation ---
 NAV_MAX_RETRIES = 15
@@ -33,7 +33,7 @@ NAV_MAX_RETRIES = 15
 # --- Task Settings ---
 TROOP_ROTATION = ['infantry', 'lancer', 'archer']
 
-# --- ALL 37 Tasks ---
+# --- ALL Tasks ---
 TASKS_ENABLED = {
     # ── Quick Collections ──
     "daily_gifts": True,
@@ -97,7 +97,7 @@ TASKS_ENABLED = {
     "toy_shop": False,
     "tribe_gold_tile": False,
 
-    # ── Maintenance (v5.1) ──
+    # ── Maintenance ──
     "wall_repair": True,
     "heal_troops": True,
     "troop_upgrade": True,
