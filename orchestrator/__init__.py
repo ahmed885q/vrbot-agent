@@ -1,1 +1,1 @@
-﻿# VRBOT Batch Scheduler
+# VRBOT Batch Scheduler
