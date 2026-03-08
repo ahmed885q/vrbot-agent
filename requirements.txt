@@ -1,9 +1,7 @@
-# VRBOT Cloud Orchestrator
-fastapi>=0.110.0
-uvicorn[standard]>=0.29.0
-pydantic>=2.0.0
-httpx>=0.27.0
-python-dotenv>=1.0.0
-aiohttp>=3.9.0
-hcloud>=2.0.0
-asyncio-mqtt>=0.16.0
+fastapi==0.109.0
+uvicorn==0.27.0
+hcloud==1.33.0
+asyncssh==2.14.2
+pydantic==2.5.3
+supabase==2.3.0
+python-dotenv==1.0.0
