@@ -15,38 +15,24 @@ jobs:
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
+          command_timeout: 10m
           script: |
             echo "=== Deploying VRBOT WebSocket Hub ==="
-            
-            # Install websockets
-            pip3 install websockets --quiet 2>/dev/null || pip install websockets --quiet
-            
+
+            # Install websockets (--break-system-packages for PEP 668)
+            pip3 install websockets --break-system-packages --quiet 2>/dev/null || apt-get install -y python3-websockets 2>/dev/null || true
+
             # Create directory
             mkdir -p /opt/vrbot/ws_hub
-            
+
             # Download ws_hub.py from GitHub
             curl -sL https://raw.githubusercontent.com/ahmed885q/vrbot-agent/main/ws/ws_hub.py -o /opt/vrbot/ws_hub/ws_hub.py
             chmod +x /opt/vrbot/ws_hub/ws_hub.py
-            
-            # Install certbot for SSL
-            which certbot || (apt-get update -qq && apt-get install -y -qq certbot > /dev/null 2>&1)
-            
-            # Get SSL certificate (if not exists)
-            CERT="/etc/letsencrypt/live/ws.vrbot.me/fullchain.pem"
-            if [ ! -f "$CERT" ]; then
-              # Stop anything on port 80 temporarily
-              systemctl stop nginx 2>/dev/null || true
-              certbot certonly --standalone --non-interactive --agree-tos \
-                --email ahmed885q@gmail.com \
-                -d ws.vrbot.me \
-                --preferred-challenges http || echo "SSL failed - will use non-SSL"
-              systemctl start nginx 2>/dev/null || true
-            fi
-            
-            # Create systemd service (SSL)
+
+            # Create SSL service
             cat > /etc/systemd/system/vrbot-ws-hub.service << 'SVC'
             [Unit]
-            Description=VRBOT WebSocket Hub
+            Description=VRBOT WebSocket Hub (SSL)
             After=network.target
             [Service]
             Type=simple
@@ -59,7 +45,7 @@ jobs:
             [Install]
             WantedBy=multi-user.target
             SVC
-            
+
             # Create fallback service (no SSL)
             cat > /etc/systemd/system/vrbot-ws-hub-fallback.service << 'SVC'
             [Unit]
@@ -76,13 +62,13 @@ jobs:
             [Install]
             WantedBy=multi-user.target
             SVC
-            
+
             # Start services
             systemctl daemon-reload
             systemctl enable --now vrbot-ws-hub.service
             systemctl enable --now vrbot-ws-hub-fallback.service
-            
             sleep 2
+
             systemctl status vrbot-ws-hub.service --no-pager || true
             systemctl status vrbot-ws-hub-fallback.service --no-pager || true
             curl -s http://localhost:8765/health || echo "Health check pending..."
