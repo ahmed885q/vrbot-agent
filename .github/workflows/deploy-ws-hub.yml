@@ -19,8 +19,16 @@ jobs:
           script: |
             echo "=== Deploying VRBOT WebSocket Hub ==="
 
-            # Install websockets (--break-system-packages for PEP 668)
+            # Install websockets
             pip3 install websockets --break-system-packages --quiet 2>/dev/null || apt-get install -y python3-websockets 2>/dev/null || true
+
+            # Open firewall ports
+            if command -v ufw &>/dev/null; then
+              ufw allow 8765/tcp 2>/dev/null || true
+              ufw allow 443/tcp 2>/dev/null || true
+            fi
+            iptables -I INPUT -p tcp --dport 8765 -j ACCEPT 2>/dev/null || true
+            iptables -I INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || true
 
             # Create directory
             mkdir -p /opt/vrbot/ws_hub
@@ -28,6 +36,10 @@ jobs:
             # Download ws_hub.py from GitHub
             curl -sL https://raw.githubusercontent.com/ahmed885q/vrbot-agent/main/ws/ws_hub.py -o /opt/vrbot/ws_hub/ws_hub.py
             chmod +x /opt/vrbot/ws_hub/ws_hub.py
+
+            # Stop old services if running
+            systemctl stop vrbot-ws-hub.service 2>/dev/null || true
+            systemctl stop vrbot-ws-hub-fallback.service 2>/dev/null || true
 
             # Create SSL service
             cat > /etc/systemd/system/vrbot-ws-hub.service << 'SVC'
@@ -67,9 +79,18 @@ jobs:
             systemctl daemon-reload
             systemctl enable --now vrbot-ws-hub.service
             systemctl enable --now vrbot-ws-hub-fallback.service
-            sleep 2
+            sleep 3
 
-            systemctl status vrbot-ws-hub.service --no-pager || true
-            systemctl status vrbot-ws-hub-fallback.service --no-pager || true
-            curl -s http://localhost:8765/health || echo "Health check pending..."
+            # Verify
+            echo "=== Service Status ==="
+            systemctl is-active vrbot-ws-hub.service && echo "SSL service: RUNNING" || echo "SSL service: STOPPED"
+            systemctl is-active vrbot-ws-hub-fallback.service && echo "Fallback service: RUNNING" || echo "Fallback service: STOPPED"
+            
+            echo "=== Health Check ==="
+            curl -s http://localhost:8765/health && echo "" || echo "Health: no response (checking logs...)"
+            journalctl -u vrbot-ws-hub-fallback.service -n 10 --no-pager 2>/dev/null || true
+            
+            echo "=== Port Check ==="
+            ss -tlnp | grep -E '8765|443' || echo "No listeners found"
+            
             echo "=== Deployment Complete ==="
