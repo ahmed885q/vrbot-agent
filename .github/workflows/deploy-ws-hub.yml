@@ -16,6 +16,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           command_timeout: 10m
+          envs: SUPABASE_URL,SUPABASE_SERVICE_KEY
           script: |
             echo "=== Deploying VRBOT WebSocket Hub ==="
 
@@ -37,9 +38,19 @@ jobs:
             curl -sL https://raw.githubusercontent.com/ahmed885q/vrbot-agent/main/ws/ws_hub.py -o /opt/vrbot/ws_hub/ws_hub.py
             chmod +x /opt/vrbot/ws_hub/ws_hub.py
 
+            # Kill any running ws_hub processes
+            pkill -f ws_hub.py 2>/dev/null || true
+
             # Stop old services if running
             systemctl stop vrbot-ws-hub.service 2>/dev/null || true
             systemctl stop vrbot-ws-hub-fallback.service 2>/dev/null || true
+
+            # Write env file for Supabase credentials
+            cat > /opt/vrbot/ws_hub/.env << ENVEOF
+            SUPABASE_URL=${SUPABASE_URL}
+            SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+            REQUIRE_AGENT_TOKEN=false
+            ENVEOF
 
             # Create SSL service
             cat > /etc/systemd/system/vrbot-ws-hub.service << 'SVC'
@@ -53,6 +64,7 @@ jobs:
             ExecStart=/usr/bin/python3 /opt/vrbot/ws_hub/ws_hub.py --port 443 --ssl
             Restart=always
             RestartSec=5
+            EnvironmentFile=/opt/vrbot/ws_hub/.env
             Environment=PYTHONUNBUFFERED=1
             [Install]
             WantedBy=multi-user.target
@@ -70,6 +82,7 @@ jobs:
             ExecStart=/usr/bin/python3 /opt/vrbot/ws_hub/ws_hub.py --port 8765
             Restart=always
             RestartSec=5
+            EnvironmentFile=/opt/vrbot/ws_hub/.env
             Environment=PYTHONUNBUFFERED=1
             [Install]
             WantedBy=multi-user.target
@@ -85,12 +98,15 @@ jobs:
             echo "=== Service Status ==="
             systemctl is-active vrbot-ws-hub.service && echo "SSL service: RUNNING" || echo "SSL service: STOPPED"
             systemctl is-active vrbot-ws-hub-fallback.service && echo "Fallback service: RUNNING" || echo "Fallback service: STOPPED"
-            
+
             echo "=== Health Check ==="
             curl -s http://localhost:8765/health && echo "" || echo "Health: no response (checking logs...)"
             journalctl -u vrbot-ws-hub-fallback.service -n 10 --no-pager 2>/dev/null || true
-            
+
             echo "=== Port Check ==="
             ss -tlnp | grep -E '8765|443' || echo "No listeners found"
-            
+
             echo "=== Deployment Complete ==="
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
