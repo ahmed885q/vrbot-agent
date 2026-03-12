@@ -9,23 +9,42 @@ jobs:
       - name: Check running processes on server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: 65.109.214.187
+          host: 88.99.64.19
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           command_timeout: 2m
           script: |
-            echo "===== CREATE_TOUCH.PY CONTENT ====="
-            cat /tmp/create_touch.py 2>/dev/null || echo "File not found"
+            echo "===== RUNNING PROCESSES ====="
+            ps aux | grep -iE 'python|node|register|signup|email|account|gsmini|vrbot|selenium|playwright|bot' | grep -v grep
             echo ""
-            echo "===== CREATE_TOUCH PROCESS INFO ====="
-            ps aux | grep create_touch | grep -v grep
+            echo "===== DOCKER CONTAINERS ====="
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || echo "No docker"
             echo ""
-            echo "===== FILES IN /tmp/ related ====="
-            ls -la /tmp/create* /tmp/account* /tmp/email* /tmp/register* /tmp/*.json /tmp/*.csv /tmp/*.txt 2>/dev/null | head -30
+            echo "===== SYSTEMD SERVICES ====="
+            systemctl list-units --type=service --state=running | grep -iE 'vrbot|bot|farm|register' || echo "None found"
             echo ""
-            echo "===== LAST 50 LINES OF ANY LOG ====="
-            find /tmp -name "*.log" -newer /tmp/create_touch.py 2>/dev/null -exec echo "--- {} ---" \; -exec tail -20 {} \;
+            echo "===== SCREEN/TMUX ====="
+            screen -ls 2>/dev/null || echo "No screen"
+            tmux ls 2>/dev/null || echo "No tmux"
             echo ""
-            echo "===== /root/ relevant files ====="
-            ls -la /root/*.py /root/*.sh /root/*.json /root/*.csv /root/*.log 2>/dev/null | head -20
+            echo "===== PM2 ====="
+            pm2 list 2>/dev/null || echo "No pm2"
+            echo ""
+            echo "===== CRON JOBS ====="
+            crontab -l 2>/dev/null || echo "No cron"
+            echo ""
+            echo "===== RECENT PY/SH FILES ====="
+            find /root /opt /tmp /home -name "*.py" -o -name "*.sh" 2>/dev/null | grep -iE 'register|signup|email|account|farm|bot|gsmini' | head -20
+            echo ""
+            echo "===== ALL PYTHON/NODE PROCESSES DETAIL ====="
+            ps aux | grep -E 'python|node' | grep -v grep
+            echo ""
+            echo "===== /tmp LOG FILES ====="
+            ls -la /tmp/*.log /tmp/*.txt /tmp/*.csv 2>/dev/null | head -20
+            echo ""
+            echo "===== NOHUP OUTPUT ====="
+            tail -30 /root/nohup.out 2>/dev/null || echo "No nohup.out"
+            echo ""
+            echo "===== /root/ FILES ====="
+            ls -la /root/*.py /root/*.sh /root/*.json /root/*.log 2>/dev/null | head -20
