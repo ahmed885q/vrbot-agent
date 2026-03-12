@@ -1095,12 +1095,44 @@ def main():
         main_classic()
         return
 
+    # --adb-serial: override ADB device serial (used by orchestrator)
+    adb_serial = None
+    for i, a in enumerate(args):
+        if a == "--adb-serial" and i + 1 < len(args):
+            adb_serial = args[i + 1]
+            os.environ["ADB_SERIAL"] = adb_serial
+            log.info(f"ADB serial override: {adb_serial}")
+
     # Parse flags
-    once = "--once" in args
+    once = "--once" in args or "--single-run" in args
     single_task = None
-    for a in args:
-        if not a.startswith("--") and a in TASK_MAP:
-            single_task = a
+
+    # --task <name>: single task mode (from orchestrator)
+    for i, a in enumerate(args):
+        if a == "--task" and i + 1 < len(args):
+            single_task = args[i + 1]
+
+    # --tasks <name1,name2,...>: multi-task mode (from orchestrator daily)
+    task_list = None
+    for i, a in enumerate(args):
+        if a == "--tasks" and i + 1 < len(args):
+            task_list = [t.strip() for t in args[i + 1].split(",") if t.strip()]
+
+    # Legacy: positional task name
+    if not single_task and not task_list:
+        for a in args:
+            if not a.startswith("--") and a in TASK_MAP:
+                single_task = a
+
+    # Multi-task mode: run each task once then exit
+    if task_list:
+        log.info(f"Multi-task mode: {len(task_list)} tasks")
+        for task_name in task_list:
+            if task_name in TASK_MAP:
+                main_enhanced(once=True, single_task=task_name)
+            else:
+                log.warning(f"Unknown task: {task_name}")
+        return
 
     main_enhanced(once=once, single_task=single_task)
 

@@ -21,6 +21,7 @@ from models import (
     Farm, FarmStatus, TaskType, TaskStatus, TaskPriority,
     TaskRequest, BatchInfo, SchedulerConfig
 )
+from farm_executor import get_executor
 
 logger = logging.getLogger("batch_scheduler")
 
@@ -311,53 +312,42 @@ class BatchScheduler:
     # ══════════════════════════════════════
 
     async def _start_container(self, farm: Farm):
-        """تشغيل Redroid container للمزرعة"""
-        # سيتم الاتصال بالسيرفر عبر SSH وتشغيل docker run
-        logger.debug(f"  🐳 Starting container for farm {farm.id}")
-
-        # TODO: ربط مع node agent
-        # cmd = f"docker start farm_{farm.id}"
-        # async with asyncssh.connect(farm.server_ip) as conn:
-        #     await conn.run(cmd)
-
-        await asyncio.sleep(2)  # محاكاة وقت التشغيل
-        farm.status = FarmStatus.RUNNING
+        """تشغيل Redroid container للمزرعة عبر SSH → Docker"""
+        executor = get_executor()
+        success = await executor.start_container(farm)
+        if not success:
+            raise RuntimeError(f"Failed to start container for farm {farm.id}")
 
     async def _stop_container(self, farm: Farm):
         """إيقاف الـ container بعد انتهاء المهمة"""
-        logger.debug(f"  🐳 Stopping container for farm {farm.id}")
-
-        # TODO: ربط مع node agent
-        # cmd = f"docker stop farm_{farm.id}"
-        # async with asyncssh.connect(farm.server_ip) as conn:
-        #     await conn.run(cmd)
-
-        await asyncio.sleep(1)
-        farm.status = FarmStatus.IDLE
+        executor = get_executor()
+        await executor.stop_container(farm)
 
     async def _run_task_on_farm(self, farm: Farm, task: TaskRequest):
-        """تنفيذ المهمة الفعلية على المزرعة عبر ADB"""
-
-        # TODO: ربط مع bot engine
-        # هنا يتم إرسال الأوامر للمزرعة عبر ADB
-        # مثال:
-        # await adb_connect(farm.server_ip, farm.adb_port)
-        # if task.task_type == TaskType.FARMING:
-        #     await bot.execute_farming(farm.id)
-        # elif task.task_type == TaskType.DAILY:
-        #     await bot.execute_daily_tasks(farm.id)
-        # elif task.task_type == TaskType.NIFLING:
-        #     await bot.execute_nifling(farm.id)
+        """تنفيذ المهمة الفعلية على المزرعة عبر SSH → ADB → vrbot_main.py"""
+        executor = get_executor()
 
         # Self-Learning: تعديل المدة حسب التجربة السابقة
         estimated_time = self.error_tracker.get_estimated_duration(
             farm.id, task.task_type
         )
-        logger.debug(f"  ⏱️ Estimated duration: {estimated_time}s "
+        logger.info(f"  ⏱️ Estimated duration: {estimated_time//60}min "
                     f"(learned from history)")
 
-        # محاكاة
-        await asyncio.sleep(5)
+        # Pre-check: verify game is running
+        health = await executor.check_farm_health(farm)
+        if not health.get("game_running"):
+            logger.info(f"  🔄 Game not running on farm {farm.id}, restarting...")
+            await executor.restart_game(farm)
+            await asyncio.sleep(30)  # Wait for game to fully load
+
+        # Execute the task
+        success = await executor.run_task_on_farm(farm, task)
+        if not success:
+            raise RuntimeError(
+                f"Task {task.task_type.value} failed on farm {farm.id}: "
+                f"{task.error_message or 'unknown error'}"
+            )
 
     # ══════════════════════════════════════
     #  Helper Methods

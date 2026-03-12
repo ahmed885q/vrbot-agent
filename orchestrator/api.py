@@ -379,7 +379,46 @@ async def system_status():
 @app.get("/api/health")
 async def health():
     """فحص سلامة النظام"""
-    return {"status": "ok", "version": "1.0.0"}
+    return {"status": "ok", "version": "1.1.0"}
+
+
+@app.get("/api/farms/{farm_id}/health")
+async def farm_health(farm_id: str):
+    """
+    🔍 فحص صحة مزرعة (container + ADB + game)
+    """
+    from farm_executor import get_executor
+
+    farm = batch_scheduler.farms.get(farm_id)
+    if not farm:
+        raise HTTPException(status_code=404, detail="Farm not found")
+
+    executor = get_executor()
+    health_data = await executor.check_farm_health(farm)
+    return {
+        "farm_id": farm_id,
+        "server_ip": farm.server_ip,
+        **health_data,
+    }
+
+
+@app.post("/api/farms/{farm_id}/restart-game")
+async def restart_farm_game(farm_id: str):
+    """
+    🔄 إعادة تشغيل اللعبة على مزرعة
+    """
+    from farm_executor import get_executor
+
+    farm = batch_scheduler.farms.get(farm_id)
+    if not farm:
+        raise HTTPException(status_code=404, detail="Farm not found")
+
+    executor = get_executor()
+    success = await executor.restart_game(farm)
+    return {
+        "farm_id": farm_id,
+        "restarted": success,
+    }
 
 
 # ══════════════════════════════════════════
