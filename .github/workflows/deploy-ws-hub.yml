@@ -8,40 +8,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy WS Hub to server
+      - name: Upload and configure ws_hub
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 65.109.214.187
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
-          command_timeout: 5m
+          command_timeout: 3m
           envs: SUPABASE_URL,SUPABASE_SERVICE_KEY
           script: |
-            echo "=== Deploying VRBOT WebSocket Hub ==="
-            pip3 install websockets --break-system-packages --quiet 2>/dev/null || true
-            iptables -I INPUT -p tcp --dport 8765 -j ACCEPT 2>/dev/null || true
-            iptables -I INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || true
+            set -e
+            echo "=== Step 1: Download ws_hub.py ==="
             mkdir -p /opt/vrbot/ws_hub
             curl -sL https://raw.githubusercontent.com/ahmed885q/vrbot-agent/main/ws/ws_hub.py -o /opt/vrbot/ws_hub/ws_hub.py
-            chmod +x /opt/vrbot/ws_hub/ws_hub.py
-            systemctl stop vrbot-ws-hub.service 2>/dev/null || true
-            systemctl stop vrbot-ws-hub-fallback.service 2>/dev/null || true
-            kill $(pgrep -f "python3 /opt/vrbot/ws_hub/ws_hub.py") 2>/dev/null || true
-            sleep 1
+            echo "=== Step 2: Write env file ==="
             echo "SUPABASE_URL=${SUPABASE_URL}" > /opt/vrbot/ws_hub/.env
             echo "SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}" >> /opt/vrbot/ws_hub/.env
             echo "REQUIRE_AGENT_TOKEN=false" >> /opt/vrbot/ws_hub/.env
-            printf '[Unit]\nDescription=VRBOT WebSocket Hub (SSL)\nAfter=network.target\n[Service]\nType=simple\nUser=root\nWorkingDirectory=/opt/vrbot/ws_hub\nExecStart=/usr/bin/python3 /opt/vrbot/ws_hub/ws_hub.py --port 443 --ssl\nRestart=always\nRestartSec=5\nEnvironmentFile=/opt/vrbot/ws_hub/.env\nEnvironment=PYTHONUNBUFFERED=1\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/vrbot-ws-hub.service
-            printf '[Unit]\nDescription=VRBOT WebSocket Hub (fallback)\nAfter=network.target\n[Service]\nType=simple\nUser=root\nWorkingDirectory=/opt/vrbot/ws_hub\nExecStart=/usr/bin/python3 /opt/vrbot/ws_hub/ws_hub.py --port 8765\nRestart=always\nRestartSec=5\nEnvironmentFile=/opt/vrbot/ws_hub/.env\nEnvironment=PYTHONUNBUFFERED=1\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/vrbot-ws-hub-fallback.service
+            echo "=== Step 3: Write systemd units ==="
+            printf '[Unit]\nDescription=VRBOT WS Hub SSL\nAfter=network.target\n[Service]\nType=simple\nUser=root\nWorkingDirectory=/opt/vrbot/ws_hub\nExecStart=/usr/bin/python3 /opt/vrbot/ws_hub/ws_hub.py --port 443 --ssl\nRestart=always\nRestartSec=5\nEnvironmentFile=/opt/vrbot/ws_hub/.env\nEnvironment=PYTHONUNBUFFERED=1\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/vrbot-ws-hub.service
+            printf '[Unit]\nDescription=VRBOT WS Hub Fallback\nAfter=network.target\n[Service]\nType=simple\nUser=root\nWorkingDirectory=/opt/vrbot/ws_hub\nExecStart=/usr/bin/python3 /opt/vrbot/ws_hub/ws_hub.py --port 8765\nRestart=always\nRestartSec=5\nEnvironmentFile=/opt/vrbot/ws_hub/.env\nEnvironment=PYTHONUNBUFFERED=1\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/vrbot-ws-hub-fallback.service
+            echo "=== Step 4: Reload and restart ==="
             systemctl daemon-reload
-            systemctl enable --now vrbot-ws-hub.service || true
-            systemctl enable --now vrbot-ws-hub-fallback.service || true
+            systemctl restart vrbot-ws-hub-fallback.service || systemctl start vrbot-ws-hub-fallback.service || true
+            systemctl restart vrbot-ws-hub.service || systemctl start vrbot-ws-hub.service || true
+            systemctl enable vrbot-ws-hub.service vrbot-ws-hub-fallback.service 2>/dev/null || true
             sleep 2
-            echo "=== Service Status ==="
-            systemctl is-active vrbot-ws-hub.service && echo "SSL: RUNNING" || echo "SSL: STOPPED"
-            systemctl is-active vrbot-ws-hub-fallback.service && echo "Fallback: RUNNING" || echo "Fallback: STOPPED"
-            curl -s http://localhost:8765/health || echo "Health: no response"
+            echo "=== Status ==="
+            systemctl is-active vrbot-ws-hub-fallback.service && echo "Fallback: OK" || echo "Fallback: FAIL"
+            systemctl is-active vrbot-ws-hub.service && echo "SSL: OK" || echo "SSL: FAIL"
+            curl -s http://localhost:8765/health || echo "No health response yet"
             echo "=== Done ==="
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
