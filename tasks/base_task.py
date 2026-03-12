@@ -76,8 +76,8 @@ class BaseTask:
     # -- Dismiss popup (replaces hardcoded tap 640,400) --
 
     def _dismiss_popup(self, wait_after=2):
-        """Dismiss reward/popup by tapping center."""
-        self.bot.tap(640, 400, jitter=False)
+        """Dismiss reward/popup — tries close/confirm detection first, then center tap."""
+        self.bot.hybrid_tap_center(fallback_xy=(640, 400))
         self.bot.wait(wait_after)
         self._actions_taken += 1
 
@@ -231,7 +231,7 @@ class BaseTask:
 
     def _tap_center(self, wait_after=2):
         """Tap screen center (640, 360) — for generic map interactions."""
-        self.bot.tap(640, 360, jitter=False)
+        self.bot.tap(640, 360, jitter=True)
         self.bot.wait(wait_after)
         self._actions_taken += 1
 

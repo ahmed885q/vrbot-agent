@@ -350,23 +350,46 @@ class Bot:
         print(f"    tap ({x},{y})")
 
     def _natural_tap(self, x, y):
-        """Simulate natural finger touch: short swipe from nearby offset ending at target.
+        """Simulate natural finger touch with Bezier-like curved approach.
 
-        Human fingers don't teleport — they approach from a slight offset.
-        This creates a very short swipe (5-25px, 50-150ms) that ends at the target,
-        mimicking a natural touch gesture.
+        Human fingers don't teleport — they approach from a slight offset
+        with a curved trajectory (not perfectly straight).
+        Uses quadratic Bezier interpolation for more natural movement.
         """
-        # Small random offset for approach direction (5-25px away)
-        offset = random.randint(5, 25)
+        # Start point: 10-35px away in a random direction
+        offset = random.randint(10, 35)
         angle = random.uniform(0, 6.283)  # Random direction (2*pi radians)
         start_x = int(x + offset * math.cos(angle))
         start_y = int(y + offset * math.sin(angle))
         start_x = max(0, min(1279, start_x))
         start_y = max(0, min(719, start_y))
-        # Very short duration (50-150ms) to look like a tap, not a drag
-        dur = random.randint(50, 150)
-        self._adb("shell", "input", "swipe",
-                   str(start_x), str(start_y), str(x), str(y), str(dur))
+
+        # Control point for Bezier curve (perpendicular offset for natural arc)
+        perp_angle = angle + random.choice([-1.57, 1.57])  # ±90 degrees
+        ctrl_offset = random.randint(3, 12)
+        mid_x = (start_x + x) // 2 + int(ctrl_offset * math.cos(perp_angle))
+        mid_y = (start_y + y) // 2 + int(ctrl_offset * math.sin(perp_angle))
+
+        # Generate 3-5 intermediate points along the Bezier curve
+        n_points = random.randint(3, 5)
+        points = []
+        for i in range(n_points + 1):
+            t = i / n_points
+            # Quadratic Bezier: B(t) = (1-t)²·P0 + 2(1-t)t·P1 + t²·P2
+            bx = int((1 - t) ** 2 * start_x + 2 * (1 - t) * t * mid_x + t ** 2 * x)
+            by = int((1 - t) ** 2 * start_y + 2 * (1 - t) * t * mid_y + t ** 2 * y)
+            bx = max(0, min(1279, bx))
+            by = max(0, min(719, by))
+            points.append((bx, by))
+
+        # Execute as chained short swipes (total 80-200ms)
+        total_dur = random.randint(80, 200)
+        seg_dur = max(20, total_dur // len(points))
+        for i in range(len(points) - 1):
+            self._adb("shell", "input", "swipe",
+                       str(points[i][0]), str(points[i][1]),
+                       str(points[i + 1][0]), str(points[i + 1][1]),
+                       str(seg_dur))
 
     def swipe(self, x1, y1, x2, y2, duration=None):
         if duration is None:
@@ -977,6 +1000,53 @@ class Bot:
             '{"found":true,"x":640,"y":500} or {"found":false}. JSON ONLY.')
 
         return self.hybrid_find(yolo_classes, ai_prompt, image_b64, tmpl_names=tmpl_names)
+
+    def hybrid_tap(self, button_type, fallback_xy=None, timeout=5.0, retries=2):
+        """Convenience: detect button via 4-layer cascade → tap it → return success.
+
+        This is the recommended way to interact with any game UI element.
+        Flow: Template → YOLO → AI → fallback_xy (if provided).
+
+        Args:
+            button_type: Key from YOLO_BUTTON_MAP (e.g. "claim", "close", "confirm")
+            fallback_xy: Optional (x, y) tuple as last resort if all detection fails
+            timeout: Max seconds to wait for detection across retries
+            retries: Number of detection attempts before using fallback
+        Returns:
+            dict: {"tapped": True/False, "method": "template|yolo|ai|fallback", "x": x, "y": y}
+        """
+        for attempt in range(retries):
+            result = self.hybrid_find_button(button_type)
+            if result and result.get("found"):
+                method = result.get("method", result.get("template", "ai"))
+                if isinstance(method, str) and "/" in method:
+                    method = "template"
+                elif not isinstance(method, str):
+                    method = "detection"
+                self.tap(result["x"], result["y"])
+                print(f"    [hybrid_tap] {button_type} found via {method} at ({result['x']},{result['y']})")
+                return {"tapped": True, "method": method, "x": result["x"], "y": result["y"]}
+            if attempt < retries - 1:
+                time.sleep(min(timeout / retries, 2.0))
+
+        # Fallback to hardcoded coordinates
+        if fallback_xy:
+            self.tap(fallback_xy[0], fallback_xy[1], jitter=True)
+            print(f"    [hybrid_tap] {button_type} FALLBACK at {fallback_xy}")
+            return {"tapped": True, "method": "fallback", "x": fallback_xy[0], "y": fallback_xy[1]}
+
+        print(f"    [hybrid_tap] {button_type} NOT FOUND (no fallback)")
+        return {"tapped": False, "method": "none", "x": 0, "y": 0}
+
+    def hybrid_tap_center(self, fallback_xy=(640, 400)):
+        """Tap center of screen to dismiss popups. Tries close button first."""
+        result = self.hybrid_tap("close", fallback_xy=fallback_xy, retries=1, timeout=2.0)
+        if not result["tapped"] or result["method"] == "fallback":
+            # Also try confirm/ok
+            result2 = self.hybrid_tap("confirm", fallback_xy=fallback_xy, retries=1, timeout=2.0)
+            if result2["tapped"] and result2["method"] != "fallback":
+                return result2
+        return result
 
     # ════════════════════════════════════════════════════
     # SCREEN DETECTION (cached, YOLO → API)
