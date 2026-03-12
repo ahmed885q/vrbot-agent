@@ -36,10 +36,16 @@ jobs:
             systemctl restart vrbot-ws-hub-fallback.service || systemctl start vrbot-ws-hub-fallback.service || true
             systemctl restart vrbot-ws-hub.service || systemctl start vrbot-ws-hub.service || true
             systemctl enable vrbot-ws-hub.service vrbot-ws-hub-fallback.service 2>/dev/null || true
-            sleep 4
+            sleep 8
             echo "=== Status ==="
             systemctl is-active vrbot-ws-hub-fallback.service && echo "Fallback: OK" || echo "Fallback: FAIL"
             systemctl is-active vrbot-ws-hub.service && echo "SSL: OK" || echo "SSL: FAIL"
+            echo "=== Fallback logs ==="
+            journalctl -u vrbot-ws-hub-fallback.service -n 30 --no-pager 2>/dev/null || true
+            echo "=== SSL logs ==="
+            journalctl -u vrbot-ws-hub.service -n 30 --no-pager 2>/dev/null || true
+            echo "=== Python check ==="
+            python3 -c "import websockets; print('websockets version:', websockets.__version__)" 2>&1 || true
             curl -s http://localhost:8765/health || echo "No health response yet"
             echo "=== Done ==="
         env:
