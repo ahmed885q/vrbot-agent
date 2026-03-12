@@ -128,6 +128,35 @@ async def _persist_agent_status(uid, status_data):
     except Exception as e:
         logger.debug(f"Persist status error: {e}")
 
+async def _lookup_agent_farm(uid, agent_id):
+    """Look up farm linked to this agent from its config in Supabase."""
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    try:
+        import urllib.request, urllib.parse
+        # Query agent config to find farm_id
+        url = (f"{SUPABASE_URL}/rest/v1/agents"
+               f"?user_id=eq.{urllib.parse.quote(uid)}"
+               f"&agent_id=eq.{urllib.parse.quote(agent_id)}"
+               f"&select=config")
+        req = urllib.request.Request(url, method="GET", headers={
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            rows = json.loads(resp.read().decode())
+            if rows and rows[0].get("config"):
+                config = rows[0]["config"]
+                farm_id = config.get("farm_id")
+                farm_name = config.get("farm_name")
+                if farm_id:
+                    logger.info(f"Agent {agent_id} linked to farm {farm_id} ({farm_name})")
+                    return {"farm_id": farm_id, "farm_name": farm_name}
+        return None
+    except Exception as e:
+        logger.debug(f"Farm lookup error: {e}")
+        return None
+
 async def handle(ws, path=None):
     auth = False; role = uid = None
     try:
@@ -159,14 +188,33 @@ async def handle(ws, path=None):
                 logger.warning(f"Agent {uid} connected without token (REQUIRE_AGENT_TOKEN=true)")
                 await ws.close(4007, "Token required"); return
 
-            await R.register_agent(ws, uid, msg.get("deviceId","unknown")); auth = True
-            await ws.send(json.dumps({"type":"auth_ok"}))
+            agent_id = msg.get("agentId", uid)  # agent_id e.g. "farm-<uuid>"
+            device_id = msg.get("deviceId", "unknown")
+            await R.register_agent(ws, uid, device_id); auth = True
+
+            # Auto-link: look up which farm this agent belongs to
+            farm_info = await _lookup_agent_farm(uid, agent_id)
+            auth_resp = {"type": "auth_ok"}
+            if farm_info:
+                auth_resp["farm_id"] = farm_info["farm_id"]
+                auth_resp["farm_name"] = farm_info["farm_name"]
+            await ws.send(json.dumps(auth_resp))
 
             # Persist agent as online
             asyncio.create_task(_persist_agent_status(uid, {
-                "p_agent_id": uid, "p_device_id": msg.get("deviceId",""),
+                "p_agent_id": agent_id, "p_device_id": device_id,
                 "p_status": "online",
             }))
+
+            # Notify dashboard with farm linkage
+            if farm_info:
+                await R._notify_dash(uid, {
+                    "type": "agent_farm_linked",
+                    "agentId": agent_id,
+                    "farm_id": farm_info["farm_id"],
+                    "farm_name": farm_info["farm_name"],
+                    "timestamp": time.time(),
+                })
         else:
             await ws.close(4005, "Bad role"); return
 
