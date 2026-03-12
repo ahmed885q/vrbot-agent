@@ -298,7 +298,7 @@ class AntiBanScheduler:
 # ═══════════════════════════════════════════════════════════════════
 
 class HumanBehavior:
-    """Anti-ban: random delays, long pauses, session breaks."""
+    """Anti-ban: random delays, long pauses, session breaks, idle browsing."""
 
     DELAY_MIN        = 2.0    # sec between tasks
     DELAY_MAX        = 8.0
@@ -308,10 +308,13 @@ class HumanBehavior:
     BREAK_EVERY      = 8      # cycles between breaks
     BREAK_MIN        = 60.0   # 1 min
     BREAK_MAX        = 180.0  # 3 min
+    IDLE_BROWSE_PROB = 0.08   # 8% chance to do idle browsing between tasks
+    IDLE_BROWSE_MIN  = 5.0    # min idle browse duration
+    IDLE_BROWSE_MAX  = 20.0   # max idle browse duration
 
     @staticmethod
     def task_delay():
-        """Delay between tasks — occasionally pauses longer."""
+        """Delay between tasks — occasionally pauses longer or does idle browsing."""
         if random.random() < HumanBehavior.LONG_PAUSE_PROB:
             d = random.uniform(HumanBehavior.LONG_PAUSE_MIN, HumanBehavior.LONG_PAUSE_MAX)
             print(f"  [anti-ban] Human pause: {d:.0f}s")
@@ -334,6 +337,47 @@ class HumanBehavior:
             and HumanBehavior.BREAK_EVERY > 0
             and (cycle_num - 1) % HumanBehavior.BREAK_EVERY == 0
         )
+
+    @staticmethod
+    def maybe_idle_browse(bot):
+        """Randomly browse screens to simulate human curiosity. ~8% chance."""
+        if random.random() >= HumanBehavior.IDLE_BROWSE_PROB:
+            return  # No idle browse this time
+
+        duration = random.uniform(HumanBehavior.IDLE_BROWSE_MIN,
+                                  HumanBehavior.IDLE_BROWSE_MAX)
+        print(f"  [anti-ban] Idle browsing ({duration:.0f}s)...")
+        log.debug(f"Idle browse: {duration:.0f}s")
+
+        actions = [
+            # Random swipes on city view (like looking around)
+            lambda: bot.swipe(
+                640 + random.randint(-200, 200), 360 + random.randint(-100, 100),
+                640 + random.randint(-200, 200), 360 + random.randint(-100, 100),
+                duration=random.randint(400, 900)),
+            # Zoom gesture (pinch simulation via fast swipe)
+            lambda: bot.swipe(640, 200, 640, 500, duration=random.randint(200, 500)),
+            # Small idle tap near center (like absent-mindedly tapping)
+            lambda: bot.tap(640 + random.randint(-50, 50),
+                            360 + random.randint(-50, 50), jitter=True),
+            # Just wait (staring at screen)
+            lambda: time.sleep(random.uniform(2, 6)),
+        ]
+
+        end_time = time.time() + duration
+        while time.time() < end_time:
+            action = random.choice(actions)
+            try:
+                action()
+            except Exception:
+                pass
+            time.sleep(random.uniform(1.5, 4.0))
+
+        # Return to city in case we navigated somewhere
+        try:
+            bot.go_to_city(max_attempts=5)
+        except Exception:
+            pass
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -599,7 +643,7 @@ def load_task_class(task_name):
 
 
 def run_task(bot, task_name, captcha=None, smart_retry=None):
-    """Run a single task with Smart Retry on failure."""
+    """Run a single task with Smart Retry + full error recovery on failure."""
     cls = load_task_class(task_name)
     if cls is None:
         return None
@@ -611,6 +655,7 @@ def run_task(bot, task_name, captcha=None, smart_retry=None):
     log.info(f"Running: {cls.name}")
 
     t0 = time.time()
+    crash_error = None
     try:
         task = cls(bot)
         success = task.run()
@@ -618,6 +663,7 @@ def run_task(bot, task_name, captcha=None, smart_retry=None):
         log.error(f"{task_name} crashed: {e}")
         traceback.print_exc()
         success = False
+        crash_error = str(e)
 
     # ── Smart Retry on failure ──
     if not success and smart_retry:
@@ -628,6 +674,10 @@ def run_task(bot, task_name, captcha=None, smart_retry=None):
         else:
             log.error(f"[{task_name}] SmartRetry also failed.")
 
+    # ── Final failure: ERROR_STATE recovery ──
+    if not success:
+        _handle_final_failure(bot, task_name, crash_error)
+
     duration = time.time() - t0
     status = "OK" if success else "FAIL"
     log.info(f"Result: {task_name} = {status} ({duration:.1f}s)")
@@ -637,6 +687,65 @@ def run_task(bot, task_name, captcha=None, smart_retry=None):
         captcha.wait_clear()
 
     return success
+
+
+def _handle_final_failure(bot, task_name, error_msg=None):
+    """Handle complete task failure after SmartRetry exhausted.
+
+    Steps:
+      1. Set BotState to ERROR_RECOVERY
+      2. Try closing popups / pressing back
+      3. Attempt go_to_city() recovery
+      4. Send alert to Socket.IO (if connected)
+      5. Update state manager with error details
+    """
+    global _bot_state
+
+    prev_state = _bot_state.state
+    _bot_state.set_state(BotState.ERROR_RECOVERY, f"{task_name} final failure")
+    _bot_state.last_error = f"{task_name}: {error_msg}" if error_msg else f"{task_name} failed"
+
+    log.warning(f"[{task_name}] Final failure — entering ERROR_RECOVERY")
+
+    # Step 1: Try closing any stacked popups via YOLO/Template
+    for attempt in range(3):
+        closed = bot.close_popup()
+        if not closed:
+            break
+        time.sleep(1)
+
+    # Step 2: Press back a few times
+    for _ in range(2):
+        bot.adb_back()
+        time.sleep(1.5)
+
+    # Step 3: Try to get back to city
+    recovered = False
+    try:
+        recovered = bot.go_to_city(max_attempts=8)
+    except Exception as e:
+        log.error(f"[{task_name}] Recovery go_to_city failed: {e}")
+
+    if recovered:
+        log.info(f"[{task_name}] Recovered to city after final failure")
+    else:
+        log.error(f"[{task_name}] Could NOT recover to city — bot may be stuck")
+
+    # Step 4: Notify via Socket.IO (if listener is connected)
+    _bot_state._notify("alert", {
+        "type": "task_final_failure",
+        "task": task_name,
+        "error": error_msg or "unknown",
+        "recovered": recovered,
+    })
+
+    # Step 5: Restore previous state
+    if recovered:
+        _bot_state.set_state(prev_state if prev_state != BotState.ERROR_RECOVERY
+                             else BotState.RUNNING, "recovered from error")
+    else:
+        # Stay in error state — main loop will handle
+        _bot_state.set_state(BotState.ERROR_RECOVERY, "stuck after failure")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -870,8 +979,9 @@ def main_enhanced(once=False, single_task=None):
                     cycle_fail += 1
                     bot.go_to_city()  # recover position on fail
 
-                # Human delay
+                # Human delay + occasional idle browsing
                 HumanBehavior.task_delay()
+                HumanBehavior.maybe_idle_browse(bot)
 
             print(f"\n  Cycle {_bot_state.cycle}: {cycle_ok} OK / {cycle_fail} FAIL")
 

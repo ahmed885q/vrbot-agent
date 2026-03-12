@@ -11,7 +11,7 @@ Changelog v5.3:
   - 4-layer detection: Template → YOLO → OpenAI → Claude
   - All v5.2 improvements retained
 """
-import subprocess, os, sys, time, json, base64, re, random, io
+import subprocess, os, sys, time, json, base64, re, random, io, math
 import numpy as np
 from PIL import Image
 
@@ -326,6 +326,9 @@ class Bot:
         """Invalidate screen cache after any interaction."""
         self._screen_cache = None
 
+    # Probability of using natural touch (short swipe-to-tap) instead of instant tap
+    _NATURAL_TOUCH_PROB = 0.25  # 25% of taps use natural approach
+
     def tap(self, x, y, jitter=True):
         elapsed = time.time() - self._last_tap_time
         min_wait = TAP_DELAY_MIN
@@ -335,10 +338,35 @@ class Bot:
             x += random.randint(-COORDINATE_JITTER, COORDINATE_JITTER)
             y += random.randint(-COORDINATE_JITTER, COORDINATE_JITTER)
         x, y = max(0, min(1279, x)), max(0, min(719, y))
-        self._adb("shell", "input", "tap", str(x), str(y))
+
+        # Natural touch: ~25% of taps simulate finger approach (short swipe ending at target)
+        if random.random() < self._NATURAL_TOUCH_PROB:
+            self._natural_tap(x, y)
+        else:
+            self._adb("shell", "input", "tap", str(x), str(y))
+
         self._last_tap_time = time.time()
         self._invalidate_cache()
         print(f"    tap ({x},{y})")
+
+    def _natural_tap(self, x, y):
+        """Simulate natural finger touch: short swipe from nearby offset ending at target.
+
+        Human fingers don't teleport — they approach from a slight offset.
+        This creates a very short swipe (5-25px, 50-150ms) that ends at the target,
+        mimicking a natural touch gesture.
+        """
+        # Small random offset for approach direction (5-25px away)
+        offset = random.randint(5, 25)
+        angle = random.uniform(0, 6.283)  # Random direction (2*pi radians)
+        start_x = int(x + offset * math.cos(angle))
+        start_y = int(y + offset * math.sin(angle))
+        start_x = max(0, min(1279, start_x))
+        start_y = max(0, min(719, start_y))
+        # Very short duration (50-150ms) to look like a tap, not a drag
+        dur = random.randint(50, 150)
+        self._adb("shell", "input", "swipe",
+                   str(start_x), str(start_y), str(x), str(y), str(dur))
 
     def swipe(self, x1, y1, x2, y2, duration=None):
         if duration is None:
