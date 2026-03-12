@@ -313,23 +313,26 @@ class AutoProvisioner:
 
             try:
                 # ─── Hetzner API Call ───
-                # client = self._get_hetzner_client()
-                # response = client.servers.create(
-                #     name=server_id,
-                #     server_type=client.server_types.get_by_name(
-                #         server_type.value + "-nvme"
-                #     ),
-                #     image=client.images.get_by_name("ubuntu-22.04"),
-                #     user_data=cloud_init,
-                #     location=client.locations.get_by_name("fsn1"),
-                #     labels={
-                #         "project": "vrbot",
-                #         "role": "farm-node",
-                #         "max_farms": str(node.max_farms)
-                #     }
-                # )
-                # node.hetzner_id = response.server.id
-                # node.ip = response.server.public_net.ipv4.ip
+                client = self._get_hetzner_client()
+                if client:
+                    response = client.servers.create(
+                        name=server_id,
+                        server_type=client.server_types.get_by_name(
+                            server_type.value + "-nvme"
+                        ),
+                        image=client.images.get_by_name("ubuntu-22.04"),
+                        user_data=cloud_init,
+                        location=client.locations.get_by_name("fsn1"),
+                        labels={
+                            "project": "vrbot",
+                            "role": "farm-node",
+                            "max_farms": str(node.max_farms)
+                        }
+                    )
+                    node.hetzner_id = response.server.id
+                    node.ip = response.server.public_net.ipv4.ip
+                else:
+                    logger.warning(f"  ⚠️ Hetzner client not available, skipping actual creation")
 
                 logger.info(
                     f"  🖥️ Server {i+1}/{count}: {server_id} "
@@ -337,17 +340,6 @@ class AutoProvisioner:
                 )
 
                 node.status = ServerStatus.INSTALLING
-
-                # ─── حفظ في Supabase ───
-                # await supabase.table("cloud_servers").insert({
-                #     "server_id": server_id,
-                #     "hetzner_id": node.hetzner_id,
-                #     "ip": node.ip,
-                #     "server_type": server_type.value,
-                #     "status": "installing",
-                #     "max_farms": node.max_farms,
-                #     "token": server_token,
-                # })
 
             except Exception as e:
                 node.status = ServerStatus.ERROR

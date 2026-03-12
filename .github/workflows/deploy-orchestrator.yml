@@ -1,0 +1,78 @@
+name: Deploy Orchestrator
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy orchestrator files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 65.109.214.187
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          source: "orchestrator/"
+          target: "/opt/vrbot/orchestrator/"
+          strip_components: 1
+
+      - name: Setup and start orchestrator
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 65.109.214.187
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 3m
+          script: |
+            set -e
+
+            echo "===== Install dependencies ====="
+            pip3 install fastapi uvicorn pydantic --break-system-packages --quiet 2>/dev/null || \
+            pip3 install fastapi uvicorn pydantic --quiet 2>/dev/null || true
+
+            echo "===== Verify files ====="
+            ls -la /opt/vrbot/orchestrator/
+            head -3 /opt/vrbot/orchestrator/api.py
+
+            echo "===== Create .env if needed ====="
+            if [ ! -f /opt/vrbot/orchestrator/.env ]; then
+              echo "HETZNER_TOKEN=" > /opt/vrbot/orchestrator/.env
+              echo "Created .env"
+            fi
+
+            echo "===== Create systemd service ====="
+            cat > /etc/systemd/system/vrbot-orchestrator.service << 'SVCEOF'
+            [Unit]
+            Description=VRBOT Orchestrator API
+            After=network.target
+            Wants=network-online.target
+
+            [Service]
+            Type=simple
+            WorkingDirectory=/opt/vrbot/orchestrator
+            EnvironmentFile=/opt/vrbot/orchestrator/.env
+            ExecStart=/usr/bin/python3 -m uvicorn api:app --host 0.0.0.0 --port 8080 --log-level info
+            Restart=always
+            RestartSec=5
+
+            [Install]
+            WantedBy=multi-user.target
+            SVCEOF
+
+            echo "===== Start service ====="
+            systemctl daemon-reload
+            systemctl enable vrbot-orchestrator.service
+            systemctl restart vrbot-orchestrator.service
+            sleep 5
+
+            echo "===== Check status ====="
+            systemctl is-active vrbot-orchestrator.service && echo "Orchestrator: OK" || echo "Orchestrator: FAIL"
+            journalctl -u vrbot-orchestrator.service -n 15 --no-pager
+
+            echo "===== Health check ====="
+            sleep 3
+            curl -s http://localhost:8080/docs || curl -s http://localhost:8080/ || echo "Health check pending..."
