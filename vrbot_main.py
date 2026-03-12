@@ -696,7 +696,7 @@ def _handle_final_failure(bot, task_name, error_msg=None):
       1. Set BotState to ERROR_RECOVERY
       2. Try closing popups / pressing back
       3. Attempt go_to_city() recovery
-      4. Send alert to Socket.IO (if connected)
+      4. Send alert to Hub WebSocket (if connected)
       5. Update state manager with error details
     """
     global _bot_state
@@ -731,7 +731,7 @@ def _handle_final_failure(bot, task_name, error_msg=None):
     else:
         log.error(f"[{task_name}] Could NOT recover to city — bot may be stuck")
 
-    # Step 4: Notify via Socket.IO (if listener is connected)
+    # Step 4: Notify via Hub WebSocket (if listener is connected)
     _bot_state._notify("alert", {
         "type": "task_final_failure",
         "task": task_name,
@@ -883,13 +883,15 @@ def main_enhanced(once=False, single_task=None):
     _bot_state.start_time = time.time()
     _bot_state.set_state(BotState.STARTING, "initializing")
 
-    # ── Socket.IO (optional — connects if server URL configured) ──
-    ws_client = None
+    # ── WebSocket Hub (connects to ws.vrbot.me relay) ──
+    hub_client = None
     try:
-        from socketio_client import integrate_socketio
-        ws_client = integrate_socketio(_bot_state)
+        from hub_client import integrate_hub
+        hub_client = integrate_hub(_bot_state)
+        if hub_client:
+            log.info("Hub WebSocket connected — dashboard can monitor live")
     except Exception as e:
-        log.debug(f"Socket.IO not available: {e}")
+        log.debug(f"Hub WebSocket not available: {e}")
 
     # ── Single task ──
     if single_task:
@@ -1009,9 +1011,9 @@ def main_enhanced(once=False, single_task=None):
     bot.print_stats()
     _bot_state.set_state(BotState.STOPPED, "session complete")
 
-    # Disconnect Socket.IO
-    if ws_client:
-        ws_client.disconnect()
+    # Disconnect Hub WebSocket
+    if hub_client:
+        hub_client.disconnect()
 
 
 # ═══════════════════════════════════════════════════════════════════

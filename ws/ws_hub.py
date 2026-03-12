@@ -115,6 +115,8 @@ async def handle(ws, path=None):
                     await R.send_to_agents(uid, {"type":"run_tasks","farmId":msg.get("farmId"),"tasks":msg.get("tasks",[]),"from":"dashboard"})
                 elif t == "stop_tasks":
                     await R.send_to_agents(uid, {"type":"stop_tasks","farmId":msg.get("farmId"),"from":"dashboard"})
+                elif t in ("pause","resume","get_status"):
+                    await R.send_to_agents(uid, {"type":t,"from":"dashboard"})
                 elif t == "ping":
                     await ws.send(json.dumps({"type":"pong","timestamp":time.time()}))
                 elif t == "get_agents":
@@ -122,7 +124,7 @@ async def handle(ws, path=None):
                 else:
                     msg["from"] = "dashboard"; await R.send_to_agents(uid, msg)
             elif role == "agent":
-                if t in ("task_status","task_complete","task_error","agent_status","log"):
+                if t in ("task_status","task_complete","task_error","agent_status","agent_alert","agent_heartbeat","log"):
                     msg["agentId"] = uid; msg["timestamp"] = msg.get("timestamp", time.time())
                     await R._notify_dash(uid, msg)
                 elif t == "ping":

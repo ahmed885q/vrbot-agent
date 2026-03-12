@@ -43,6 +43,9 @@ class HubClient:
         # Callbacks - set these from your agent
         self.on_run_tasks = None  # def handler(farm_id, tasks, from_client): ...
         self.on_stop_tasks = None  # def handler(): ...
+        self.on_pause = None      # def handler(): ...
+        self.on_resume = None     # def handler(): ...
+        self.on_get_status = None # def handler() -> dict: ...
         self.on_connected = None  # def handler(): ...
         self.on_disconnected = None  # def handler(): ...
 
@@ -139,6 +142,22 @@ class HubClient:
                 if self.on_stop_tasks:
                     self.on_stop_tasks()
 
+            elif msg_type == "pause":
+                logger.info("Received PAUSE command")
+                if self.on_pause:
+                    self.on_pause()
+
+            elif msg_type == "resume":
+                logger.info("Received RESUME command")
+                if self.on_resume:
+                    self.on_resume()
+
+            elif msg_type == "get_status":
+                logger.info("Received GET_STATUS request")
+                if self.on_get_status:
+                    status = self.on_get_status()
+                    self.send_agent_status(status or {})
+
             elif msg_type == "pong":
                 pass  # Heartbeat response
 
@@ -216,6 +235,99 @@ class HubClient:
             "type": "agent_status",
             "payload": status,
         })
+
+    def send_alert(self, alert_type: str, message: str, data: dict = None):
+        """Send alert (captcha, error_recovery, task_final_failure) to dashboard"""
+        self.send({
+            "type": "agent_alert",
+            "payload": {
+                "alert_type": alert_type,
+                "message": message,
+                **(data or {}),
+            },
+        })
+
+    def send_heartbeat(self, status: dict = None):
+        """Send heartbeat with optional status snapshot"""
+        self.send({
+            "type": "agent_heartbeat",
+            "payload": status or {},
+        })
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Integration Helper — wire BotStateManager → Hub WebSocket
+# ═══════════════════════════════════════════════════════════════════
+
+def integrate_hub(bot_state_manager, user_id: str = None):
+    """Connect HubClient and wire it to BotStateManager.
+
+    Replaces the old socketio_client integration. Routes all state
+    changes, task results, and alerts through ws_hub.py relay.
+
+    Args:
+        bot_state_manager: BotStateManager instance from vrbot_main
+        user_id: Supabase user ID for Hub authentication
+
+    Returns:
+        HubClient if connected, None otherwise
+    """
+    import os
+    uid = user_id or os.environ.get("VRBOT_USER_ID", "agent-default")
+
+    hub = HubClient(user_id=uid)
+
+    # Wire BotStateManager events → Hub messages
+    def on_state_event(event: str, data: dict):
+        if event == "state_change":
+            hub.send_agent_status(data)
+        elif event == "task_update":
+            hub.send_status(data.get("task_state", "running"), {
+                "task": data.get("task", ""),
+                "currentTask": data.get("task", ""),
+            })
+        elif event == "task_result":
+            task = data.get("task", "")
+            if data.get("success"):
+                hub.send_task_complete(task, {
+                    "success": True,
+                    "duration": data.get("duration", 0),
+                })
+            else:
+                hub.send_error(f"{task} failed", None)
+        elif event == "alert":
+            hub.send_alert(
+                data.get("type", "unknown"),
+                data.get("message", ""),
+                data,
+            )
+
+    bot_state_manager.add_listener(on_state_event)
+
+    # Start heartbeat that sends full status every 30s
+    def heartbeat_loop():
+        import time as _time
+        while hub.running:
+            if hub.connected:
+                hub.send_heartbeat(bot_state_manager.get_status())
+            _time.sleep(30)
+
+    hub.connect()
+    # Give it a moment to auth
+    import time as _time
+    _time.sleep(2)
+
+    if hub.connected:
+        ht = threading.Thread(target=heartbeat_loop, daemon=True, name="hub-heartbeat")
+        ht.start()
+        logger.info("Hub WebSocket integrated with BotStateManager")
+        return hub
+    else:
+        logger.warning("Hub connection pending — will retry in background")
+        # Still return hub; it auto-reconnects
+        ht = threading.Thread(target=heartbeat_loop, daemon=True, name="hub-heartbeat")
+        ht.start()
+        return hub
 
 
 # ===== EXAMPLE USAGE =====
