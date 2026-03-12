@@ -15,30 +15,17 @@ jobs:
           port: 22
           command_timeout: 2m
           script: |
-            echo "===== RUNNING PROCESSES ====="
-            ps aux | grep -iE 'python|node|register|signup|email|account|gsmini|vrbot|selenium|playwright|puppeteer' | grep -v grep
+            echo "===== CREATE_TOUCH.PY CONTENT ====="
+            cat /tmp/create_touch.py 2>/dev/null || echo "File not found"
             echo ""
-            echo "===== SYSTEMD SERVICES (vrbot) ====="
-            systemctl list-units --type=service | grep -i vrbot
+            echo "===== CREATE_TOUCH PROCESS INFO ====="
+            ps aux | grep create_touch | grep -v grep
             echo ""
-            echo "===== SCREEN/TMUX SESSIONS ====="
-            screen -ls 2>/dev/null || echo "No screen sessions"
-            tmux ls 2>/dev/null || echo "No tmux sessions"
+            echo "===== FILES IN /tmp/ related ====="
+            ls -la /tmp/create* /tmp/account* /tmp/email* /tmp/register* /tmp/*.json /tmp/*.csv /tmp/*.txt 2>/dev/null | head -30
             echo ""
-            echo "===== CRON JOBS ====="
-            crontab -l 2>/dev/null || echo "No cron jobs"
+            echo "===== LAST 50 LINES OF ANY LOG ====="
+            find /tmp -name "*.log" -newer /tmp/create_touch.py 2>/dev/null -exec echo "--- {} ---" \; -exec tail -20 {} \;
             echo ""
-            echo "===== PM2 PROCESSES ====="
-            pm2 list 2>/dev/null || echo "No pm2"
-            echo ""
-            echo "===== DOCKER CONTAINERS ====="
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || echo "No docker"
-            echo ""
-            echo "===== /opt/vrbot/ CONTENTS ====="
-            ls -la /opt/vrbot/ 2>/dev/null || echo "No /opt/vrbot"
-            echo ""
-            echo "===== NOHUP / LOG FILES ====="
-            ls -la /opt/vrbot/*.log /opt/vrbot/nohup.out /root/nohup.out /tmp/*register* /tmp/*signup* 2>/dev/null || echo "No log files found"
-            echo ""
-            echo "===== RECENT PYTHON FILES ====="
-            find /opt/vrbot /root -name "*.py" -mtime -30 -type f 2>/dev/null | head -30
+            echo "===== /root/ relevant files ====="
+            ls -la /root/*.py /root/*.sh /root/*.json /root/*.csv /root/*.log 2>/dev/null | head -20
