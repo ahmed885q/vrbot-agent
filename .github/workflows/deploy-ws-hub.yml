@@ -19,6 +19,8 @@ jobs:
           envs: SUPABASE_URL,SUPABASE_SERVICE_KEY
           script: |
             set -e
+            echo "=== Step 0: Install dependencies ==="
+            pip3 install websockets --break-system-packages --quiet 2>/dev/null || pip3 install websockets --quiet 2>/dev/null || true
             echo "=== Step 1: Download ws_hub.py ==="
             mkdir -p /opt/vrbot/ws_hub
             curl -sL https://raw.githubusercontent.com/ahmed885q/vrbot-agent/main/ws/ws_hub.py -o /opt/vrbot/ws_hub/ws_hub.py
@@ -34,7 +36,7 @@ jobs:
             systemctl restart vrbot-ws-hub-fallback.service || systemctl start vrbot-ws-hub-fallback.service || true
             systemctl restart vrbot-ws-hub.service || systemctl start vrbot-ws-hub.service || true
             systemctl enable vrbot-ws-hub.service vrbot-ws-hub-fallback.service 2>/dev/null || true
-            sleep 2
+            sleep 4
             echo "=== Status ==="
             systemctl is-active vrbot-ws-hub-fallback.service && echo "Fallback: OK" || echo "Fallback: FAIL"
             systemctl is-active vrbot-ws-hub.service && echo "SSL: OK" || echo "SSL: FAIL"
