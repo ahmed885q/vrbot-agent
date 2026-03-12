@@ -1,0 +1,828 @@
+{
+  "version": "2.0",
+  "resolution": "1280x720",
+  "total_templates": 131,
+  "categories": {
+    "banners": 3,
+    "buttons": 62,
+    "buildings": 6,
+    "icons": 19,
+    "panels": 6,
+    "popups": 2,
+    "screens": 9,
+    "tabs": 11,
+    "text": 4,
+    "tiles": 7,
+    "timers": 2
+  },
+  "templates": {
+    "banners": [
+      {
+        "file": "banner_kingdom_mayhem.png",
+        "name": "banner_kingdom_mayhem",
+        "width": 135,
+        "height": 65
+      },
+      {
+        "file": "banner_kings_return.png",
+        "name": "banner_kings_return",
+        "width": 120,
+        "height": 65
+      },
+      {
+        "file": "banner_mall.png",
+        "name": "banner_mall",
+        "width": 100,
+        "height": 65
+      }
+    ],
+    "buttons": [
+      {
+        "file": "btn_alliance.png",
+        "name": "btn_alliance",
+        "width": 65,
+        "height": 70
+      },
+      {
+        "file": "btn_alliance_icon.png",
+        "name": "btn_alliance_icon",
+        "width": 50,
+        "height": 50
+      },
+      {
+        "file": "btn_back.png",
+        "name": "btn_back",
+        "width": 110,
+        "height": 40
+      },
+      {
+        "file": "btn_building_castle.png",
+        "name": "btn_building_castle",
+        "width": 80,
+        "height": 70
+      },
+      {
+        "file": "btn_building_info.png",
+        "name": "btn_building_info",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "file": "btn_building_settings.png",
+        "name": "btn_building_settings",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "file": "btn_building_upgrade.png",
+        "name": "btn_building_upgrade",
+        "width": 60,
+        "height": 60
+      },
+      {
+        "file": "btn_claim_green.png",
+        "name": "btn_claim_green",
+        "width": 210,
+        "height": 52
+      },
+      {
+        "file": "btn_close_x.png",
+        "name": "btn_close_x",
+        "width": 55,
+        "height": 40
+      },
+      {
+        "file": "btn_close_x_panel.png",
+        "name": "btn_close_x_panel",
+        "width": 45,
+        "height": 45
+      },
+      {
+        "file": "btn_close_x_upgrade.png",
+        "name": "btn_close_x_upgrade",
+        "width": 55,
+        "height": 40
+      },
+      {
+        "file": "btn_compass.png",
+        "name": "btn_compass",
+        "width": 60,
+        "height": 65
+      },
+      {
+        "file": "btn_complete_all.png",
+        "name": "btn_complete_all",
+        "width": 245,
+        "height": 60
+      },
+      {
+        "file": "btn_delete_read_mail.png",
+        "name": "btn_delete_read_mail",
+        "width": 200,
+        "height": 35
+      },
+      {
+        "file": "btn_donate_gems.png",
+        "name": "btn_donate_gems",
+        "width": 245,
+        "height": 50
+      },
+      {
+        "file": "btn_donate_gold.png",
+        "name": "btn_donate_gold",
+        "width": 205,
+        "height": 50
+      },
+      {
+        "file": "btn_download.png",
+        "name": "btn_download",
+        "width": 75,
+        "height": 70
+      },
+      {
+        "file": "btn_event_kingdom.png",
+        "name": "btn_event_kingdom",
+        "width": 130,
+        "height": 65
+      },
+      {
+        "file": "btn_event_kings_return.png",
+        "name": "btn_event_kings_return",
+        "width": 120,
+        "height": 65
+      },
+      {
+        "file": "btn_event_mall.png",
+        "name": "btn_event_mall",
+        "width": 115,
+        "height": 65
+      },
+      {
+        "file": "btn_gather.png",
+        "name": "btn_gather",
+        "width": 160,
+        "height": 40
+      },
+      {
+        "file": "btn_go_blue.png",
+        "name": "btn_go_blue",
+        "width": 110,
+        "height": 40
+      },
+      {
+        "file": "btn_go_event.png",
+        "name": "btn_go_event",
+        "width": 110,
+        "height": 40
+      },
+      {
+        "file": "btn_go_requirement.png",
+        "name": "btn_go_requirement",
+        "width": 145,
+        "height": 45
+      },
+      {
+        "file": "btn_hero_grade.png",
+        "name": "btn_hero_grade",
+        "width": 135,
+        "height": 30
+      },
+      {
+        "file": "btn_heroes.png",
+        "name": "btn_heroes",
+        "width": 60,
+        "height": 70
+      },
+      {
+        "file": "btn_info_popup.png",
+        "name": "btn_info_popup",
+        "width": 35,
+        "height": 35
+      },
+      {
+        "file": "btn_items.png",
+        "name": "btn_items",
+        "width": 65,
+        "height": 70
+      },
+      {
+        "file": "btn_mail.png",
+        "name": "btn_mail",
+        "width": 60,
+        "height": 70
+      },
+      {
+        "file": "btn_more.png",
+        "name": "btn_more",
+        "width": 60,
+        "height": 70
+      },
+      {
+        "file": "btn_ok_green.png",
+        "name": "btn_ok_green",
+        "width": 340,
+        "height": 50
+      },
+      {
+        "file": "btn_popup_close_x.png",
+        "name": "btn_popup_close_x",
+        "width": 55,
+        "height": 40
+      },
+      {
+        "file": "btn_prestige_shop.png",
+        "name": "btn_prestige_shop",
+        "width": 125,
+        "height": 85
+      },
+      {
+        "file": "btn_quest_claim.png",
+        "name": "btn_quest_claim",
+        "width": 150,
+        "height": 45
+      },
+      {
+        "file": "btn_quest_go.png",
+        "name": "btn_quest_go",
+        "width": 150,
+        "height": 45
+      },
+      {
+        "file": "btn_quests.png",
+        "name": "btn_quests",
+        "width": 60,
+        "height": 70
+      },
+      {
+        "file": "btn_read_claim_all.png",
+        "name": "btn_read_claim_all",
+        "width": 220,
+        "height": 35
+      },
+      {
+        "file": "btn_search_blue.png",
+        "name": "btn_search_blue",
+        "width": 255,
+        "height": 55
+      },
+      {
+        "file": "btn_search_conquest.png",
+        "name": "btn_search_conquest",
+        "width": 240,
+        "height": 55
+      },
+      {
+        "file": "btn_search_monster.png",
+        "name": "btn_search_monster",
+        "width": 220,
+        "height": 40
+      },
+      {
+        "file": "btn_search_worldmap.png",
+        "name": "btn_search_worldmap",
+        "width": 50,
+        "height": 35
+      },
+      {
+        "file": "btn_share_popup.png",
+        "name": "btn_share_popup",
+        "width": 35,
+        "height": 35
+      },
+      {
+        "file": "btn_shield.png",
+        "name": "btn_shield",
+        "width": 50,
+        "height": 70
+      },
+      {
+        "file": "btn_toolbar_mail2.png",
+        "name": "btn_toolbar_mail2",
+        "width": 50,
+        "height": 80
+      },
+      {
+        "file": "btn_toolbar_star.png",
+        "name": "btn_toolbar_star",
+        "width": 50,
+        "height": 80
+      },
+      {
+        "file": "btn_tribe_assist.png",
+        "name": "btn_tribe_assist",
+        "width": 95,
+        "height": 50
+      },
+      {
+        "file": "btn_tribe_bank.png",
+        "name": "btn_tribe_bank",
+        "width": 165,
+        "height": 80
+      },
+      {
+        "file": "btn_tribe_crystal.png",
+        "name": "btn_tribe_crystal",
+        "width": 135,
+        "height": 50
+      },
+      {
+        "file": "btn_tribe_gifts.png",
+        "name": "btn_tribe_gifts",
+        "width": 95,
+        "height": 50
+      },
+      {
+        "file": "btn_tribe_honor_wall.png",
+        "name": "btn_tribe_honor_wall",
+        "width": 135,
+        "height": 70
+      },
+      {
+        "file": "btn_tribe_materials.png",
+        "name": "btn_tribe_materials",
+        "width": 125,
+        "height": 50
+      },
+      {
+        "file": "btn_tribe_members.png",
+        "name": "btn_tribe_members",
+        "width": 145,
+        "height": 80
+      },
+      {
+        "file": "btn_tribe_odyssey.png",
+        "name": "btn_tribe_odyssey",
+        "width": 160,
+        "height": 80
+      },
+      {
+        "file": "btn_tribe_settings.png",
+        "name": "btn_tribe_settings",
+        "width": 120,
+        "height": 50
+      },
+      {
+        "file": "btn_tribe_shop.png",
+        "name": "btn_tribe_shop",
+        "width": 95,
+        "height": 50
+      },
+      {
+        "file": "btn_tribe_technology.png",
+        "name": "btn_tribe_technology",
+        "width": 200,
+        "height": 80
+      },
+      {
+        "file": "btn_tribe_trial.png",
+        "name": "btn_tribe_trial",
+        "width": 130,
+        "height": 70
+      },
+      {
+        "file": "btn_tribe_war.png",
+        "name": "btn_tribe_war",
+        "width": 150,
+        "height": 70
+      },
+      {
+        "file": "btn_tribe_warehouse.png",
+        "name": "btn_tribe_warehouse",
+        "width": 125,
+        "height": 50
+      },
+      {
+        "file": "btn_worldmap_eye.png",
+        "name": "btn_worldmap_eye",
+        "width": 60,
+        "height": 55
+      },
+      {
+        "file": "btn_worldmap_search.png",
+        "name": "btn_worldmap_search",
+        "width": 60,
+        "height": 55
+      },
+      {
+        "file": "btn_worldmap_tools.png",
+        "name": "btn_worldmap_tools",
+        "width": 60,
+        "height": 55
+      }
+    ],
+    "buildings": [
+      {
+        "file": "building_icon_crown.png",
+        "name": "building_icon_crown",
+        "width": 55,
+        "height": 55
+      },
+      {
+        "file": "building_icon_eternal_drought.png",
+        "name": "building_icon_eternal_drought",
+        "width": 55,
+        "height": 55
+      },
+      {
+        "file": "building_icon_hammer.png",
+        "name": "building_icon_hammer",
+        "width": 50,
+        "height": 50
+      },
+      {
+        "file": "building_icon_scroll.png",
+        "name": "building_icon_scroll",
+        "width": 60,
+        "height": 55
+      },
+      {
+        "file": "building_icon_ship.png",
+        "name": "building_icon_ship",
+        "width": 55,
+        "height": 55
+      },
+      {
+        "file": "building_icon_sword.png",
+        "name": "building_icon_sword",
+        "width": 50,
+        "height": 50
+      }
+    ],
+    "icons": [
+      {
+        "file": "icon_arena.png",
+        "name": "icon_arena",
+        "width": 245,
+        "height": 310
+      },
+      {
+        "file": "icon_chest_100.png",
+        "name": "icon_chest_100",
+        "width": 120,
+        "height": 45
+      },
+      {
+        "file": "icon_chest_20.png",
+        "name": "icon_chest_20",
+        "width": 80,
+        "height": 45
+      },
+      {
+        "file": "icon_chest_40.png",
+        "name": "icon_chest_40",
+        "width": 100,
+        "height": 45
+      },
+      {
+        "file": "icon_chest_60.png",
+        "name": "icon_chest_60",
+        "width": 95,
+        "height": 45
+      },
+      {
+        "file": "icon_chest_80.png",
+        "name": "icon_chest_80",
+        "width": 105,
+        "height": 45
+      },
+      {
+        "file": "icon_drill_ground.png",
+        "name": "icon_drill_ground",
+        "width": 290,
+        "height": 310
+      },
+      {
+        "file": "icon_freeze.png",
+        "name": "icon_freeze",
+        "width": 35,
+        "height": 30
+      },
+      {
+        "file": "icon_minimap.png",
+        "name": "icon_minimap",
+        "width": 85,
+        "height": 90
+      },
+      {
+        "file": "icon_mystic_realm.png",
+        "name": "icon_mystic_realm",
+        "width": 410,
+        "height": 310
+      },
+      {
+        "file": "icon_notification_bell.png",
+        "name": "icon_notification_bell",
+        "width": 65,
+        "height": 75
+      },
+      {
+        "file": "icon_notification_tribe.png",
+        "name": "icon_notification_tribe",
+        "width": 65,
+        "height": 80
+      },
+      {
+        "file": "icon_profile_avatar.png",
+        "name": "icon_profile_avatar",
+        "width": 75,
+        "height": 75
+      },
+      {
+        "file": "icon_resource_food.png",
+        "name": "icon_resource_food",
+        "width": 65,
+        "height": 30
+      },
+      {
+        "file": "icon_resource_gems.png",
+        "name": "icon_resource_gems",
+        "width": 65,
+        "height": 30
+      },
+      {
+        "file": "icon_resource_iron.png",
+        "name": "icon_resource_iron",
+        "width": 65,
+        "height": 30
+      },
+      {
+        "file": "icon_resource_stone.png",
+        "name": "icon_resource_stone",
+        "width": 65,
+        "height": 30
+      },
+      {
+        "file": "icon_resource_wood.png",
+        "name": "icon_resource_wood",
+        "width": 65,
+        "height": 30
+      },
+      {
+        "file": "icon_settings_gear.png",
+        "name": "icon_settings_gear",
+        "width": 35,
+        "height": 30
+      }
+    ],
+    "panels": [
+      {
+        "file": "panel_conquest_quests.png",
+        "name": "panel_conquest_quests",
+        "width": 310,
+        "height": 155
+      },
+      {
+        "file": "panel_daily_quests_sidebar.png",
+        "name": "panel_daily_quests_sidebar",
+        "width": 255,
+        "height": 220
+      },
+      {
+        "file": "panel_event_hub.png",
+        "name": "panel_event_hub",
+        "width": 295,
+        "height": 65
+      },
+      {
+        "file": "panel_event_hub_expanded.png",
+        "name": "panel_event_hub_expanded",
+        "width": 295,
+        "height": 85
+      },
+      {
+        "file": "panel_event_hub_new.png",
+        "name": "panel_event_hub_new",
+        "width": 290,
+        "height": 80
+      },
+      {
+        "file": "panel_resource_costs.png",
+        "name": "panel_resource_costs",
+        "width": 470,
+        "height": 40
+      }
+    ],
+    "popups": [
+      {
+        "file": "popup_monster_info.png",
+        "name": "popup_monster_info",
+        "width": 450,
+        "height": 380
+      },
+      {
+        "file": "popup_resource_point.png",
+        "name": "popup_resource_point",
+        "width": 460,
+        "height": 415
+      }
+    ],
+    "screens": [
+      {
+        "file": "screen_city_event_report.png",
+        "name": "screen_city_event_report",
+        "width": 350,
+        "height": 40
+      },
+      {
+        "file": "screen_daily_quests.png",
+        "name": "screen_daily_quests",
+        "width": 200,
+        "height": 45
+      },
+      {
+        "file": "screen_hero.png",
+        "name": "screen_hero",
+        "width": 120,
+        "height": 40
+      },
+      {
+        "file": "screen_mail.png",
+        "name": "screen_mail",
+        "width": 170,
+        "height": 40
+      },
+      {
+        "file": "screen_special_farmer_event.png",
+        "name": "screen_special_farmer_event",
+        "width": 480,
+        "height": 40
+      },
+      {
+        "file": "screen_staging_post.png",
+        "name": "screen_staging_post",
+        "width": 195,
+        "height": 40
+      },
+      {
+        "file": "screen_technology.png",
+        "name": "screen_technology",
+        "width": 190,
+        "height": 40
+      },
+      {
+        "file": "screen_tribe.png",
+        "name": "screen_tribe",
+        "width": 120,
+        "height": 40
+      },
+      {
+        "file": "screen_upgrade_power.png",
+        "name": "screen_upgrade_power",
+        "width": 700,
+        "height": 40
+      }
+    ],
+    "tabs": [
+      {
+        "file": "tab_daily_quests.png",
+        "name": "tab_daily_quests",
+        "width": 160,
+        "height": 40
+      },
+      {
+        "file": "tab_mail_kingdom.png",
+        "name": "tab_mail_kingdom",
+        "width": 140,
+        "height": 40
+      },
+      {
+        "file": "tab_mail_personal.png",
+        "name": "tab_mail_personal",
+        "width": 140,
+        "height": 35
+      },
+      {
+        "file": "tab_mail_report.png",
+        "name": "tab_mail_report",
+        "width": 140,
+        "height": 35
+      },
+      {
+        "file": "tab_mail_system.png",
+        "name": "tab_mail_system",
+        "width": 140,
+        "height": 40
+      },
+      {
+        "file": "tab_mail_tribe.png",
+        "name": "tab_mail_tribe",
+        "width": 140,
+        "height": 40
+      },
+      {
+        "file": "tab_quests.png",
+        "name": "tab_quests",
+        "width": 150,
+        "height": 40
+      },
+      {
+        "file": "tab_tech_basic_internal.png",
+        "name": "tab_tech_basic_internal",
+        "width": 165,
+        "height": 50
+      },
+      {
+        "file": "tab_tech_basic_military.png",
+        "name": "tab_tech_basic_military",
+        "width": 165,
+        "height": 40
+      },
+      {
+        "file": "tab_tech_skills.png",
+        "name": "tab_tech_skills",
+        "width": 165,
+        "height": 35
+      },
+      {
+        "file": "tab_tech_tribe_territory.png",
+        "name": "tab_tech_tribe_territory",
+        "width": 165,
+        "height": 45
+      }
+    ],
+    "text": [
+      {
+        "file": "text_chiefs_hall.png",
+        "name": "text_chiefs_hall",
+        "width": 185,
+        "height": 50
+      },
+      {
+        "file": "text_level_24_to_25.png",
+        "name": "text_level_24_to_25",
+        "width": 460,
+        "height": 35
+      },
+      {
+        "file": "text_local_time.png",
+        "name": "text_local_time",
+        "width": 210,
+        "height": 35
+      },
+      {
+        "file": "text_monster_timer.png",
+        "name": "text_monster_timer",
+        "width": 170,
+        "height": 30
+      }
+    ],
+    "tiles": [
+      {
+        "file": "tile_farm.png",
+        "name": "tile_farm",
+        "width": 150,
+        "height": 145
+      },
+      {
+        "file": "tile_gold_mine.png",
+        "name": "tile_gold_mine",
+        "width": 160,
+        "height": 145
+      },
+      {
+        "file": "tile_monster.png",
+        "name": "tile_monster",
+        "width": 150,
+        "height": 145
+      },
+      {
+        "file": "tile_niflung.png",
+        "name": "tile_niflung",
+        "width": 150,
+        "height": 145
+      },
+      {
+        "file": "tile_quarry.png",
+        "name": "tile_quarry",
+        "width": 150,
+        "height": 145
+      },
+      {
+        "file": "tile_sawmill.png",
+        "name": "tile_sawmill",
+        "width": 150,
+        "height": 145
+      },
+      {
+        "file": "tile_shadowflame_assassin.png",
+        "name": "tile_shadowflame_assassin",
+        "width": 150,
+        "height": 145
+      }
+    ],
+    "timers": [
+      {
+        "file": "timer_event_1.png",
+        "name": "timer_event_1",
+        "width": 110,
+        "height": 30
+      },
+      {
+        "file": "timer_event_2.png",
+        "name": "timer_event_2",
+        "width": 130,
+        "height": 30
+      }
+    ]
+  }
+}

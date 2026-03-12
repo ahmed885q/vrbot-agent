@@ -1,14 +1,37 @@
 """
-VRBOT Config v5.2 — Optimized Settings
+VRBOT Config v5.3 — Dual Backend (LDPlayer + Docker/Redroid)
 """
-# --- ADB ---
+import os
+
+# --- Backend ---
+# "ldplayer"  = Local LDPlayer emulator via ADB (Windows)
+# "docker"    = Redroid containers via docker exec (Server)
+BACKEND = os.environ.get("VRBOT_BACKEND", "ldplayer")
+
+# --- ADB (LDPlayer backend) ---
 ADB_EXE = r"C:\LDPlayer\LDPlayer9\adb.exe"
 ADB_DEVICE = "emulator-5554"
 
+# --- Docker (Redroid backend) ---
+DOCKER_CONTAINER = os.environ.get("VRBOT_CONTAINER", "farm_001")
+# SSH to remote server (None = local docker, "root@88.99.64.19" = remote)
+DOCKER_SSH = os.environ.get("VRBOT_DOCKER_SSH", None)
+
 # --- AI Provider ---
-AI_PROVIDER = "openai"  # "openai" or "anthropic"
+AI_PROVIDER = "anthropic"  # "openai" or "anthropic"
 OPENAI_MODEL = "gpt-4o-mini"
 CLAUDE_MODEL = "claude-sonnet-4-20250514"
+
+# --- API Keys (loaded from .env or environment) ---
+# Create a .env file with: ANTHROPIC_API_KEY=sk-ant-...
+_env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(_env_path):
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
 
 # --- YOLO ONNX (FREE - runs locally, no PyTorch needed) ---
 YOLO_ENABLED = True

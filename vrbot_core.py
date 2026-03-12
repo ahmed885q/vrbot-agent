@@ -16,7 +16,8 @@ import numpy as np
 from PIL import Image
 
 from vrbot_config import (
-    ADB_EXE, ADB_DEVICE, DEBUG_DIR,
+    BACKEND, ADB_EXE, ADB_DEVICE, DEBUG_DIR,
+    DOCKER_CONTAINER, DOCKER_SSH,
     TAP_DELAY_MIN, TAP_DELAY_MAX, COORDINATE_JITTER,
     TASK_DELAY_MIN, TASK_DELAY_MAX,
     SESSION_BREAK_INTERVAL, SESSION_BREAK_DURATION,
@@ -277,8 +278,49 @@ class Bot:
     # ════════════════════════════════════════════════════
 
     def _adb(self, *args):
+        """Execute ADB command — routes to LDPlayer ADB or Docker backend."""
+        if BACKEND == "docker":
+            return self._docker_exec(*args)
         cmd = [ADB_EXE, "-s", ADB_DEVICE] + list(args)
         return subprocess.run(cmd, capture_output=True, timeout=15)
+
+    def _docker_exec(self, *args):
+        """Execute command inside a Docker/Redroid container.
+
+        Translates ADB commands to docker exec equivalents:
+          adb shell <cmd>      → docker exec <container> <cmd>
+          adb exec-out <cmd>   → docker exec <container> <cmd>
+          adb pull <src> <dst> → docker cp <container>:<src> <dst>
+        """
+        args = list(args)
+        docker_cmd = None
+
+        if args[0] == "shell":
+            # adb shell <cmd> → docker exec <container> <cmd>
+            shell_cmd = " ".join(args[1:])
+            docker_cmd = ["docker", "exec", DOCKER_CONTAINER, "sh", "-c", shell_cmd]
+        elif args[0] == "exec-out":
+            # adb exec-out <cmd> → docker exec <container> <cmd>
+            shell_cmd = " ".join(args[1:])
+            docker_cmd = ["docker", "exec", DOCKER_CONTAINER, "sh", "-c", shell_cmd]
+        elif args[0] == "pull":
+            # adb pull <remote> <local> → docker cp <container>:<remote> <local>
+            if len(args) >= 3:
+                remote_path, local_path = args[1], args[2]
+                docker_cmd = ["docker", "cp", f"{DOCKER_CONTAINER}:{remote_path}", local_path]
+            else:
+                return subprocess.CompletedProcess(args, 1, b"", b"pull needs 2 args")
+        else:
+            # Unknown — treat as shell command
+            shell_cmd = " ".join(args)
+            docker_cmd = ["docker", "exec", DOCKER_CONTAINER, "sh", "-c", shell_cmd]
+
+        # Wrap with SSH if running remotely
+        if DOCKER_SSH:
+            remote_str = " ".join(f'"{a}"' if " " in a else a for a in docker_cmd)
+            docker_cmd = ["ssh", "-o", "StrictHostKeyChecking=no", DOCKER_SSH, remote_str]
+
+        return subprocess.run(docker_cmd, capture_output=True, timeout=30)
 
     def _invalidate_cache(self):
         """Invalidate screen cache after any interaction."""
@@ -326,6 +368,9 @@ class Bot:
             name = f"shot_{self._shot_counter:04d}"
         path = os.path.join(DEBUG_DIR, name + ".png")
 
+        if BACKEND == "docker":
+            return self._screenshot_docker(path)
+
         # Method 1: exec-out (fast, fewer corrupt PNGs on real devices)
         try:
             result = subprocess.run(
@@ -362,6 +407,44 @@ class Bot:
             time.sleep(0.5)
 
         print("  [screenshot] WARNING: All attempts failed, using last file")
+
+    def _screenshot_docker(self, path):
+        """Screenshot via Docker exec — fast pipe method."""
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else DEBUG_DIR, exist_ok=True)
+
+        # Method 1: exec-out pipe (fastest — no temp file on device)
+        try:
+            result = self._adb("exec-out", "screencap", "-p")
+            if result.returncode == 0 and len(result.stdout) > 5000:
+                with open(path, "wb") as f:
+                    f.write(result.stdout)
+                img = Image.open(path)
+                img.verify()
+                self._last_screenshot_path = path
+                self._last_screenshot_time = time.time()
+                return path
+        except Exception:
+            pass
+
+        # Method 2: screencap + docker cp (reliable fallback)
+        for attempt in range(3):
+            self._adb("shell", "screencap", "-p", "/data/vrbot_screen.png")
+            time.sleep(0.3)
+            self._adb("pull", "/data/vrbot_screen.png", path)
+            if os.path.exists(path) and os.path.getsize(path) > 5000:
+                try:
+                    img = Image.open(path)
+                    img.verify()
+                    self._last_screenshot_path = path
+                    self._last_screenshot_time = time.time()
+                    return path
+                except Exception:
+                    print(f"  [screenshot] Corrupt PNG (attempt {attempt+1}/3)")
+            else:
+                print(f"  [screenshot] Empty/missing (attempt {attempt+1}/3)")
+            time.sleep(0.5)
+
+        print("  [screenshot] WARNING: Docker screenshot failed")
         self._last_screenshot_path = path
         self._last_screenshot_time = time.time()
         return path

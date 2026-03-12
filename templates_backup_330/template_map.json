@@ -1,0 +1,407 @@
+{
+  "btn_back_research.png": {
+    "screen": "research",
+    "action": "navigate_back",
+    "category": "navigation"
+  },
+  "btn_back_technology.png": {
+    "screen": "technology",
+    "action": "navigate_back",
+    "category": "navigation"
+  },
+  "btn_back_tribe.png": {
+    "screen": "tribe",
+    "action": "navigate_back",
+    "category": "navigation"
+  },
+  "btn_building_info.png": {
+    "screen": "city",
+    "action": "building_info",
+    "category": "building"
+  },
+  "btn_building_upgrade.png": {
+    "screen": "city",
+    "action": "building_upgrade",
+    "category": "building"
+  },
+  "btn_building_enter.png": {
+    "screen": "city",
+    "action": "building_enter",
+    "category": "building"
+  },
+  "label_academy.png": {
+    "screen": "city",
+    "action": "detect_academy",
+    "category": "building"
+  },
+  "tile_monster.png": {
+    "screen": "world_search",
+    "action": "select_monster",
+    "category": "search"
+  },
+  "tile_niflung.png": {
+    "screen": "world_search",
+    "action": "select_niflung",
+    "category": "search"
+  },
+  "tile_farm.png": {
+    "screen": "world_search",
+    "action": "select_farm",
+    "category": "search"
+  },
+  "tile_sawmill.png": {
+    "screen": "world_search",
+    "action": "select_sawmill",
+    "category": "search"
+  },
+  "tile_quarry.png": {
+    "screen": "world_search",
+    "action": "select_quarry",
+    "category": "search"
+  },
+  "tile_goldmine.png": {
+    "screen": "world_search",
+    "action": "select_goldmine",
+    "category": "search"
+  },
+  "btn_search_niflung.png": {
+    "screen": "world_search",
+    "action": "search_niflung",
+    "category": "search"
+  },
+  "btn_search_monster.png": {
+    "screen": "world_search",
+    "action": "search_monster",
+    "category": "search"
+  },
+  "search_bar_full.png": {
+    "screen": "world_map",
+    "action": "detect_search_bar",
+    "category": "search"
+  },
+  "btn_level_minus.png": {
+    "screen": "world_search",
+    "action": "decrease_level",
+    "category": "search"
+  },
+  "btn_level_lock.png": {
+    "screen": "world_search",
+    "action": "max_level_lock",
+    "category": "search"
+  },
+  "event_beast_wars.png": {
+    "screen": "city",
+    "action": "detect_beast_wars",
+    "category": "event"
+  },
+  "event_beast_wars_full.png": {
+    "screen": "city",
+    "action": "open_beast_wars",
+    "category": "event"
+  },
+  "btn_kingdom_mayhem.png": {
+    "screen": "city",
+    "action": "open_kingdom_mayhem",
+    "category": "event"
+  },
+  "btn_kings_return.png": {
+    "screen": "city",
+    "action": "open_kings_return",
+    "category": "event"
+  },
+  "label_event_hub.png": {
+    "screen": "city",
+    "action": "detect_event_hub",
+    "category": "event"
+  },
+  "btn_mall.png": {
+    "screen": "city",
+    "action": "open_mall",
+    "category": "event"
+  },
+  "icon_gift_green.png": {
+    "screen": "city",
+    "action": "collect_gift",
+    "category": "event"
+  },
+  "title_tribe.png": {
+    "screen": "tribe",
+    "action": "detect_tribe_screen",
+    "category": "tribe"
+  },
+  "btn_honor_wall.png": {
+    "screen": "tribe",
+    "action": "open_honor_wall",
+    "category": "tribe"
+  },
+  "btn_trial.png": {
+    "screen": "tribe",
+    "action": "open_trial",
+    "category": "tribe"
+  },
+  "btn_war.png": {
+    "screen": "tribe",
+    "action": "open_war",
+    "category": "tribe"
+  },
+  "btn_tribe_members.png": {
+    "screen": "tribe",
+    "action": "open_members",
+    "category": "tribe"
+  },
+  "btn_odyssey.png": {
+    "screen": "tribe",
+    "action": "open_odyssey",
+    "category": "tribe"
+  },
+  "btn_technology.png": {
+    "screen": "tribe",
+    "action": "open_technology",
+    "category": "tribe"
+  },
+  "btn_tribe_bank.png": {
+    "screen": "tribe",
+    "action": "open_bank",
+    "category": "tribe"
+  },
+  "btn_city_territory.png": {
+    "screen": "tribe",
+    "action": "open_territory",
+    "category": "tribe"
+  },
+  "tribe_banner.png": {
+    "screen": "tribe",
+    "action": "detect_tribe_banner",
+    "category": "tribe"
+  },
+  "tab_crystal_trove.png": {
+    "screen": "tribe",
+    "action": "tab_crystal_trove",
+    "category": "tribe_tab"
+  },
+  "tab_materials_war.png": {
+    "screen": "tribe",
+    "action": "tab_materials_war",
+    "category": "tribe_tab"
+  },
+  "tab_tribe_assist.png": {
+    "screen": "tribe",
+    "action": "tab_assist",
+    "category": "tribe_tab"
+  },
+  "tab_tribe_gifts.png": {
+    "screen": "tribe",
+    "action": "tab_gifts",
+    "category": "tribe_tab"
+  },
+  "tab_tribe_shop.png": {
+    "screen": "tribe",
+    "action": "tab_shop",
+    "category": "tribe_tab"
+  },
+  "tab_tribe_warehouse.png": {
+    "screen": "tribe",
+    "action": "tab_warehouse",
+    "category": "tribe_tab"
+  },
+  "tab_tribe_settings.png": {
+    "screen": "tribe",
+    "action": "tab_settings",
+    "category": "tribe_tab"
+  },
+  "title_research.png": {
+    "screen": "research",
+    "action": "detect_research_screen",
+    "category": "research"
+  },
+  "research_queue1_idle.png": {
+    "screen": "research",
+    "action": "detect_queue_idle",
+    "category": "research"
+  },
+  "research_queue2_locked.png": {
+    "screen": "research",
+    "action": "detect_queue2_locked",
+    "category": "research"
+  },
+  "btn_unlock_queue.png": {
+    "screen": "research",
+    "action": "unlock_queue2",
+    "category": "research"
+  },
+  "tab_research_basic_internal_selected.png": {
+    "screen": "research",
+    "action": "tab_basic_internal",
+    "category": "research_tab"
+  },
+  "tab_research_basic_military.png": {
+    "screen": "research",
+    "action": "tab_basic_military",
+    "category": "research_tab"
+  },
+  "tab_research_basic_military_selected.png": {
+    "screen": "research",
+    "action": "detect_military_active",
+    "category": "research_tab"
+  },
+  "tab_research_dragon_internal.png": {
+    "screen": "research",
+    "action": "tab_dragon_internal",
+    "category": "research_tab"
+  },
+  "tab_research_dragon_military.png": {
+    "screen": "research",
+    "action": "tab_dragon_military",
+    "category": "research_tab"
+  },
+  "research_node_complete.png": {
+    "screen": "research",
+    "action": "detect_completed_node",
+    "category": "research"
+  },
+  "research_node_incomplete.png": {
+    "screen": "research",
+    "action": "detect_incomplete_node",
+    "category": "research"
+  },
+  "title_technology.png": {
+    "screen": "technology",
+    "action": "detect_tech_screen",
+    "category": "technology"
+  },
+  "btn_tech_help.png": {
+    "screen": "technology",
+    "action": "tech_help",
+    "category": "technology"
+  },
+  "tab_tech_basic_internal_selected.png": {
+    "screen": "technology",
+    "action": "tab_basic_internal",
+    "category": "tech_tab"
+  },
+  "tab_tech_tribe_territory.png": {
+    "screen": "technology",
+    "action": "tab_tribe_territory",
+    "category": "tech_tab"
+  },
+  "tab_tech_tribe_territory_selected.png": {
+    "screen": "technology",
+    "action": "detect_territory_active",
+    "category": "tech_tab"
+  },
+  "tab_tech_basic_military.png": {
+    "screen": "technology",
+    "action": "tab_basic_military",
+    "category": "tech_tab"
+  },
+  "tab_tech_basic_military_selected.png": {
+    "screen": "technology",
+    "action": "detect_military_active",
+    "category": "tech_tab"
+  },
+  "tab_tech_skills.png": {
+    "screen": "technology",
+    "action": "tab_skills",
+    "category": "tech_tab"
+  },
+  "tab_tech_skills_selected.png": {
+    "screen": "technology",
+    "action": "detect_skills_active",
+    "category": "tech_tab"
+  },
+  "todays_donation.png": {
+    "screen": "technology",
+    "action": "detect_donation_counter",
+    "category": "technology"
+  },
+  "tech_timer.png": {
+    "screen": "technology",
+    "action": "detect_timer",
+    "category": "technology"
+  },
+  "tech_node_complete_10_10.png": {
+    "screen": "technology",
+    "action": "detect_complete_tech",
+    "category": "tech_node"
+  },
+  "tech_node_incomplete_9_10.png": {
+    "screen": "technology",
+    "action": "detect_incomplete_tech",
+    "category": "tech_node"
+  },
+  "tech_node_locked_0_10.png": {
+    "screen": "technology",
+    "action": "detect_locked_tech",
+    "category": "tech_node"
+  },
+  "skill_gathering_efficiency.png": {
+    "screen": "technology_skills",
+    "action": "select_gathering_eff",
+    "category": "tech_skill"
+  },
+  "skill_alien_nemesis.png": {
+    "screen": "technology_skills",
+    "action": "select_alien_nemesis",
+    "category": "tech_skill"
+  },
+  "skill_battle_growth_locked.png": {
+    "screen": "technology_skills",
+    "action": "detect_locked_skill",
+    "category": "tech_skill"
+  },
+  "label_skill_locked.png": {
+    "screen": "technology_skills",
+    "action": "detect_skill_locked_text",
+    "category": "tech_skill"
+  },
+  "avatar_frame.png": {
+    "screen": "city",
+    "action": "detect_avatar",
+    "category": "hud"
+  },
+  "avatar_power_display.png": {
+    "screen": "city",
+    "action": "detect_power",
+    "category": "hud"
+  },
+  "troops_counter.png": {
+    "screen": "city",
+    "action": "detect_troops",
+    "category": "hud"
+  },
+  "resource_bar_top.png": {
+    "screen": "any",
+    "action": "detect_resource_bar",
+    "category": "hud"
+  },
+  "utc_time_display.png": {
+    "screen": "city",
+    "action": "detect_utc_time",
+    "category": "hud"
+  },
+  "badge_chat_99.png": {
+    "screen": "city",
+    "action": "detect_chat",
+    "category": "hud"
+  },
+  "btn_plus_resources.png": {
+    "screen": "any",
+    "action": "open_resource_shop",
+    "category": "hud"
+  },
+  "daily_conquest_quests.png": {
+    "screen": "world_search",
+    "action": "detect_conquest_quests",
+    "category": "detection"
+  },
+  "niflung_popup_title.png": {
+    "screen": "world_search",
+    "action": "detect_niflung_popup",
+    "category": "detection"
+  },
+  "monster_hunt_title.png": {
+    "screen": "world_search",
+    "action": "detect_monster_popup",
+    "category": "detection"
+  }
+}
