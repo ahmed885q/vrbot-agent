@@ -128,6 +128,9 @@ TASK_MAP = {
     "surprise_gift":       ("tasks.task_surprise_gift",       "TaskSurpriseGift"),
     "toy_shop":            ("tasks.task_toy_shop",            "TaskToyShop"),
 
+    # Resource Management
+    "transfer_resources":  ("tasks.task_transfer_resources",  "TaskTransferResources"),
+
     # Meta
     "city_rush":           ("tasks.task_city_rush",           "TaskCityRush"),
 
