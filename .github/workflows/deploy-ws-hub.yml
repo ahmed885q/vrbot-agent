@@ -25,9 +25,10 @@ jobs:
             mkdir -p /opt/vrbot/ws_hub
             curl -sL https://raw.githubusercontent.com/ahmed885q/vrbot-agent/main/ws/ws_hub.py -o /opt/vrbot/ws_hub/ws_hub.py
             chmod +x /opt/vrbot/ws_hub/ws_hub.py
-            pkill -f ws_hub.py 2>/dev/null || true
             systemctl stop vrbot-ws-hub.service 2>/dev/null || true
             systemctl stop vrbot-ws-hub-fallback.service 2>/dev/null || true
+            kill $(pgrep -f "python3 /opt/vrbot/ws_hub/ws_hub.py") 2>/dev/null || true
+            sleep 1
             echo "SUPABASE_URL=${SUPABASE_URL}" > /opt/vrbot/ws_hub/.env
             echo "SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}" >> /opt/vrbot/ws_hub/.env
             echo "REQUIRE_AGENT_TOKEN=false" >> /opt/vrbot/ws_hub/.env
