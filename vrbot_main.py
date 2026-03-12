@@ -1,4 +1,4 @@
-﻿"""
+"""
 VRBOT Main v5.0 — Enhanced Engine
 ===================================
 Drop-in replacement with 4 built-in improvements:
@@ -56,6 +56,7 @@ log = logging.getLogger("vrbot")
 from vrbot_core import Bot
 from vrbot_config import TASKS_ENABLED
 from smart_retry import SmartRetry
+from state_machine import BotState, TaskState
 
 # ═══════════════════════════════════════════════════════════════════
 # Task Registry — 37 tasks (unchanged from original)
@@ -678,20 +679,116 @@ def main_classic():
 
 
 # ═══════════════════════════════════════════════════════════════════
+# [NEW] Bot State Manager — integrates state_machine.py
+# ═══════════════════════════════════════════════════════════════════
+
+class BotStateManager:
+    """Top-level bot state tracker. Reports status for Socket.IO/UI."""
+
+    def __init__(self):
+        self.state = BotState.STOPPED
+        self.current_task: str = ""
+        self.task_state: str = ""
+        self.cycle: int = 0
+        self.total_ok: int = 0
+        self.total_fail: int = 0
+        self.total_skip: int = 0
+        self.start_time: float = 0
+        self.last_error: str = ""
+        self.game_restarts: int = 0
+        self.captchas_detected: int = 0
+        self._listeners = []
+
+    def set_state(self, new_state: BotState, reason: str = ""):
+        old = self.state
+        self.state = new_state
+        if old != new_state:
+            log.info(f"BotState: {old.name} → {new_state.name}" +
+                     (f" ({reason})" if reason else ""))
+            self._notify("state_change", self.get_status())
+
+    def set_task(self, task_name: str, task_state: str = "running"):
+        self.current_task = task_name
+        self.task_state = task_state
+        self._notify("task_update", {
+            "task": task_name, "task_state": task_state
+        })
+
+    def on_task_result(self, task_name: str, success: bool, duration: float):
+        if success:
+            self.total_ok += 1
+        else:
+            self.total_fail += 1
+        self._notify("task_result", {
+            "task": task_name, "success": success, "duration": round(duration, 1)
+        })
+
+    def get_status(self) -> dict:
+        uptime = time.time() - self.start_time if self.start_time else 0
+        return {
+            "state": self.state.name,
+            "current_task": self.current_task,
+            "task_state": self.task_state,
+            "cycle": self.cycle,
+            "total_ok": self.total_ok,
+            "total_fail": self.total_fail,
+            "total_skip": self.total_skip,
+            "uptime_seconds": round(uptime),
+            "game_restarts": self.game_restarts,
+            "captchas_detected": self.captchas_detected,
+            "last_error": self.last_error,
+        }
+
+    def add_listener(self, callback):
+        """Register event listener (for Socket.IO integration)."""
+        self._listeners.append(callback)
+
+    def _notify(self, event: str, data: dict):
+        for cb in self._listeners:
+            try:
+                cb(event, data)
+            except Exception:
+                pass
+
+
+# Global bot state — accessible from Socket.IO client
+_bot_state = BotStateManager()
+
+def get_bot_state() -> BotStateManager:
+    """Get the global bot state manager."""
+    return _bot_state
+
+
+# ═══════════════════════════════════════════════════════════════════
 # Enhanced Mode (default)
 # ═══════════════════════════════════════════════════════════════════
 
 def main_enhanced(once=False, single_task=None):
-    """Enhanced mode with all 5 improvements (+ Smart Retry)."""
+    """Enhanced mode with all 5 improvements (+ Smart Retry + State Machine)."""
+    global _bot_state
     bot = Bot()
     captcha = CaptchaGuard(bot)
     health = HealthGuard(bot)
     retry = SmartRetry(bot=bot)
 
+    _bot_state.start_time = time.time()
+    _bot_state.set_state(BotState.STARTING, "initializing")
+
+    # ── Socket.IO (optional — connects if server URL configured) ──
+    ws_client = None
+    try:
+        from socketio_client import integrate_socketio
+        ws_client = integrate_socketio(_bot_state)
+    except Exception as e:
+        log.debug(f"Socket.IO not available: {e}")
+
     # ── Single task ──
     if single_task:
         bot.go_to_city()
+        _bot_state.set_state(BotState.RUNNING, f"single task: {single_task}")
+        _bot_state.set_task(single_task)
         run_task(bot, single_task, captcha, smart_retry=retry)
+        _bot_state.set_state(BotState.STOPPED, "single task done")
         bot.print_stats()
         return
 
@@ -699,35 +796,37 @@ def main_enhanced(once=False, single_task=None):
     enabled = [t for t in TASK_MAP if TASKS_ENABLED.get(t, False)]
     if not enabled:
         print("  No tasks enabled in vrbot_config.py!")
+        _bot_state.set_state(BotState.STOPPED, "no tasks enabled")
         return
 
     print("\n" + "=" * 60)
-    print(f"  VRBOT v5.0 — Enhanced Engine")
+    print(f"  VRBOT v5.0 — Enhanced Engine + State Machine")
     print(f"  {len(enabled)} tasks enabled | {'single pass' if once else 'continuous'}")
     print(f"  [1] Anti-Ban Scheduler   [2] Human Behavior")
     print(f"  [3] Captcha Detection    [4] Health Monitor")
+    print(f"  [5] State Machine        [6] Smart Retry")
     print("=" * 60)
 
     health.start_background()
     bot.go_to_city()
     bot.wait(2)
-
-    cycle = 0
-    total_ok = total_fail = total_skip = 0
+    _bot_state.set_state(BotState.RUNNING, "main loop started")
 
     try:
         while True:
-            cycle += 1
+            _bot_state.cycle += 1
 
             # Break between cycles
-            if HumanBehavior.should_break(cycle):
+            if HumanBehavior.should_break(_bot_state.cycle):
+                _bot_state.set_state(BotState.PAUSED, "cycle break")
                 HumanBehavior.cycle_break()
+                _bot_state.set_state(BotState.RUNNING, "resumed after break")
 
             # Build RANDOMIZED queue
             queue = AntiBanScheduler.build_queue(enabled)
 
             print(f"\n{'=' * 60}")
-            print(f"  Cycle {cycle} — {len(queue)} tasks")
+            print(f"  Cycle {_bot_state.cycle} — {len(queue)} tasks")
             print(f"  Order: {', '.join(queue)}")
             print(f"{'=' * 60}")
 
@@ -736,33 +835,45 @@ def main_enhanced(once=False, single_task=None):
             for task_name in queue:
                 # Health check
                 if not health.healthy:
+                    _bot_state.set_state(BotState.ERROR_RECOVERY, "game unhealthy")
+                    _bot_state.game_restarts = health.total_restarts
                     print("  [health] Game unhealthy — recovering...")
                     health.recover()
+                    _bot_state.game_restarts = health.total_restarts
+                    _bot_state.set_state(BotState.RUNNING, "recovered")
 
                 # Captcha check
                 if captcha.check(task_name):
+                    _bot_state.set_state(BotState.CAPTCHA_WAIT, task_name)
+                    _bot_state.captchas_detected = captcha.total_detected
                     captcha.wait_clear()
+                    _bot_state.set_state(BotState.RUNNING, "captcha cleared")
 
                 # Navigate home + run task
                 bot.go_to_city()
                 bot.wait(1)
 
+                _bot_state.set_task(task_name, "running")
+                t0 = time.time()
                 result = run_task(bot, task_name, captcha, smart_retry=retry)
+                duration = time.time() - t0
 
                 if result is None:
-                    total_skip += 1
+                    _bot_state.total_skip += 1
+                    _bot_state.set_task(task_name, "skipped")
                 elif result:
-                    total_ok += 1
+                    _bot_state.on_task_result(task_name, True, duration)
                     cycle_ok += 1
                 else:
-                    total_fail += 1
+                    _bot_state.on_task_result(task_name, False, duration)
+                    _bot_state.last_error = f"{task_name} failed"
                     cycle_fail += 1
                     bot.go_to_city()  # recover position on fail
 
                 # Human delay
                 HumanBehavior.task_delay()
 
-            print(f"\n  Cycle {cycle}: {cycle_ok} OK / {cycle_fail} FAIL")
+            print(f"\n  Cycle {_bot_state.cycle}: {cycle_ok} OK / {cycle_fail} FAIL")
 
             if once:
                 break
@@ -776,14 +887,21 @@ def main_enhanced(once=False, single_task=None):
         print("\n\n  Stopped by user (Ctrl+C)")
 
     # ── Session Summary ──
+    _bot_state.set_state(BotState.SHUTTING_DOWN, "session ending")
     health.stop_background()
 
+    s = _bot_state
     print(f"\n{'=' * 60}")
     print(f"  SESSION COMPLETE")
-    print(f"  Cycles: {cycle}  |  OK: {total_ok}  |  FAIL: {total_fail}  |  Skip: {total_skip}")
+    print(f"  Cycles: {s.cycle}  |  OK: {s.total_ok}  |  FAIL: {s.total_fail}  |  Skip: {s.total_skip}")
     print(f"  Game Restarts: {health.total_restarts}  |  Captchas: {captcha.total_detected}")
     print(f"{'=' * 60}")
     bot.print_stats()
+    _bot_state.set_state(BotState.STOPPED, "session complete")
+
+    # Disconnect Socket.IO
+    if ws_client:
+        ws_client.disconnect()
 
 
 # ═══════════════════════════════════════════════════════════════════

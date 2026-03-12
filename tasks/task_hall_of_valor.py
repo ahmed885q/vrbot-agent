@@ -76,8 +76,7 @@ class TaskHallOfValor(BaseTask):
         return False
 
     def _dismiss_popup(self):
-        self.bot.tap(*self.DISMISS_SPOT, jitter=False)
-        self.bot.wait(1)
+        self._tap_ui(None, fallback_xy=self.DISMISS_SPOT, wait_after=1)
 
     def _recover_to_city(self):
         for _ in range(3):
@@ -99,8 +98,7 @@ class TaskHallOfValor(BaseTask):
     def _scan_grid(self, positions):
         """Tap positions, template match after each tap."""
         for x, y in positions:
-            self.bot.tap(x, y, jitter=False)
-            self.bot.wait(1.5)
+            self._tap_ui(None, fallback_xy=(x, y), wait_after=1.5)
 
             # Template match: "Hall of Valor" text (FREE)
             if self._check_hall_of_valor():
@@ -197,12 +195,10 @@ class TaskHallOfValor(BaseTask):
         self.log.info(f"Free {tab_name}! Summoning...")
         free_btn = self.bot.yolo_find_any(["free_summon_btn"])
         if free_btn:
-            self.bot.tap(free_btn['x'], free_btn['y'])
+            self._tap_ui(None, fallback_xy=(free_btn['x'], free_btn['y']), wait_after=10)
         else:
-            self.bot.tap(*self.FREE_SUMMON_BTN)
-        self.bot.wait(10)
-        self.bot.tap(640, 360)
-        self.bot.wait(3)
+            self._tap_ui(None, fallback_xy=self.FREE_SUMMON_BTN, wait_after=10)
+        self._tap_center()
 
     def _find_building(self):
         """Find Hall of Valor using grid-tap + template matching."""
@@ -227,7 +223,7 @@ class TaskHallOfValor(BaseTask):
 
         for direction, swipe_coords in pans:
             self.log.info(f"Panning {direction}...")
-            self.bot.swipe(*swipe_coords)
+            self._swipe_ui(direction=direction, fallback_coords=swipe_coords)
             self.bot.wait(2)
 
             bx, by = self._scan_grid(self.SCAN_AFTER_PAN)
@@ -273,8 +269,7 @@ class TaskHallOfValor(BaseTask):
         summoned = False
         for tab_name, tab_coords in self.SUMMON_TABS:
             self.log.info(f"Checking {tab_name}...")
-            self.bot.tap(*tab_coords)
-            self.bot.wait(3)
+            self._tap_ui(None, fallback_xy=tab_coords, wait_after=3)
 
             if self._is_free_available():
                 self._do_free_summon(tab_name)
@@ -282,8 +277,7 @@ class TaskHallOfValor(BaseTask):
             else:
                 self.log.info(f"{tab_name} - on cooldown.")
 
-        self.bot.tap(*self.BACK_ARROW)
-        self.bot.wait(2)
+        self._tap_ui(None, fallback_xy=self.BACK_ARROW, wait_after=2)
         self.bot.adb_back()
         self.bot.wait(1)
         self.bot.go_to_city()

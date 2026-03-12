@@ -31,8 +31,7 @@ class TaskProsperity(BaseTask):
         if found:
             # Tap OK on the popup
             self.log.info("Tapping OK...")
-            bot.tap(640, 450, jitter=False)
-            bot.wait(2)
+            self._tap_ui("confirm", fallback_xy=(640, 450), jitter=False, wait_after=2)
             self._dismiss_popup()  # dismiss reward
             bot.wait(2)
             self.log.info("✔ Prosperity collected!")

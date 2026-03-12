@@ -50,7 +50,7 @@ class TaskClearForest(BaseTask):
 
             # Swipe to reveal more areas
             if attempt in (2, 4):
-                bot.swipe(640, 360, 300, 200)
+                self._swipe_ui("explore_nw")
                 bot.wait(2)
 
         return cleared

@@ -15,13 +15,11 @@ class TaskHeroXp(BaseTask):
         if not self._cooldown_ok():
             return True
 
-        bot = self.bot
-        bot.go_to_city()
-        bot.wait(2)
+        self.bot.go_to_city()
+        self.bot.wait(2)
 
         self.log.info("Opening hero list...")
-        bot.tap(HERO_BTN[0], HERO_BTN[1], jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=HERO_BTN, ai_prompt="Find the Hero button on the bottom toolbar", wait_after=4)
 
         # Find a hero with available XP/level up
         leveled = 0

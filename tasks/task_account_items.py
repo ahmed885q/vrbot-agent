@@ -15,16 +15,14 @@ class TaskAccountItems(BaseTask):
         if not self._cooldown_ok():
             return True
 
-        bot = self.bot
-        bot.go_to_city()
-        bot.wait(2)
+        self.bot.go_to_city()
+        self.bot.wait(2)
 
         self.log.info("Opening items...")
-        bot.tap(ITEMS_BTN[0], ITEMS_BTN[1], jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=ITEMS_BTN, ai_prompt="Find the Items/Inventory button on the bottom toolbar", wait_after=4)
 
         # Verify opened
-        s = bot.detect_screen()
+        s = self.bot.detect_screen()
         if s and s.get("screen", "").lower() == "city":
             self.log.info("Items didn't open.")
             return False

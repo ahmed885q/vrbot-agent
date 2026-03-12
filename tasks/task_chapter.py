@@ -28,8 +28,7 @@ class TaskChapter(BaseTask):
         )
         if not found:
             # Try fixed position for quest icon
-            bot.tap(1230, 530, jitter=True)
-            bot.wait(4)
+            self._tap_ui(None, fallback_xy=(1230, 530), ai_prompt="Find quest/chapter icon on right side", jitter=True, wait_after=4)
 
         # Try to claim and advance multiple steps
         claimed = 0

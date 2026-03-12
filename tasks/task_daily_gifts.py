@@ -16,21 +16,19 @@ class TaskDailyGifts(BaseTask):
         if not self._cooldown_ok():
             return True
 
-        bot = self.bot
-        bot.go_to_city()
-        bot.wait(2)
+        self.bot.go_to_city()
+        self.bot.wait(2)
 
         # Open Daily Quests
         self.log.info("Opening Daily Quests...")
-        bot.tap(QUESTS_ICON[0], QUESTS_ICON[1], jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=QUESTS_ICON, ai_prompt="Find the Quests/daily tasks icon on the left side", wait_after=4)
 
         # Claim completed quests (max 5 attempts to avoid infinite AI calls)
         claimed = 0
         for i in range(5):
             self.log.info(f"Looking for Claim button ({i + 1})...")
-            img = bot.screenshot_b64()
-            result = bot.ask_ai(
+            img = self.bot.screenshot_b64()
+            result = self.bot.ask_ai(
                 "Viking Rise Quests screen (1280x720). "
                 "Find a GREEN 'Claim' button (completed quest). "
                 "IGNORE blue 'Go' buttons (incomplete). "
@@ -39,19 +37,19 @@ class TaskDailyGifts(BaseTask):
                 img, 80,
             )
             if result and result.get("found"):
-                bot.tap(result["x"], result["y"])
-                bot.wait(2)
+                self.bot.tap(result["x"], result["y"])
+                self.bot.wait(2)
                 # Dismiss reward popup
                 self._dismiss_popup()
-                bot.wait(2)
+                self.bot.wait(2)
                 claimed += 1
             else:
                 break
 
         # Check milestone chests at top
         self.log.info("Checking milestone chests...")
-        img = bot.screenshot_b64()
-        chest = bot.ask_ai(
+        img = self.bot.screenshot_b64()
+        chest = self.bot.ask_ai(
             "Viking Rise (1280x720). Look at the TOP area with treasure chests "
             "at quest point milestones (20, 40, 60, 80, 100). "
             "Is any chest GLOWING, highlighted, or ready to open? "
@@ -60,10 +58,10 @@ class TaskDailyGifts(BaseTask):
             img, 80,
         )
         if chest and chest.get("found"):
-            bot.tap(chest["x"], chest["y"])
-            bot.wait(3)
+            self.bot.tap(chest["x"], chest["y"])
+            self.bot.wait(3)
             self._dismiss_popup()
-            bot.wait(2)
+            self.bot.wait(2)
             claimed += 1
 
         self.log.info(f"✔ Claimed {claimed} reward(s).")

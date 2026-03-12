@@ -42,75 +42,27 @@ class TaskKillMonster(BaseTask):
 
     def _open_monster_search(self):
         """Open the monster search dialog."""
-        bot = self.bot
-
-        # Try YOLO for search icon / magnify
-        for cls in ["search_icon", "search_btn", "search_btn_icon"]:
-            result = bot.yolo_find(cls)
-            if result:
-                self.log.info(f"YOLO found {cls}")
-                bot.tap(result["x"], result["y"])
-                bot.wait(2)
-                return True
-
-        # Fallback: magnify icon at known position
-        self.log.info("Using magnify fallback...")
-        bot.tap(*MAGNIFY_ICON, jitter=False)
-        bot.wait(2)
+        self._tap_ui("search", fallback_xy=MAGNIFY_ICON, wait_after=2)
         return True
 
     def _select_monster(self):
         """Select monster category and search."""
-        bot = self.bot
-
-        # Try YOLO for monster_icon
-        result = bot.yolo_find("monster_icon")
-        if result:
-            self.log.info("YOLO found monster_icon")
-            bot.tap(result["x"], result["y"])
-        else:
-            bot.tap(*MONSTER_CAT, jitter=False)
-        bot.wait(2)
+        # Select monster category (try YOLO first)
+        self._tap_ui("monster", fallback_xy=MONSTER_CAT, wait_after=2, ai_prompt="Monster category button")
 
         # Search button
-        result = bot.hybrid_find_button("search")
-        if result and result.get("found"):
-            bot.tap(result["x"], result["y"])
-        else:
-            bot.tap(*MONSTER_SEARCH, jitter=False)
-        bot.wait(5)
+        self._tap_ui("search", fallback_xy=MONSTER_SEARCH, wait_after=5)
 
     def _attack_monster(self):
         """Execute attack sequence: Attack → Create → March."""
-        bot = self.bot
-
         # Step 1: Attack button
-        result = bot.hybrid_find_button("attack")
-        if result and result.get("found"):
-            self.log.info(f"Found Attack at ({result['x']},{result['y']})")
-            bot.tap(result["x"], result["y"])
-        else:
-            self.log.info("Attack fallback position")
-            bot.tap(*ATTACK_POS, jitter=False)
-        bot.wait(3)
+        self._tap_ui("attack", fallback_xy=ATTACK_POS, wait_after=3)
 
         # Step 2: Create squad
-        result = bot.hybrid_find_button("create")
-        if result and result.get("found"):
-            self.log.info(f"Found Create at ({result['x']},{result['y']})")
-            bot.tap(result["x"], result["y"])
-        else:
-            bot.tap(*CREATE_POS, jitter=False)
-        bot.wait(3)
+        self._tap_ui("create", fallback_xy=CREATE_POS, wait_after=3)
 
         # Step 3: March
-        result = bot.hybrid_find_button("march")
-        if result and result.get("found"):
-            self.log.info(f"Found March at ({result['x']},{result['y']})")
-            bot.tap(result["x"], result["y"])
-        else:
-            bot.tap(*MARCH_POS, jitter=False)
-        bot.wait(3)
+        self._tap_ui("march", fallback_xy=MARCH_POS, wait_after=3)
 
         return True
 

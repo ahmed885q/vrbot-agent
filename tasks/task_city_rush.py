@@ -145,6 +145,14 @@ class TaskCityRush(BaseTask):
             "Tap the building to open its panel.",
             wait_after=4,
         )
+
+        # Fallback: swipe to find construction if not visible
+        if not found:
+            self._swipe_ui("explore_nw")
+            found = self._find_and_tap(
+                "Find a building that is currently under construction.",
+                wait_after=3,
+            )
         if not found:
             return False
 
@@ -227,8 +235,7 @@ class TaskCityRush(BaseTask):
         )
         if not found:
             # Swipe around to find it
-            bot.swipe(640, 360, 300, 200)
-            bot.wait(2)
+            self._swipe_ui("explore_nw")
             found = self._find_and_tap(
                 f"Find {desc}.",
                 wait_after=4,

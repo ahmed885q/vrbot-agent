@@ -32,8 +32,9 @@ class TaskErrands(BaseTask):
             )
             if not result or not result.get("found"):
                 if attempt < 4:
-                    # Swipe to check other areas
-                    bot.swipe(640, 360, 300 + attempt * 100, 200)
+                    # Swipe to check other areas (dynamic pattern with fallback)
+                    x2 = 300 + attempt * 100
+                    self._swipe_ui(direction="explore_nw", fallback_coords=(640, 360, x2, 200))
                     bot.wait(2)
                     continue
                 break

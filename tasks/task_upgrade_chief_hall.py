@@ -26,7 +26,7 @@ class TaskUpgradeChiefHall(BuildingTask):
 
         # Chief Hall is usually center — try tapping center first
         self.log.info("Looking for Chief Hall...")
-        bot.tap(640, 350)
+        self._tap_center()
         bot.wait(3)
 
         # Check if we got a building popup

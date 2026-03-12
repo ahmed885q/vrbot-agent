@@ -10,7 +10,13 @@ import random
 import time
 from tasks.base_task import BaseTask
 
-MAGNIFY_ICON = (155, 525)
+# Fallback coordinates (used if hybrid_find_button fails)
+FALLBACK = {
+    "magnify_icon": (155, 525),
+    "gather_btn": (1075, 485),
+    "create_btn": (940, 170),
+    "march_btn": (960, 615),
+}
 
 RESOURCES = {
     "farm":     {"cat": (555, 655), "search": (555, 490)},
@@ -18,10 +24,6 @@ RESOURCES = {
     "quarry":   {"cat": (890, 655), "search": (890, 490)},
     "goldmine": {"cat": (1060, 655), "search": (1060, 490)},
 }
-
-GATHER_BTN = (1075, 485)
-CREATE_BTN = (940, 170)
-MARCH_BTN  = (960, 615)
 
 # ============ CONFIG ============
 MARCH_ORDER = ["farm", "sawmill", "quarry", "goldmine", "goldmine"]
@@ -65,34 +67,34 @@ class TaskGather(BaseTask):
 
         # Step 1: Open search panel
         self.log.info("Opening search panel...")
-        bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
+        self._tap_ui("search", fallback_xy=FALLBACK["magnify_icon"], wait_after=3)
         self._human_wait(2.5, 4)
 
         # Step 2: Select resource category
         cx, cy = info["cat"]
         self.log.info(f"Selecting {resource}...")
-        bot.tap(cx, cy, jitter=True)
+        self._tap_ui(None, fallback_xy=(cx, cy), ai_prompt=f"Tap the {resource} category tab", jitter=True, wait_after=1)
         self._human_wait(1.5, 3)
 
         # Step 3: Search
         sx, sy = info["search"]
         self.log.info(f"Tapping Search ({sx},{sy})...")
-        bot.tap(sx, sy, jitter=False)
+        self._tap_ui("search", fallback_xy=(sx, sy), wait_after=3)
         self._human_wait(5, 8)
 
         # Step 4: Gather
         self.log.info("Tapping Gather...")
-        bot.tap(GATHER_BTN[0], GATHER_BTN[1], jitter=False)
+        self._tap_ui("gather", fallback_xy=FALLBACK["gather_btn"], wait_after=3)
         self._human_wait(2, 4)
 
         # Step 5: Create
         self.log.info("Tapping Create...")
-        bot.tap(CREATE_BTN[0], CREATE_BTN[1], jitter=False)
+        self._tap_ui("create", fallback_xy=FALLBACK["create_btn"], wait_after=3)
         self._human_wait(2, 4)
 
         # Step 6: March
         self.log.info("Tapping March...")
-        bot.tap(MARCH_BTN[0], MARCH_BTN[1], jitter=False)
+        self._tap_ui("march", fallback_xy=FALLBACK["march_btn"], wait_after=3)
         self._human_wait(3, 5)
 
         # Step 7: Verify — check we're back on world map (march sent)

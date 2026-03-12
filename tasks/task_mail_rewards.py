@@ -17,39 +17,33 @@ class TaskMailRewards(BaseTask):
     cooldown_hours = 6
 
     def _collect_mail(self):
-        bot = self.bot
         self.log.info("Opening mail...")
-        bot.tap(MAIL_ICON[0], MAIL_ICON[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui(None, fallback_xy=MAIL_ICON, ai_prompt="Find the Mail/envelope icon on the right side", wait_after=3)
 
         # Verify mail opened
-        s = bot.detect_screen()
+        s = self.bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if screen == "city":
-            bot.tap(MAIL_ICON[0], MAIL_ICON[1], jitter=False)
-            bot.wait(3)
+            self._tap_ui(None, fallback_xy=MAIL_ICON, ai_prompt="Find the Mail/envelope icon on the right side", wait_after=3)
 
         # Read & Claim All
         self.log.info("Tapping Read & Claim All...")
-        bot.tap(READ_CLAIM_ALL[0], READ_CLAIM_ALL[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui("claim", fallback_xy=READ_CLAIM_ALL, wait_after=3)
         self._dismiss_popup()
-        bot.wait(2)
+        self.bot.wait(2)
 
-        bot.adb_back()
-        bot.wait(2)
+        self.bot.adb_back()
+        self.bot.wait(2)
         self.log.info("✔ Mail claimed!")
 
     def _collect_quests(self):
-        bot = self.bot
         self.log.info("Opening Daily Quests...")
-        bot.tap(QUESTS_ICON[0], QUESTS_ICON[1], jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=QUESTS_ICON, ai_prompt="Find the Quests/daily tasks icon on the left side", wait_after=4)
 
         claimed = 0
         for i in range(5):
-            img = bot.screenshot_b64()
-            result = bot.ask_ai(
+            img = self.bot.screenshot_b64()
+            result = self.bot.ask_ai(
                 "Viking Rise Quests screen (1280x720). "
                 "Find a GREEN 'Claim' button (completed quest). "
                 "IGNORE blue 'Go' buttons. "
@@ -58,22 +52,22 @@ class TaskMailRewards(BaseTask):
                 img, 80,
             )
             if result and result.get("found"):
-                bot.tap(result["x"], result["y"])
-                bot.wait(2)
+                self.bot.tap(result["x"], result["y"])
+                self.bot.wait(2)
                 self._dismiss_popup()
-                bot.wait(2)
+                self.bot.wait(2)
                 claimed += 1
             else:
                 break
 
-        bot.adb_back()
-        bot.wait(2)
+        self.bot.adb_back()
+        self.bot.wait(2)
 
         # Check if still not on city
-        s = bot.detect_screen()
+        s = self.bot.detect_screen()
         if s and "city" not in s.get("screen", "").lower():
-            bot.adb_back()
-            bot.wait(2)
+            self.bot.adb_back()
+            self.bot.wait(2)
 
         self.log.info(f"✔ Claimed {claimed} quest(s)!")
 
@@ -81,16 +75,15 @@ class TaskMailRewards(BaseTask):
         if not self._cooldown_ok():
             return True
 
-        bot = self.bot
-        bot.go_to_city()
-        bot.wait(2)
+        self.bot.go_to_city()
+        self.bot.wait(2)
 
         self._collect_mail()
-        bot.go_to_city()
-        bot.wait(2)
+        self.bot.go_to_city()
+        self.bot.wait(2)
 
         self._collect_quests()
-        bot.go_to_city()
+        self.bot.go_to_city()
 
         self._save_cooldown()
         self.log.info("✔ All rewards collected!")

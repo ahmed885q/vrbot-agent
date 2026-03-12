@@ -1,5 +1,5 @@
 """
-VRBOT Base Task Classes v6.0
+VRBOT Base Task Classes v7.0
 =============================
 Professional integration:
   - Structured logging (logging module, not print)
@@ -7,6 +7,8 @@ Professional integration:
   - dismiss_popup() replaces hardcoded tap(640,400)
   - 4-layer hybrid detection (Template -> YOLO -> OpenAI -> Claude)
   - Post-action verification built-in
+  - _tap_ui() / _swipe_ui(): Hybrid + Fallback coordinate system
+    Tries detection first → falls back to known coordinates if detection fails
 """
 
 import os
@@ -178,6 +180,90 @@ class BaseTask:
             return True
         return False
 
+    # -- Hybrid + Fallback tap/swipe --
+
+    def _tap_ui(self, button_type, fallback_xy=None, wait_after=3,
+                ai_prompt=None, jitter=False):
+        """Hybrid tap: Try detection first, fall back to coordinates.
+
+        Args:
+            button_type: Key for hybrid_find_button() e.g. "attack", "march"
+            fallback_xy: (x, y) tuple to use if detection fails. None = no fallback.
+            wait_after: Seconds to wait after tap.
+            ai_prompt: Custom AI prompt (overrides default for button_type).
+            jitter: Enable coordinate jitter on fallback tap.
+
+        Returns:
+            True if tapped (by detection or fallback), False if nothing to tap.
+        """
+        bot = self.bot
+
+        # Layer 1-4: Hybrid detection (Template → YOLO → AI)
+        if button_type:
+            if ai_prompt:
+                # Custom AI prompt — use hybrid_find directly
+                result = bot.hybrid_find(
+                    [],  # no YOLO classes for custom
+                    f"Viking Rise (1280x720). {ai_prompt}\n"
+                    '{"found": true, "x": 640, "y": 400} or {"found": false}. JSON ONLY.',
+                )
+            else:
+                result = bot.hybrid_find_button(button_type)
+
+            if result and result.get("found"):
+                bot.tap(result["x"], result["y"])
+                bot.wait(wait_after)
+                self._actions_taken += 1
+                self.log.debug(f"_tap_ui({button_type}): detected at ({result['x']},{result['y']})")
+                return True
+
+        # Fallback: known coordinates
+        if fallback_xy:
+            fx, fy = fallback_xy
+            bot.tap(fx, fy, jitter=jitter)
+            bot.wait(wait_after)
+            self._actions_taken += 1
+            self.log.debug(f"_tap_ui({button_type}): fallback ({fx},{fy})")
+            return True
+
+        self.log.debug(f"_tap_ui({button_type}): not found, no fallback")
+        return False
+
+    def _tap_center(self, wait_after=2):
+        """Tap screen center (640, 360) — for generic map interactions."""
+        self.bot.tap(640, 360, jitter=False)
+        self.bot.wait(wait_after)
+        self._actions_taken += 1
+
+    def _swipe_ui(self, direction="left", fallback_coords=None, duration=None):
+        """Swipe with named direction or fallback coordinates.
+
+        Args:
+            direction: "left", "right", "up", "down", or None for fallback only
+            fallback_coords: (x1, y1, x2, y2) explicit swipe coordinates
+            duration: Swipe duration in ms (None = random 300-700)
+        """
+        bot = self.bot
+        SWIPE_PRESETS = {
+            "left":  (1000, 360, 280, 360),
+            "right": (280, 360, 1000, 360),
+            "up":    (640, 550, 640, 150),
+            "down":  (640, 150, 640, 550),
+            "explore_nw": (640, 360, 400, 200),
+            "explore_ne": (640, 360, 900, 200),
+            "explore_sw": (640, 360, 400, 500),
+        }
+        coords = SWIPE_PRESETS.get(direction, fallback_coords)
+        if coords:
+            if duration:
+                bot.swipe(*coords, duration=duration)
+            else:
+                bot.swipe(*coords)
+            bot.wait(2)
+            self._actions_taken += 1
+            return True
+        return False
+
     def _close_all_popups(self, max_tries=3):
         """Close multiple stacked popups."""
         for _ in range(max_tries):
@@ -297,8 +383,7 @@ class WorldMapTask(BaseTask):
         found = False
         for attempt in range(2):
             if attempt == 1:
-                bot.swipe(640, 360, 200, 200)
-                bot.wait(2)
+                self._swipe_ui("explore_nw")
 
             self.log.info(f"Searching (attempt {attempt + 1})...")
             img = bot.screenshot_b64()

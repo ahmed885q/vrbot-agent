@@ -18,20 +18,17 @@ class TaskRewards(BaseTask):
         """Open mail → Read & Claim All → close."""
         bot = self.bot
         self.log.info("=== Mail ===")
-        bot.tap(MAIL_ICON[0], MAIL_ICON[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui(None, fallback_xy=MAIL_ICON, ai_prompt="Find the Mail/envelope icon", wait_after=3)
 
         # Verify mail opened (not still on city)
         s = bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if screen == "city":
             self.log.info("Mail didn't open, retrying...")
-            bot.tap(MAIL_ICON[0], MAIL_ICON[1], jitter=False)
-            bot.wait(3)
+            self._tap_ui(None, fallback_xy=MAIL_ICON, ai_prompt="Find the Mail/envelope icon", wait_after=3)
 
         # Read & Claim All
-        bot.tap(READ_CLAIM_ALL[0], READ_CLAIM_ALL[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui("claim", fallback_xy=READ_CLAIM_ALL, wait_after=3)
         self._dismiss_popup()  # dismiss popup
         bot.wait(2)
 
@@ -44,8 +41,7 @@ class TaskRewards(BaseTask):
         """Open daily quests → claim green buttons → close."""
         bot = self.bot
         self.log.info("=== Quests ===")
-        bot.tap(QUESTS_ICON[0], QUESTS_ICON[1], jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=QUESTS_ICON, ai_prompt="Find the Quests icon on the left side", wait_after=4)
 
         claimed = 0
         for i in range(5):

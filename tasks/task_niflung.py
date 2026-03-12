@@ -48,27 +48,27 @@ class TaskNiflung(BaseTask):
         self.log.info(f"\n=== Attack #{kill_num} (total: {self.total_kills}) ===")
 
         # Open search panel
-        bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
+        self._tap_ui("search", fallback_xy=MAGNIFY_ICON, jitter=False)
         self._human_wait(2.5, 4)
 
         # Select Niflung category
-        bot.tap(NIFLUNG_CAT[0], NIFLUNG_CAT[1], jitter=False)
+        self._tap_ui("search", fallback_xy=NIFLUNG_CAT, ai_prompt="Click on Niflung category tab in search panel", jitter=False)
         self._human_wait(1.5, 3)
 
         # Search
-        bot.tap(NIFLUNG_SEARCH[0], NIFLUNG_SEARCH[1], jitter=False)
+        self._tap_ui("search", fallback_xy=NIFLUNG_SEARCH, jitter=False)
         self._human_wait(5, 8)
 
         # Attack
-        bot.tap(ATTACK_BTN[0], ATTACK_BTN[1], jitter=False)
+        self._tap_ui("attack", fallback_xy=ATTACK_BTN, jitter=False)
         self._human_wait(2, 4)
 
         # Create
-        bot.tap(CREATE_BTN[0], CREATE_BTN[1], jitter=False)
+        self._tap_ui("create", fallback_xy=CREATE_BTN, jitter=False)
         self._human_wait(2, 4)
 
         # March
-        bot.tap(MARCH_BTN[0], MARCH_BTN[1], jitter=False)
+        self._tap_ui("march", fallback_xy=MARCH_BTN, jitter=False)
         self._human_wait(3, 5)
 
         # Verify

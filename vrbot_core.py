@@ -504,14 +504,36 @@ class Bot:
             return result.get("screen") == "world_map"
         return False
 
+    # -- Fallback coordinates for core navigation --
+    _NAV_WORLD_MAP_BTN = (47, 643)   # World map button (city bottom-left)
+    _NAV_HOME_BTN = (72, 636)        # Home/city button (world map bottom-left)
+    _NAV_HOME_ALTS = [(72, 636), (47, 643), (60, 654), (130, 654)]
+
+    def _tap_nav(self, button_type, fallback_xy, ai_prompt=None):
+        """Hybrid tap for core navigation: YOLO/Template → fallback."""
+        result = self.hybrid_find_button(button_type)
+        if result and result.get("found"):
+            self.tap(result["x"], result["y"])
+            return True
+        if ai_prompt:
+            result = self.hybrid_find(
+                [], f"Viking Rise (1280x720). {ai_prompt}\n"
+                '{"found": true, "x": 640, "y": 400} or {"found": false}. JSON ONLY.')
+            if result and result.get("found"):
+                self.tap(result["x"], result["y"])
+                return True
+        self.tap(fallback_xy[0], fallback_xy[1], jitter=False)
+        return True
+
     def go_to_world_map(self, max_attempts=3):
-        """Navigate to world map."""
+        """Navigate to world map. Hybrid detection + fallback."""
         if self.is_world_map():
             print("  [world] Already on world map")
             return True
         for attempt in range(max_attempts):
             print(f"  [world] Tapping world map button (attempt {attempt+1})...")
-            self.tap(47, 643, jitter=False)
+            self._tap_nav("go", self._NAV_WORLD_MAP_BTN,
+                          "Find the World Map button on bottom-left toolbar")
             time.sleep(3)
             if self.is_world_map():
                 print("  [world] World map confirmed!")
@@ -1095,7 +1117,16 @@ class Bot:
                 print(f"  [nav] STUCK on {s} ({same_screen_count}x)")
                 if s == "world_map":
                     print("  [nav] Trying home button positions...")
-                    for hx, hy in [(72, 636), (47, 643), (60, 654), (130, 654)]:
+                    # Try hybrid first, then fallback positions
+                    home = self.hybrid_find_button("go")
+                    if home and home.get("found"):
+                        self.tap(home["x"], home["y"])
+                        time.sleep(2)
+                        check = self.detect_screen(force=True)
+                        if check and check.get("screen") == "city":
+                            self._nav_fails = 0
+                            return True
+                    for hx, hy in self._NAV_HOME_ALTS:
                         self.tap(hx, hy, jitter=False)
                         time.sleep(2)
                         check = self.detect_screen(force=True)
@@ -1107,7 +1138,7 @@ class Bot:
                 elif s == "exit_popup":
                     self.adb_back()
                     time.sleep(1.5)
-                    self.tap(640, 360, jitter=False)
+                    self.tap(640, 360, jitter=False)  # center dismiss
                     time.sleep(1)
                 else:
                     # Try YOLO close button before back
@@ -1132,7 +1163,8 @@ class Bot:
 
             elif s == "world_map":
                 print("  [nav] Tapping home button (world_botn)...")
-                self.tap(72, 636, jitter=False)
+                self._tap_nav("go", self._NAV_HOME_BTN,
+                              "Find the Home/City button on bottom-left toolbar")
                 time.sleep(2)
 
             elif s in ("action_menu", "popup", "encounter",

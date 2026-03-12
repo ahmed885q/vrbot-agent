@@ -37,8 +37,7 @@ class TaskTribeGoldTile(BaseTask):
         self.log.info("Searching for Tribe Gold Tile...")
 
         # Use magnify search for tribe territory
-        bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui("search", fallback_xy=MAGNIFY_ICON, wait_after=3)
 
         # Look for tribe/alliance resource tile tab
         found = self._find_and_tap(
@@ -68,16 +67,13 @@ class TaskTribeGoldTile(BaseTask):
         )
 
         # Gather from gold tile
-        bot.tap(GATHER_BTN[0], GATHER_BTN[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui("gather", fallback_xy=GATHER_BTN, wait_after=3)
 
         # Create march
-        bot.tap(CREATE_BTN[0], CREATE_BTN[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui("create", fallback_xy=CREATE_BTN, wait_after=3)
 
         # Send march
-        bot.tap(MARCH_BTN[0], MARCH_BTN[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui("march", fallback_xy=MARCH_BTN, wait_after=3)
 
         self.log.info("✔ Sent march to tribe gold tile!")
 

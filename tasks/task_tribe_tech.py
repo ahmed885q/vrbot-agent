@@ -33,31 +33,27 @@ class TaskTribeTech(BaseTask):
 
         # Step 1: Open Alliance/Tribe
         self.log.info("Opening tribe...")
-        bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=ALLIANCE_BTN, ai_prompt="Find the Alliance/Tribe button on bottom-right toolbar", wait_after=4)
 
         # Verify alliance opened
         s = bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if "city" in screen:
             self.log.info("Alliance didn't open, retrying...")
-            bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
-            bot.wait(4)
+            self._tap_ui(None, fallback_xy=ALLIANCE_BTN, ai_prompt="Find the Alliance/Tribe button on bottom-right toolbar", wait_after=4)
 
         # Step 2: Swipe left to reveal Technology icon
         self.log.info("Swiping to reveal Technology...")
-        bot.swipe(1100, 400, 600, 400, duration=500)
+        self._swipe_ui("left", fallback_coords=(1100, 400, 600, 400))
         bot.wait(2)
 
         # Step 3: Tap Technology
         self.log.info("Tapping Technology...")
-        bot.tap(1050, 400, jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=(1050, 400), ai_prompt="Find Technology icon in alliance menu", wait_after=4)
 
         # Step 4: Select a tech to donate to
         self.log.info("Selecting tech...")
-        bot.tap(TECH_SELECT[0], TECH_SELECT[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui(None, fallback_xy=TECH_SELECT, ai_prompt="Find the Technology button in alliance menu", wait_after=3)
 
         # Step 5: SAFETY CHECK — verify donate button is resource, not gems
         self.log.info("Verifying donate button...")
@@ -87,7 +83,7 @@ class TaskTribeTech(BaseTask):
         # Step 6: Donate 20 times
         self.log.info(f"Donating {MAX_DONATIONS} times (resource button ONLY)...")
         for i in range(MAX_DONATIONS):
-            bot.tap(DONATE_BTN[0], DONATE_BTN[1], jitter=False)
+            self._tap_ui("donate", fallback_xy=DONATE_BTN, wait_after=0)
             delay = random.uniform(0.8, 1.5)
             bot.wait(delay)
             if (i + 1) % 5 == 0:

@@ -23,20 +23,17 @@ class TaskTribeGifts(BaseTask):
 
         # Open Alliance
         self.log.info("Opening tribe...")
-        bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=ALLIANCE_BTN, ai_prompt="Find the Alliance/Tribe button on bottom-right toolbar", wait_after=4)
 
         # Verify
         s = bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if "city" in screen:
-            bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
-            bot.wait(4)
+            self._tap_ui(None, fallback_xy=ALLIANCE_BTN, ai_prompt="Find the Alliance/Tribe button on bottom-right toolbar", wait_after=4)
 
         # Tap Gifts tab
         self.log.info("Tapping Gifts tab...")
-        bot.tap(GIFTS_TAB[0], GIFTS_TAB[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui(None, fallback_xy=GIFTS_TAB, ai_prompt="Find the Gifts tab in the alliance menu", wait_after=3)
 
         # Claim gifts (try multiple times - there can be several)
         claimed = 0

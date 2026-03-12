@@ -16,27 +16,23 @@ class TaskHelps(BaseTask):
         if not self._cooldown_ok():
             return True
 
-        bot = self.bot
-        bot.go_to_city()
-        bot.wait(2)
+        self.bot.go_to_city()
+        self.bot.wait(2)
 
         # Open Alliance
         self.log.info("Opening tribe...")
-        bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=ALLIANCE_BTN, ai_prompt="Find the Alliance/Tribe button on bottom-right toolbar", wait_after=4)
 
         # Verify we're in alliance screen
-        s = bot.detect_screen()
+        s = self.bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if "city" in screen:
             self.log.info("Alliance didn't open, retrying...")
-            bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
-            bot.wait(4)
+            self._tap_ui(None, fallback_xy=ALLIANCE_BTN, ai_prompt="Find the Alliance/Tribe button on bottom-right toolbar", wait_after=4)
 
         # Tap Assist tab
         self.log.info("Tapping Assist tab...")
-        bot.tap(ASSIST_TAB[0], ASSIST_TAB[1], jitter=True)
-        bot.wait(3)
+        self._tap_ui("help_all", fallback_xy=ASSIST_TAB, ai_prompt="Find the Assist/Help tab in alliance menu", wait_after=3)
 
         # Look for Help All button (try twice)
         helped = False
@@ -51,13 +47,13 @@ class TaskHelps(BaseTask):
                 helped = True
                 self.log.info("✔ Helped alliance!")
                 break
-            bot.wait(1)
+            self.bot.wait(1)
 
         if not helped:
             self.log.info("No pending helps.")
 
-        bot.adb_back()
-        bot.wait(2)
+        self.bot.adb_back()
+        self.bot.wait(2)
         self._safe_close()
         self._save_cooldown()
         return True

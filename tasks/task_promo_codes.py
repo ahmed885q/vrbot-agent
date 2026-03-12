@@ -19,8 +19,7 @@ class TaskPromoCodes(BaseTask):
 
         # Open avatar/profile
         self.log.info("Opening profile...")
-        bot.tap(65, 45, jitter=False)
-        bot.wait(4)
+        self._tap_ui(None, fallback_xy=(65, 45), ai_prompt="Find avatar/profile icon in top-left corner", jitter=False, wait_after=4)
 
         # Find settings or promo code section
         found = self._find_and_tap(

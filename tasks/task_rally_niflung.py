@@ -29,24 +29,21 @@ class TaskRallyNiflung(BaseTask):
 
         # Open search panel
         self.log.info("Opening search panel...")
-        bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
-        bot.wait(3)
+        self._tap_ui("search", fallback_xy=MAGNIFY_ICON, wait_after=3)
 
         # Select Niflung category
         self.log.info("Selecting Niflung category...")
-        bot.tap(NIFLUNG_CAT[0], NIFLUNG_CAT[1], jitter=True)
+        self._tap_ui(None, fallback_xy=NIFLUNG_CAT, ai_prompt="Find Niflung category tab", jitter=True)
         bot.wait(2)
 
         # Level up to find Niflung Leader (tap 5 times)
         self.log.info("Leveling up to find leader...")
         for _ in range(5):
-            bot.tap(LEVEL_UP_BTN[0], LEVEL_UP_BTN[1], jitter=False)
-            bot.wait(0.3)
+            self._tap_ui(None, fallback_xy=LEVEL_UP_BTN, ai_prompt="Find level up or increase level button", wait_after=0.3)
 
         # Search
         self.log.info("Searching...")
-        bot.tap(NIFLUNG_SEARCH[0], NIFLUNG_SEARCH[1], jitter=True)
-        bot.wait(5)
+        self._tap_ui("search", fallback_xy=NIFLUNG_SEARCH, wait_after=5, jitter=True)
 
         # Tap the Niflung on map
         bot.tap(640, 300, jitter=True)
