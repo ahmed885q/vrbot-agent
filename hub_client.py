@@ -31,9 +31,10 @@ WS_URL = "wss://ws.vrbot.me/ws"
 
 
 class HubClient:
-    def __init__(self, user_id: str, device_id: str = None):
+    def __init__(self, user_id: str, device_id: str = None, token: str = None):
         self.user_id = user_id
         self.device_id = device_id or socket.gethostname()
+        self.token = token  # Optional agent auth token (vrbot_xxx)
         self.ws = None
         self.connected = False
         self.running = False
@@ -97,6 +98,8 @@ class HubClient:
             "userId": self.user_id,
             "deviceId": self.device_id,
         }
+        if self.token:
+            auth_msg["token"] = self.token
         ws.send(json.dumps(auth_msg))
         logger.info("Connected to Hub, sending auth...")
 
@@ -274,8 +277,9 @@ def integrate_hub(bot_state_manager, user_id: str = None):
     """
     import os
     uid = user_id or os.environ.get("VRBOT_USER_ID", "agent-default")
+    agent_token = os.environ.get("VRBOT_AGENT_TOKEN", "")
 
-    hub = HubClient(user_id=uid)
+    hub = HubClient(user_id=uid, token=agent_token or None)
 
     # Wire BotStateManager events → Hub messages
     def on_state_event(event: str, data: dict):

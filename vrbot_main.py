@@ -873,12 +873,21 @@ def get_bot_state() -> BotStateManager:
 # ═══════════════════════════════════════════════════════════════════
 
 def main_enhanced(once=False, single_task=None):
-    """Enhanced mode with all 5 improvements (+ Smart Retry + State Machine)."""
+    """Enhanced mode with all 5 improvements (+ Smart Retry + State Machine + Vision GSM)."""
     global _bot_state
     bot = Bot()
     captcha = CaptchaGuard(bot)
     health = HealthGuard(bot)
     retry = SmartRetry(bot=bot)
+
+    # ── Game State Machine (vision-based) ──
+    gsm = None
+    try:
+        from game_state import GameStateMachine
+        gsm = GameStateMachine(bot)
+        log.info("GameStateMachine initialized — vision-based state tracking enabled")
+    except Exception as e:
+        log.debug(f"GameStateMachine not available: {e}")
 
     _bot_state.start_time = time.time()
     _bot_state.set_state(BotState.STARTING, "initializing")
@@ -960,14 +969,24 @@ def main_enhanced(once=False, single_task=None):
                     captcha.wait_clear()
                     _bot_state.set_state(BotState.RUNNING, "captcha cleared")
 
-                # Navigate home + run task
-                bot.go_to_city()
+                # Navigate home (vision-aware if GSM available)
+                if gsm:
+                    if not gsm.ensure_ready_for_task(task_name):
+                        log.warning(f"[{task_name}] GSM recovery failed, trying go_to_city()")
+                        bot.go_to_city()
+                else:
+                    bot.go_to_city()
                 bot.wait(1)
 
                 _bot_state.set_task(task_name, "running")
                 t0 = time.time()
                 result = run_task(bot, task_name, captcha, smart_retry=retry)
                 duration = time.time() - t0
+
+                # Post-task state check
+                if gsm:
+                    post_state = gsm.post_task_check(task_name)
+                    log.debug(f"[{task_name}] Post-task state: {post_state.value}")
 
                 if result is None:
                     _bot_state.total_skip += 1
@@ -979,7 +998,10 @@ def main_enhanced(once=False, single_task=None):
                     _bot_state.on_task_result(task_name, False, duration)
                     _bot_state.last_error = f"{task_name} failed"
                     cycle_fail += 1
-                    bot.go_to_city()  # recover position on fail
+                    if gsm:
+                        gsm.recover_to_city(max_attempts=8)
+                    else:
+                        bot.go_to_city()  # recover position on fail
 
                 # Human delay + occasional idle browsing
                 HumanBehavior.task_delay()
@@ -1007,6 +1029,9 @@ def main_enhanced(once=False, single_task=None):
     print(f"  SESSION COMPLETE")
     print(f"  Cycles: {s.cycle}  |  OK: {s.total_ok}  |  FAIL: {s.total_fail}  |  Skip: {s.total_skip}")
     print(f"  Game Restarts: {health.total_restarts}  |  Captchas: {captcha.total_detected}")
+    if gsm:
+        gs = gsm.get_stats()
+        print(f"  Vision Detections: {gs['detections']}  |  Recoveries: {gs['recovery_attempts']}")
     print(f"{'=' * 60}")
     bot.print_stats()
     _bot_state.set_state(BotState.STOPPED, "session complete")

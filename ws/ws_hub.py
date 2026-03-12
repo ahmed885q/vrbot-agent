@@ -84,6 +84,50 @@ class Registry:
 R = Registry()
 START = time.time()
 
+# Token verification (optional — needs SUPABASE_URL + SUPABASE_SERVICE_KEY env vars)
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+REQUIRE_TOKEN = os.environ.get("REQUIRE_AGENT_TOKEN", "false").lower() == "true"
+
+async def _verify_agent_token(token: str) -> str:
+    """Verify agent token via Supabase RPC. Returns user_id or empty string."""
+    if not SUPABASE_URL or not SUPABASE_KEY or not token:
+        return ""
+    try:
+        import urllib.request
+        url = f"{SUPABASE_URL}/rest/v1/rpc/verify_agent_token"
+        data = json.dumps({"p_token": token}).encode()
+        req = urllib.request.Request(url, data=data, method="POST", headers={
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            result = json.loads(resp.read().decode())
+            return result if isinstance(result, str) and result else ""
+    except Exception as e:
+        logger.warning(f"Token verify error: {e}")
+        return ""
+
+async def _persist_agent_status(uid, status_data):
+    """Persist agent status to Supabase (fire-and-forget)."""
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return
+    try:
+        import urllib.request
+        url = f"{SUPABASE_URL}/rest/v1/rpc/upsert_agent_status"
+        payload = {"p_user_id": uid, **status_data}
+        data = json.dumps(payload).encode()
+        req = urllib.request.Request(url, data=data, method="POST", headers={
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            pass
+    except Exception as e:
+        logger.debug(f"Persist status error: {e}")
+
 async def handle(ws, path=None):
     auth = False; role = uid = None
     try:
@@ -101,8 +145,28 @@ async def handle(ws, path=None):
             await ws.send(json.dumps({"type":"auth_ok"}))
             await ws.send(json.dumps({"type":"agents_list","agents":R.agents_for(uid)}))
         elif role == "agent":
+            # Token auth (optional — set REQUIRE_AGENT_TOKEN=true to enforce)
+            token = msg.get("token", "")
+            if REQUIRE_TOKEN and token:
+                verified_uid = await _verify_agent_token(token)
+                if verified_uid:
+                    uid = verified_uid  # use token's user_id
+                    logger.info(f"Agent authenticated via token (user: {uid[:8]}...)")
+                else:
+                    logger.warning(f"Invalid agent token from {uid}")
+                    await ws.close(4006, "Invalid token"); return
+            elif REQUIRE_TOKEN and not token:
+                logger.warning(f"Agent {uid} connected without token (REQUIRE_AGENT_TOKEN=true)")
+                await ws.close(4007, "Token required"); return
+
             await R.register_agent(ws, uid, msg.get("deviceId","unknown")); auth = True
             await ws.send(json.dumps({"type":"auth_ok"}))
+
+            # Persist agent as online
+            asyncio.create_task(_persist_agent_status(uid, {
+                "p_agent_id": uid, "p_device_id": msg.get("deviceId",""),
+                "p_status": "online",
+            }))
         else:
             await ws.close(4005, "Bad role"); return
 
@@ -127,6 +191,23 @@ async def handle(ws, path=None):
                 if t in ("task_status","task_complete","task_error","agent_status","agent_alert","agent_heartbeat","log"):
                     msg["agentId"] = uid; msg["timestamp"] = msg.get("timestamp", time.time())
                     await R._notify_dash(uid, msg)
+                    # Persist agent_status and heartbeat to Supabase
+                    if t in ("agent_status","agent_heartbeat") and msg.get("payload"):
+                        p = msg["payload"]
+                        asyncio.create_task(_persist_agent_status(uid, {
+                            "p_agent_id": uid,
+                            "p_status": "online",
+                            "p_bot_state": p.get("state"),
+                            "p_current_task": p.get("current_task"),
+                            "p_cycle": p.get("cycle"),
+                            "p_total_ok": p.get("total_ok"),
+                            "p_total_fail": p.get("total_fail"),
+                            "p_total_skip": p.get("total_skip"),
+                            "p_uptime_seconds": p.get("uptime_seconds"),
+                            "p_game_restarts": p.get("game_restarts"),
+                            "p_captchas_detected": p.get("captchas_detected"),
+                            "p_last_error": p.get("last_error"),
+                        }))
                 elif t == "ping":
                     await ws.send(json.dumps({"type":"pong"}))
                 else:
@@ -134,7 +215,13 @@ async def handle(ws, path=None):
     except websockets.exceptions.ConnectionClosed: pass
     except Exception as e: logger.error(f"Error: {e}")
     finally:
-        if auth: await R.unregister(ws)
+        if auth:
+            await R.unregister(ws)
+            # Mark agent as offline in DB
+            if role == "agent" and uid:
+                asyncio.create_task(_persist_agent_status(uid, {
+                    "p_agent_id": uid, "p_status": "offline",
+                }))
 
 async def health(path, headers):
     if path in ("/health", "/api/ws/status", "/ws/health"):
