@@ -730,6 +730,7 @@ def _handle_final_failure(bot, task_name, error_msg=None):
         log.info(f"[{task_name}] Recovered to city after final failure")
     else:
         log.error(f"[{task_name}] Could NOT recover to city — bot may be stuck")
+        _bot_state.consecutive_failures += 1
 
     # Step 4: Notify via Hub WebSocket (if listener is connected)
     _bot_state._notify("alert", {
@@ -739,13 +740,17 @@ def _handle_final_failure(bot, task_name, error_msg=None):
         "recovered": recovered,
     })
 
-    # Step 5: Restore previous state
+    # Step 5: Restore previous state or set FATAL_ERROR if too many consecutive failures
     if recovered:
+        _bot_state.consecutive_failures = 0
         _bot_state.set_state(prev_state if prev_state != BotState.ERROR_RECOVERY
                              else BotState.RUNNING, "recovered from error")
     else:
-        # Stay in error state — main loop will handle
-        _bot_state.set_state(BotState.ERROR_RECOVERY, "stuck after failure")
+        if _bot_state.consecutive_failures >= 3:
+            _bot_state.set_state(BotState.FATAL_ERROR, f"3+ consecutive failures: {task_name}")
+            log.critical(f"FATAL_ERROR: {_bot_state.consecutive_failures} consecutive failures")
+        else:
+            _bot_state.set_state(BotState.ERROR_RECOVERY, "stuck after failure")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -806,6 +811,7 @@ class BotStateManager:
         self.last_error: str = ""
         self.game_restarts: int = 0
         self.captchas_detected: int = 0
+        self.consecutive_failures: int = 0
         self._listeners = []
 
     def set_state(self, new_state: BotState, reason: str = ""):
@@ -826,6 +832,7 @@ class BotStateManager:
     def on_task_result(self, task_name: str, success: bool, duration: float):
         if success:
             self.total_ok += 1
+            self.consecutive_failures = 0
         else:
             self.total_fail += 1
         self._notify("task_result", {
@@ -883,7 +890,7 @@ def main_enhanced(once=False, single_task=None):
     # ── Game State Machine (vision-based) ──
     gsm = None
     try:
-        from game_state import GameStateMachine
+        from game_state import GameStateMachine, GameScreen
         gsm = GameStateMachine(bot)
         log.info("GameStateMachine initialized — vision-based state tracking enabled")
     except Exception as e:
@@ -953,6 +960,22 @@ def main_enhanced(once=False, single_task=None):
             cycle_ok = cycle_fail = 0
 
             for task_name in queue:
+                # Fatal error check — attempt full recovery
+                if _bot_state.state == BotState.FATAL_ERROR:
+                    log.critical("Bot in FATAL_ERROR — attempting emulator restart...")
+                    _bot_state._notify("alert", {
+                        "type": "fatal_error",
+                        "message": f"Bot stuck in FATAL_ERROR after {_bot_state.consecutive_failures} failures",
+                    })
+                    try:
+                        health.recover()  # This can restart emulator
+                        _bot_state.consecutive_failures = 0
+                        _bot_state.set_state(BotState.RUNNING, "recovered from FATAL_ERROR")
+                    except Exception as e:
+                        log.critical(f"Recovery from FATAL_ERROR failed: {e}")
+                        time.sleep(60)  # Wait before retrying
+                        continue
+
                 # Health check
                 if not health.healthy:
                     _bot_state.set_state(BotState.ERROR_RECOVERY, "game unhealthy")
@@ -974,6 +997,12 @@ def main_enhanced(once=False, single_task=None):
                     if not gsm.ensure_ready_for_task(task_name):
                         log.warning(f"[{task_name}] GSM recovery failed, trying go_to_city()")
                         bot.go_to_city()
+                        # Double-check with GSM — if still not ready, skip this task
+                        if not gsm.verify_state(GameScreen.CITY):
+                            log.error(f"[{task_name}] Still not in CITY after recovery — skipping")
+                            _bot_state.total_skip += 1
+                            _bot_state.set_task(task_name, "skipped")
+                            continue
                 else:
                     bot.go_to_city()
                 bot.wait(1)

@@ -40,6 +40,7 @@ class HubClient:
         self.running = False
         self._thread = None
         self._reconnect_delay = 3
+        self.last_pong_time = 0
 
         # Callbacks - set these from your agent
         self.on_run_tasks = None  # def handler(farm_id, tasks, from_client): ...
@@ -102,6 +103,7 @@ class HubClient:
             auth_msg["token"] = self.token
         ws.send(json.dumps(auth_msg))
         logger.info("Connected to Hub, sending auth...")
+        self.last_pong_time = time.time()  # Reset on fresh connection
 
     def _on_message(self, ws, raw):
         """Handle messages from Hub"""
@@ -162,7 +164,7 @@ class HubClient:
                     self.send_agent_status(status or {})
 
             elif msg_type == "pong":
-                pass  # Heartbeat response
+                self.last_pong_time = time.time()
 
             elif msg_type == "error":
                 logger.warning(f"Hub error: {msg.get('message', '')}")

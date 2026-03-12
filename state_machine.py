@@ -48,6 +48,8 @@ class BotState(Enum):
     RESTARTING_GAME = auto()
     ERROR_RECOVERY = auto()
     SHUTTING_DOWN = auto()
+    FATAL_ERROR = auto()      # Unrecoverable error — needs manual intervention or restart
+    DISCONNECTED = auto()     # Lost connection to hub / no heartbeat response
 
 
 # ─────────────────────────────────────────────
