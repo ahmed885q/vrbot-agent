@@ -18,7 +18,7 @@ class TaskPromoCodes(BaseTask):
         bot.wait(2)
 
         # Open avatar/profile
-        print("  [promo] Opening profile...")
+        self.log.info("Opening profile...")
         bot.tap(65, 45, jitter=False)
         bot.wait(4)
 
@@ -35,11 +35,11 @@ class TaskPromoCodes(BaseTask):
                 wait_after=2,
             )
             if code_found:
-                print("  [promo] ✔ Found promo section (no codes to enter).")
+                self.log.info("✔ Found promo section (no codes to enter).")
             else:
-                print("  [promo] Promo code input not found.")
+                self.log.info("Promo code input not found.")
         else:
-            print("  [promo] Promo section not found.")
+            self.log.info("Promo section not found.")
 
         self._safe_close()
         self._save_cooldown()

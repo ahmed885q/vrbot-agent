@@ -30,11 +30,11 @@ class TaskTribeGoldTile(BaseTask):
         bot = self.bot
 
         if not self._ensure_world_map():
-            print(f"  [{self.tag}] Cannot reach world map.")
+            self.log.error("Cannot reach world map.")
             return False
 
         # Navigate to tribe territory / gold tile
-        print(f"  [{self.tag}] Searching for Tribe Gold Tile...")
+        self.log.info("Searching for Tribe Gold Tile...")
 
         # Use magnify search for tribe territory
         bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
@@ -57,7 +57,7 @@ class TaskTribeGoldTile(BaseTask):
             )
 
         if not found:
-            print(f"  [{self.tag}] Gold tile not found.")
+            self.log.info("Gold tile not found.")
             bot.go_to_city()
             return True
 
@@ -79,7 +79,7 @@ class TaskTribeGoldTile(BaseTask):
         bot.tap(MARCH_BTN[0], MARCH_BTN[1], jitter=False)
         bot.wait(3)
 
-        print(f"  [{self.tag}] ✔ Sent march to tribe gold tile!")
+        self.log.info("✔ Sent march to tribe gold tile!")
 
         bot.go_to_city()
         self._save_cooldown()

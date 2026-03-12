@@ -17,7 +17,7 @@ class TaskDivination(BaseTask):
         bot.wait(2)
 
         # Find divination icon/building
-        print(f"  [{self.tag}] Looking for Divination...")
+        self.log.info("Looking for Divination...")
         found = self._find_and_tap(
             "Find the Divination or Fortune icon — a crystal ball, oracle, "
             "or mystical icon. Usually on the right side panel or events area.",
@@ -31,7 +31,7 @@ class TaskDivination(BaseTask):
             )
 
         if not found:
-            print(f"  [{self.tag}] Divination not found.")
+            self.log.info("Divination not found.")
             return True
 
         # Perform divination draws
@@ -45,14 +45,14 @@ class TaskDivination(BaseTask):
                 break
             draws += 1
             # Dismiss result
-            bot.tap(640, 400, jitter=False)
+            self._dismiss_popup()
             bot.wait(2)
             self._find_and_tap("Find 'OK' or 'Collect' button.", wait_after=2)
 
         if draws:
-            print(f"  [{self.tag}] ✔ Completed {draws} divination(s)!")
+            self.log.info(f"✔ Completed {draws} divination(s)!")
         else:
-            print(f"  [{self.tag}] No divination available.")
+            self.log.info("No divination available.")
 
         self._safe_close()
         self._save_cooldown()

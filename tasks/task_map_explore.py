@@ -21,7 +21,7 @@ class TaskMapExplore(BaseTask):
         bot.go_to_city()
         bot.wait(2)
 
-        print(f"  [{self.tag}] Heading to world map for exploration...")
+        self.log.info("Heading to world map for exploration...")
 
         # Go to world map
         found = self._find_and_tap(
@@ -30,13 +30,13 @@ class TaskMapExplore(BaseTask):
             wait_after=3,
         )
         if not found:
-            print(f"  [{self.tag}] Could not open world map.")
+            self.log.info("Could not open world map.")
             self._safe_close()
             return True
 
         explored = 0
         for i in range(self.MAX_EXPLORES):
-            print(f"  [{self.tag}] Exploration attempt {i+1}/{self.MAX_EXPLORES}...")
+            self.log.info(f"Exploration attempt {i+1}/{self.MAX_EXPLORES}...")
 
             # Find fog/unexplored area
             found_fog = self._find_and_tap(
@@ -46,7 +46,7 @@ class TaskMapExplore(BaseTask):
                 wait_after=3,
             )
             if not found_fog:
-                print(f"  [{self.tag}] No unexplored areas found nearby.")
+                self.log.info("No unexplored areas found nearby.")
                 break
 
             # Look for explore/scout button
@@ -64,13 +64,13 @@ class TaskMapExplore(BaseTask):
                 wait_after=2,
             )
             explored += 1
-            print(f"  [{self.tag}] Scout sent to explore area {i+1}!")
+            self.log.info(f"Scout sent to explore area {i+1}!")
             bot.wait(random.uniform(2, 4))
 
         if explored == 0:
-            print(f"  [{self.tag}] No areas explored.")
+            self.log.info("No areas explored.")
         else:
-            print(f"  [{self.tag}] {explored} area(s) being explored!")
+            self.log.info(f"{explored} area(s) being explored!")
 
         # Return to city
         bot.go_to_city()

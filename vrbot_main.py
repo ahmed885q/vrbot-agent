@@ -463,7 +463,6 @@ class HealthGuard:
         # Load ADB config
         try:
             from vrbot_config import ADB_EXE, ADB_DEVICE
-from smart_retry import SmartRetry
             self._exe = ADB_EXE
             self._dev = ADB_DEVICE
         except Exception:
@@ -598,8 +597,8 @@ def load_task_class(task_name):
         return None
 
 
-def run_task(bot, task_name, captcha=None):
-    """Run a single task. Compatible with original signature."""
+def run_task(bot, task_name, captcha=None, smart_retry=None):
+    """Run a single task with Smart Retry on failure."""
     cls = load_task_class(task_name)
     if cls is None:
         return None
@@ -608,8 +607,7 @@ def run_task(bot, task_name, captcha=None):
     if captcha and captcha.check(task_name):
         captcha.wait_clear()
 
-    print(f"\n  Running: {cls.name}")
-    print("=" * 50)
+    log.info(f"Running: {cls.name}")
 
     t0 = time.time()
     try:
@@ -620,10 +618,18 @@ def run_task(bot, task_name, captcha=None):
         traceback.print_exc()
         success = False
 
+    # ── Smart Retry on failure ──
+    if not success and smart_retry:
+        log.warning(f"[{task_name}] failed — SmartRetry attempting recovery...")
+        success = smart_retry.handle(task_name, bot)
+        if success:
+            log.info(f"[{task_name}] SmartRetry recovered!")
+        else:
+            log.error(f"[{task_name}] SmartRetry also failed.")
+
     duration = time.time() - t0
     status = "OK" if success else "FAIL"
-    print("=" * 50)
-    print(f"  Result: {status} ({duration:.1f}s)")
+    log.info(f"Result: {task_name} = {status} ({duration:.1f}s)")
 
     # Post-task captcha check
     if captcha and captcha.check(task_name):
@@ -676,15 +682,16 @@ def main_classic():
 # ═══════════════════════════════════════════════════════════════════
 
 def main_enhanced(once=False, single_task=None):
-    """Enhanced mode with all 4 improvements."""
+    """Enhanced mode with all 5 improvements (+ Smart Retry)."""
     bot = Bot()
     captcha = CaptchaGuard(bot)
     health = HealthGuard(bot)
+    retry = SmartRetry(bot=bot)
 
     # ── Single task ──
     if single_task:
         bot.go_to_city()
-        run_task(bot, single_task, captcha)
+        run_task(bot, single_task, captcha, smart_retry=retry)
         bot.print_stats()
         return
 
@@ -740,7 +747,7 @@ def main_enhanced(once=False, single_task=None):
                 bot.go_to_city()
                 bot.wait(1)
 
-                result = run_task(bot, task_name, captcha)
+                result = run_task(bot, task_name, captcha, smart_retry=retry)
 
                 if result is None:
                     total_skip += 1

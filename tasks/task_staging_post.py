@@ -17,14 +17,14 @@ class TaskStagingPost(BaseTask):
         bot.wait(2)
 
         # Find staging post
-        print(f"  [{self.tag}] Looking for Staging Post...")
+        self.log.info("Looking for Staging Post...")
         found = self._find_and_tap(
             "Find the Staging Post building — it looks like a military tent, "
             "outpost, or campfire structure. May be near the city edge.",
             wait_after=4,
         )
         if not found:
-            print(f"  [{self.tag}] Staging Post not found.")
+            self.log.info("Staging Post not found.")
             return True
 
         # Claim available rewards (skip red battle icons)
@@ -45,13 +45,13 @@ class TaskStagingPost(BaseTask):
             bot.tap(result["x"], result["y"])
             bot.wait(3)
             claimed += 1
-            bot.tap(640, 400, jitter=False)
+            self._dismiss_popup()
             bot.wait(2)
 
         if claimed:
-            print(f"  [{self.tag}] ✔ Claimed {claimed} staging post reward(s)!")
+            self.log.info(f"✔ Claimed {claimed} staging post reward(s)!")
         else:
-            print(f"  [{self.tag}] No rewards available.")
+            self.log.info("No rewards available.")
 
         self._safe_close()
         self._save_cooldown()

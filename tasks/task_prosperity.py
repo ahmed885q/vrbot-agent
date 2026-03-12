@@ -19,7 +19,7 @@ class TaskProsperity(BaseTask):
 
         # The Prosperity button is a GREEN floating button in the city
         # Position varies based on camera angle, so use AI
-        print("  [prosperity] Looking for Prosperity button...")
+        self.log.info("Looking for Prosperity button...")
         found = self._find_and_tap(
             "Find the GREEN 'Prosperity' floating button in the city. "
             "It shows 'Obtainable Resources' or has a green glow. "
@@ -30,14 +30,14 @@ class TaskProsperity(BaseTask):
 
         if found:
             # Tap OK on the popup
-            print("  [prosperity] Tapping OK...")
+            self.log.info("Tapping OK...")
             bot.tap(640, 450, jitter=False)
             bot.wait(2)
-            bot.tap(640, 400, jitter=False)  # dismiss reward
+            self._dismiss_popup()  # dismiss reward
             bot.wait(2)
-            print("  [prosperity] ✔ Prosperity collected!")
+            self.log.info("✔ Prosperity collected!")
         else:
-            print("  [prosperity] Prosperity button not found (may not be available).")
+            self.log.info("Prosperity button not found (may not be available).")
 
         self._safe_close()
         self._save_cooldown()

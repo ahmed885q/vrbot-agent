@@ -51,14 +51,14 @@ class TaskChiefHall(BaseTask):
         bot.wait(2)
 
         # Find Chief Hall building
-        print(f"  [{self.tag}] Looking for Chief Hall...")
+        self.log.info("Looking for Chief Hall...")
         found = self._find_and_tap(
             "Find the Chief Hall / Town Center / main large building in the center "
             "of the city. It is usually the biggest building.",
             wait_after=4,
         )
         if not found:
-            print(f"  [{self.tag}] Chief Hall not found.")
+            self.log.info("Chief Hall not found.")
             return False
 
         # Check if upgrade available
@@ -72,13 +72,13 @@ class TaskChiefHall(BaseTask):
                 "Find a 'Confirm' or 'Upgrade' confirmation button (green).",
                 wait_after=3,
             )
-            print(f"  [{self.tag}] ✔ Chief Hall upgrade started!")
+            self.log.info("✔ Chief Hall upgrade started!")
 
             # Use speedups
             self._use_speedups()
         else:
             # Maybe prerequisites needed
-            print(f"  [{self.tag}] Upgrade not available — may need prerequisites.")
+            self.log.info("Upgrade not available — may need prerequisites.")
             # Check info to see what's needed
             self._find_and_tap(
                 "Find an 'Info' or 'Requirements' tab to see what buildings are needed.",

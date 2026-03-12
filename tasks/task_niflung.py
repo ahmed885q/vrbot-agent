@@ -45,7 +45,7 @@ class TaskNiflung(BaseTask):
     def _kill_one(self, kill_num):
         bot = self.bot
         self.total_kills += 1
-        print(f"\n  [niflung] === Attack #{kill_num} (total: {self.total_kills}) ===")
+        self.log.info(f"\n=== Attack #{kill_num} (total: {self.total_kills}) ===")
 
         # Open search panel
         bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
@@ -75,10 +75,10 @@ class TaskNiflung(BaseTask):
         s = bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if "world" in screen or "city" in screen:
-            print(f"  [niflung] ✔ Attack #{kill_num} sent!")
+            self.log.info(f"✔ Attack #{kill_num} sent!")
             return True
         else:
-            print(f"  [niflung] ⚠ Attack might have failed (screen: {screen})")
+            self.log.warning(f"⚠ Attack might have failed (screen: {screen})")
             bot.adb_back()
             bot.wait(2)
             return False
@@ -86,10 +86,10 @@ class TaskNiflung(BaseTask):
     def run(self):
         start_time = time.time()
 
-        print(f"  [niflung] ╔══════════════════════════════════════╗")
-        print(f"  [niflung] ║  Auto Niflung Killer Started         ║")
-        print(f"  [niflung] ║  Loop ~{WAIT_BETWEEN_ATTACKS}s | Stop: Ctrl+C        ║")
-        print(f"  [niflung] ╚══════════════════════════════════════╝")
+        self.log.info("╔══════════════════════════════════════╗")
+        self.log.info("║  Auto Niflung Killer Started         ║")
+        self.log.info(f"║  Loop ~{WAIT_BETWEEN_ATTACKS}s | Stop: Ctrl+C        ║")
+        self.log.info("╚══════════════════════════════════════╝")
 
         kill_num = 0
         while True:
@@ -97,7 +97,7 @@ class TaskNiflung(BaseTask):
                 kill_num += 1
 
                 if not self._ensure_world_map():
-                    print("  [niflung] ✗ Failed to reach world map, retrying...")
+                    self.log.error("✗ Failed to reach world map, retrying...")
                     self.bot.wait(5)
                     continue
 
@@ -106,18 +106,18 @@ class TaskNiflung(BaseTask):
                 # Wait between attacks
                 extra = random.randint(*WAIT_RANDOM_EXTRA)
                 wait_time = max(30, WAIT_BETWEEN_ATTACKS + extra)
-                print(f"  [niflung] 💤 Waiting {wait_time}s...")
+                self.log.info(f"💤 Waiting {wait_time}s...")
                 self.bot.go_to_city()
                 self.bot.wait(wait_time)
 
             except KeyboardInterrupt:
                 break
             except Exception as e:
-                print(f"  [niflung] ✗ Error: {e}")
+                self.log.error(f"✗ Error: {e}")
                 self.bot.go_to_city()
                 self.bot.wait(10)
 
         elapsed = (time.time() - start_time) / 3600
-        print(f"\n  [niflung] ║  Stopped: {self.total_kills} kills in {elapsed:.1f}h  ║")
+        self.log.info(f"\n║  Stopped: {self.total_kills} kills in {elapsed:.1f}h  ║")
         self.bot.go_to_city()
         return True

@@ -17,7 +17,7 @@ class TaskFarmerAppointments(BaseTask):
         bot.wait(2)
 
         # Open farmer/village panel
-        print(f"  [{self.tag}] Opening farmer appointments...")
+        self.log.info("Opening farmer appointments...")
         found = self._find_and_tap(
             "Find the Village or Farm management icon — it may show farmers, "
             "houses, or a village map icon on the right side or bottom toolbar.",
@@ -31,7 +31,7 @@ class TaskFarmerAppointments(BaseTask):
             )
 
         if not found:
-            print(f"  [{self.tag}] Farmer panel not found.")
+            self.log.info("Farmer panel not found.")
             return True
 
         # Navigate to appointments tab
@@ -58,13 +58,13 @@ class TaskFarmerAppointments(BaseTask):
                 wait_after=3,
             )
             appointed += 1
-            bot.tap(640, 400, jitter=False)
+            self._dismiss_popup()
             bot.wait(2)
 
         if appointed:
-            print(f"  [{self.tag}] ✔ Appointed {appointed} farmer(s)!")
+            self.log.info(f"✔ Appointed {appointed} farmer(s)!")
         else:
-            print(f"  [{self.tag}] No appointments available.")
+            self.log.info("No appointments available.")
 
         self._safe_close()
         self._save_cooldown()

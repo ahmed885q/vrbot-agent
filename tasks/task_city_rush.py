@@ -200,7 +200,7 @@ class TaskCityRush(BaseTask):
                 break
 
         if used:
-            print(f"  [{self.tag}] Used {used} speedup(s)")
+            self.log.info(f"Used {used} speedup(s)")
 
         self._safe_close()
         return used > 0
@@ -218,7 +218,7 @@ class TaskCityRush(BaseTask):
         label = building_key.replace("_", " ").title()
         target_str = f" to Lv{target_level}" if target_level else ""
 
-        print(f"  [{self.tag}] Upgrading {label}{target_str}...")
+        self.log.info(f"Upgrading {label}{target_str}...")
 
         # Find the building
         found = self._find_and_tap(
@@ -235,7 +235,7 @@ class TaskCityRush(BaseTask):
             )
 
         if not found:
-            print(f"  [{self.tag}] {label} not found!")
+            self.log.info(f"{label} not found!")
             return False
 
         # Check current level if target specified
@@ -251,7 +251,7 @@ class TaskCityRush(BaseTask):
             if level_info and isinstance(level_info.get("level"), (int, float)):
                 current = int(level_info["level"])
                 if current >= target_level:
-                    print(f"  [{self.tag}] {label} already Lv{current} (need {target_level}) ✔")
+                    self.log.info(f"{label} already Lv{current} (need {target_level}) ✔")
                     self._safe_close()
                     return True
 
@@ -273,7 +273,7 @@ class TaskCityRush(BaseTask):
             )
 
         if not ok:
-            print(f"  [{self.tag}] Cannot upgrade {label} — may need resources or prerequisites")
+            self.log.error(f"Cannot upgrade {label} — may need resources or prerequisites")
             self._safe_close()
             return False
 
@@ -284,10 +284,10 @@ class TaskCityRush(BaseTask):
         )
 
         # Dismiss any popup
-        bot.tap(640, 400, jitter=False)
+        self._dismiss_popup()
         bot.wait(2)
 
-        print(f"  [{self.tag}] ✔ {label} upgrade started!")
+        self.log.info(f"✔ {label} upgrade started!")
         self._safe_close()
 
         # Use speedups immediately
@@ -322,13 +322,13 @@ class TaskCityRush(BaseTask):
                 if ok:
                     self._find_and_tap("Find 'Confirm' button.", wait_after=3)
                     upgraded += 1
-                    bot.tap(640, 400, jitter=False)
+                    self._dismiss_popup()
                     bot.wait(2)
                 self._safe_close()
                 bot.wait(1)
 
         if upgraded:
-            print(f"  [{self.tag}] Upgraded {upgraded} resource building(s)")
+            self.log.info(f"Upgraded {upgraded} resource building(s)")
             self._use_all_speedups()
 
         return upgraded
@@ -359,7 +359,7 @@ class TaskCityRush(BaseTask):
             collected += 1
 
         if collected:
-            print(f"  [{self.tag}] Collected {collected} resource(s)")
+            self.log.info(f"Collected {collected} resource(s)")
         return collected
 
     # ──────────────────────────────────────────────
@@ -402,11 +402,11 @@ class TaskCityRush(BaseTask):
             )
             self._find_and_tap("Find 'Confirm' or 'Use All' button.", wait_after=2)
             used += 1
-            bot.tap(640, 400, jitter=False)
+            self._dismiss_popup()
             bot.wait(1)
 
         if used:
-            print(f"  [{self.tag}] Used {used} resource item(s)")
+            self.log.info(f"Used {used} resource item(s)")
         self._safe_close()
         return used > 0
 
@@ -433,7 +433,7 @@ class TaskCityRush(BaseTask):
                 )
                 if not ok:
                     break
-                bot.tap(640, 400, jitter=False)
+                self._dismiss_popup()
                 bot.wait(2)
             self._safe_close()
 
@@ -464,7 +464,7 @@ class TaskCityRush(BaseTask):
             self._use_all_speedups()
 
             # Wait 30 seconds before checking again
-            print(f"  [{self.tag}] Construction in progress... waiting ({check+1}/{max_wait})")
+            self.log.info(f"Construction in progress... waiting ({check+1}/{max_wait})")
             bot.wait(30)
 
         return False
@@ -480,20 +480,20 @@ class TaskCityRush(BaseTask):
         # Detect current level
         current_level = self._detect_ch_level()
         if current_level is None:
-            print(f"  [{self.tag}] Cannot detect Chief Hall level!")
+            self.log.error("Cannot detect Chief Hall level!")
             current_level = 1  # Assume level 1
 
-        print(f"  [{self.tag}] ═══════════════════════════════════")
-        print(f"  [{self.tag}]  CITY RUSH: Level {current_level} → {self.TARGET_LEVEL}")
-        print(f"  [{self.tag}] ═══════════════════════════════════")
+        self.log.info("═══════════════════════════════════")
+        self.log.info(f"CITY RUSH: Level {current_level} → {self.TARGET_LEVEL}")
+        self.log.info("═══════════════════════════════════")
 
         if current_level >= self.TARGET_LEVEL:
-            print(f"  [{self.tag}] ✔ Already at Level {current_level}! Done.")
+            self.log.info(f"✔ Already at Level {current_level}! Done.")
             return True
 
         # Main progression loop
         for target_ch in range(current_level + 1, self.TARGET_LEVEL + 1):
-            print(f"\n  [{self.tag}] ───── Upgrading to Chief Hall Lv{target_ch} ─────")
+            self.log.info(f"\n───── Upgrading to Chief Hall Lv{target_ch} ─────")
 
             # 1. Collect resources
             self._collect_resources()
@@ -503,7 +503,7 @@ class TaskCityRush(BaseTask):
             requirements = CH_REQUIREMENTS.get(target_ch, [])
             for building_key, req_level in requirements:
                 label = building_key.replace("_", " ").title()
-                print(f"  [{self.tag}] Prerequisite: {label} Lv{req_level}")
+                self.log.info(f"Prerequisite: {label} Lv{req_level}")
 
                 # May need multiple upgrades to reach required level
                 for attempt in range(req_level):
@@ -523,7 +523,7 @@ class TaskCityRush(BaseTask):
                 success = self._upgrade_building("chief_hall")
                 if success:
                     break
-                print(f"  [{self.tag}] CH upgrade failed, retry {attempt+1}/{self.MAX_RETRIES}")
+                self.log.info(f"CH upgrade failed, retry {attempt+1}/{self.MAX_RETRIES}")
                 self._collect_resources()
                 self._use_resource_items()
                 self._upgrade_resource_buildings()
@@ -535,18 +535,18 @@ class TaskCityRush(BaseTask):
             # 6. Verify level
             new_level = self._detect_ch_level()
             if new_level and new_level >= target_ch:
-                print(f"  [{self.tag}] ✔ Chief Hall Level {target_ch} reached!")
+                self.log.info(f"✔ Chief Hall Level {target_ch} reached!")
             else:
-                print(f"  [{self.tag}] ⚠ Level verification: detected Lv{new_level}")
+                self.log.warning(f"⚠ Level verification: detected Lv{new_level}")
 
             # 7. Upgrade resource buildings between CH levels
             self._upgrade_resource_buildings()
 
         # Final check
         final_level = self._detect_ch_level()
-        print(f"\n  [{self.tag}] ═══════════════════════════════════")
-        print(f"  [{self.tag}]  CITY RUSH COMPLETE!")
-        print(f"  [{self.tag}]  Final Level: {final_level or '?'}")
-        print(f"  [{self.tag}] ═══════════════════════════════════")
+        self.log.info("\n═══════════════════════════════════")
+        self.log.info("CITY RUSH COMPLETE!")
+        self.log.info(f"Final Level: {final_level or '?'}")
+        self.log.info("═══════════════════════════════════")
 
         return True

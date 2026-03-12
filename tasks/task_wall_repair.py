@@ -19,7 +19,7 @@ class TaskWallRepair(BuildingTask):
         bot.go_to_city()
         bot.wait(2)
 
-        print(f"  [{self.tag}] Checking wall for damage...")
+        self.log.info("Checking wall for damage...")
 
         # Find and tap the wall structure
         found = self._find_and_tap(
@@ -28,7 +28,7 @@ class TaskWallRepair(BuildingTask):
             wait_after=3,
         )
         if not found:
-            print(f"  [{self.tag}] Wall not found or no damage.")
+            self.log.info("Wall not found or no damage.")
             self._safe_close()
             return True
 
@@ -39,7 +39,7 @@ class TaskWallRepair(BuildingTask):
             wait_after=3,
         )
         if not found_repair:
-            print(f"  [{self.tag}] No repair needed — wall is intact.")
+            self.log.info("No repair needed — wall is intact.")
             self._safe_close()
             self._save_cooldown()
             return True
@@ -50,7 +50,7 @@ class TaskWallRepair(BuildingTask):
             wait_after=2,
         )
 
-        print(f"  [{self.tag}] Wall repair initiated!")
+        self.log.info("Wall repair initiated!")
         bot.wait(random.uniform(1, 2))
         self._safe_close()
         self._save_cooldown()

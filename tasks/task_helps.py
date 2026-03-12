@@ -21,7 +21,7 @@ class TaskHelps(BaseTask):
         bot.wait(2)
 
         # Open Alliance
-        print("  [helps] Opening tribe...")
+        self.log.info("Opening tribe...")
         bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
         bot.wait(4)
 
@@ -29,12 +29,12 @@ class TaskHelps(BaseTask):
         s = bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if "city" in screen:
-            print("  [helps] Alliance didn't open, retrying...")
+            self.log.info("Alliance didn't open, retrying...")
             bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
             bot.wait(4)
 
         # Tap Assist tab
-        print("  [helps] Tapping Assist tab...")
+        self.log.info("Tapping Assist tab...")
         bot.tap(ASSIST_TAB[0], ASSIST_TAB[1], jitter=True)
         bot.wait(3)
 
@@ -49,12 +49,12 @@ class TaskHelps(BaseTask):
             )
             if found:
                 helped = True
-                print("  [helps] ✔ Helped alliance!")
+                self.log.info("✔ Helped alliance!")
                 break
             bot.wait(1)
 
         if not helped:
-            print("  [helps] No pending helps.")
+            self.log.info("No pending helps.")
 
         bot.adb_back()
         bot.wait(2)

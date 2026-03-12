@@ -16,7 +16,7 @@ class TaskRecruitFarmers(BaseTask):
         bot.go_to_city()
         bot.wait(2)
 
-        print(f"  [{self.tag}] Looking for farmer recruitment...")
+        self.log.info("Looking for farmer recruitment...")
         found = self._find_and_tap(
             "Find the Village or Farm management panel. Look for a village icon, "
             "farmer icon, or house icon on the right side or toolbar.",
@@ -29,7 +29,7 @@ class TaskRecruitFarmers(BaseTask):
             )
 
         if not found:
-            print(f"  [{self.tag}] Recruitment panel not found.")
+            self.log.info("Recruitment panel not found.")
             return True
 
         # Navigate to recruit tab
@@ -48,13 +48,13 @@ class TaskRecruitFarmers(BaseTask):
                 break
             self._find_and_tap("Find 'Confirm' or 'OK' button.", wait_after=2)
             recruited += 1
-            bot.tap(640, 400, jitter=False)
+            self._dismiss_popup()
             bot.wait(2)
 
         if recruited:
-            print(f"  [{self.tag}] ✔ Recruited {recruited} farmer(s)!")
+            self.log.info(f"✔ Recruited {recruited} farmer(s)!")
         else:
-            print(f"  [{self.tag}] No recruitment available.")
+            self.log.info("No recruitment available.")
 
         self._safe_close()
         self._save_cooldown()

@@ -20,7 +20,7 @@ class TaskVillageChampions(BaseTask):
         bot.wait(2)
 
         # Open village champions panel
-        print(f"  [{self.tag}] Opening Village Champions...")
+        self.log.info("Opening Village Champions...")
         found = self._find_and_tap(
             "Find the Village Champions icon or the Village management panel. "
             "Look for a village/champion icon on the right side or events area.",
@@ -38,7 +38,7 @@ class TaskVillageChampions(BaseTask):
                 )
 
         if not found:
-            print(f"  [{self.tag}] Village Champions not found.")
+            self.log.info("Village Champions not found.")
             return True
 
         # Deploy champions — prioritize mining villages, S tier first
@@ -77,9 +77,9 @@ class TaskVillageChampions(BaseTask):
                 bot.wait(2)
 
         if deployed:
-            print(f"  [{self.tag}] ✔ Deployed {deployed} champion(s)!")
+            self.log.info(f"✔ Deployed {deployed} champion(s)!")
         else:
-            print(f"  [{self.tag}] No champions to deploy.")
+            self.log.info("No champions to deploy.")
 
         self._safe_close()
         self._save_cooldown()

@@ -21,14 +21,14 @@ class TaskDailyGifts(BaseTask):
         bot.wait(2)
 
         # Open Daily Quests
-        print("  [daily] Opening Daily Quests...")
+        self.log.info("Opening Daily Quests...")
         bot.tap(QUESTS_ICON[0], QUESTS_ICON[1], jitter=False)
         bot.wait(4)
 
         # Claim completed quests (max 5 attempts to avoid infinite AI calls)
         claimed = 0
         for i in range(5):
-            print(f"  [daily] Looking for Claim button ({i + 1})...")
+            self.log.info(f"Looking for Claim button ({i + 1})...")
             img = bot.screenshot_b64()
             result = bot.ask_ai(
                 "Viking Rise Quests screen (1280x720). "
@@ -42,14 +42,14 @@ class TaskDailyGifts(BaseTask):
                 bot.tap(result["x"], result["y"])
                 bot.wait(2)
                 # Dismiss reward popup
-                bot.tap(640, 400, jitter=False)
+                self._dismiss_popup()
                 bot.wait(2)
                 claimed += 1
             else:
                 break
 
         # Check milestone chests at top
-        print("  [daily] Checking milestone chests...")
+        self.log.info("Checking milestone chests...")
         img = bot.screenshot_b64()
         chest = bot.ask_ai(
             "Viking Rise (1280x720). Look at the TOP area with treasure chests "
@@ -62,11 +62,11 @@ class TaskDailyGifts(BaseTask):
         if chest and chest.get("found"):
             bot.tap(chest["x"], chest["y"])
             bot.wait(3)
-            bot.tap(640, 400, jitter=False)
+            self._dismiss_popup()
             bot.wait(2)
             claimed += 1
 
-        print(f"  [daily] ✔ Claimed {claimed} reward(s).")
+        self.log.info(f"✔ Claimed {claimed} reward(s).")
 
         # Close
         self._safe_close()

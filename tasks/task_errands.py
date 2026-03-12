@@ -17,7 +17,7 @@ class TaskErrands(BaseTask):
         bot.wait(2)
 
         # Look for errand indicators (floating icons above buildings)
-        print(f"  [{self.tag}] Searching for errands...")
+        self.log.info("Searching for errands...")
         completed = 0
 
         for attempt in range(8):
@@ -48,16 +48,16 @@ class TaskErrands(BaseTask):
             )
             if ok:
                 completed += 1
-                bot.tap(640, 400, jitter=False)  # dismiss
+                self._dismiss_popup()  # dismiss
                 bot.wait(2)
             else:
                 self._safe_close()
                 bot.wait(1)
 
         if completed:
-            print(f"  [{self.tag}] ✔ Completed {completed} errand(s)!")
+            self.log.info(f"✔ Completed {completed} errand(s)!")
         else:
-            print(f"  [{self.tag}] No errands found.")
+            self.log.info("No errands found.")
 
         self._safe_close()
         self._save_cooldown()

@@ -48,13 +48,13 @@ class TaskKillMonster(BaseTask):
         for cls in ["search_icon", "search_btn", "search_btn_icon"]:
             result = bot.yolo_find(cls)
             if result:
-                print(f"  [monster] YOLO found {cls}")
+                self.log.info(f"YOLO found {cls}")
                 bot.tap(result["x"], result["y"])
                 bot.wait(2)
                 return True
 
         # Fallback: magnify icon at known position
-        print("  [monster] Using magnify fallback...")
+        self.log.info("Using magnify fallback...")
         bot.tap(*MAGNIFY_ICON, jitter=False)
         bot.wait(2)
         return True
@@ -66,7 +66,7 @@ class TaskKillMonster(BaseTask):
         # Try YOLO for monster_icon
         result = bot.yolo_find("monster_icon")
         if result:
-            print(f"  [monster] YOLO found monster_icon")
+            self.log.info("YOLO found monster_icon")
             bot.tap(result["x"], result["y"])
         else:
             bot.tap(*MONSTER_CAT, jitter=False)
@@ -87,17 +87,17 @@ class TaskKillMonster(BaseTask):
         # Step 1: Attack button
         result = bot.hybrid_find_button("attack")
         if result and result.get("found"):
-            print(f"  [monster] Found Attack at ({result['x']},{result['y']})")
+            self.log.info(f"Found Attack at ({result['x']},{result['y']})")
             bot.tap(result["x"], result["y"])
         else:
-            print("  [monster] Attack fallback position")
+            self.log.info("Attack fallback position")
             bot.tap(*ATTACK_POS, jitter=False)
         bot.wait(3)
 
         # Step 2: Create squad
         result = bot.hybrid_find_button("create")
         if result and result.get("found"):
-            print(f"  [monster] Found Create at ({result['x']},{result['y']})")
+            self.log.info(f"Found Create at ({result['x']},{result['y']})")
             bot.tap(result["x"], result["y"])
         else:
             bot.tap(*CREATE_POS, jitter=False)
@@ -106,7 +106,7 @@ class TaskKillMonster(BaseTask):
         # Step 3: March
         result = bot.hybrid_find_button("march")
         if result and result.get("found"):
-            print(f"  [monster] Found March at ({result['x']},{result['y']})")
+            self.log.info(f"Found March at ({result['x']},{result['y']})")
             bot.tap(result["x"], result["y"])
         else:
             bot.tap(*MARCH_POS, jitter=False)
@@ -117,7 +117,7 @@ class TaskKillMonster(BaseTask):
     def _kill_one(self, kill_num):
         """Execute one full kill sequence."""
         bot = self.bot
-        print(f"\n  [monster] === Attack #{kill_num}/{KILLS_PER_CYCLE} ===")
+        self.log.info(f"\n=== Attack #{kill_num}/{KILLS_PER_CYCLE} ===")
 
         # Open search
         self._open_monster_search()
@@ -132,10 +132,10 @@ class TaskKillMonster(BaseTask):
         s = bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if "world" in screen or "city" in screen:
-            print(f"  [monster] ✔ Attack #{kill_num} sent!")
+            self.log.info(f"✔ Attack #{kill_num} sent!")
             return True
         else:
-            print(f"  [monster] ⚠ Attack may have failed (screen: {screen})")
+            self.log.warning(f"⚠ Attack may have failed (screen: {screen})")
             bot.adb_back()
             bot.wait(2)
             return False
@@ -144,12 +144,12 @@ class TaskKillMonster(BaseTask):
         if not self._cooldown_ok():
             return True
 
-        print(f"  [monster] Starting {KILLS_PER_CYCLE} kill cycle")
+        self.log.info(f"Starting {KILLS_PER_CYCLE} kill cycle")
         successful = 0
 
         for i in range(1, KILLS_PER_CYCLE + 1):
             if not self._ensure_world_map():
-                print("  [monster] ✗ Failed world map, retrying...")
+                self.log.error("✗ Failed world map, retrying...")
                 self.bot.wait(5)
                 continue
 
@@ -159,11 +159,11 @@ class TaskKillMonster(BaseTask):
             if i < KILLS_PER_CYCLE:
                 extra = random.randint(-10, 15)
                 wait_time = max(30, WAIT_BETWEEN_ATTACKS + extra)
-                print(f"  [monster] Waiting {wait_time}s...")
+                self.log.info(f"Waiting {wait_time}s...")
                 self.bot.go_to_city()
                 self.bot.wait(wait_time)
 
         self.bot.go_to_city()
         self._save_cooldown()
-        print(f"  [monster] ✔ Cycle done: {successful}/{KILLS_PER_CYCLE} kills")
+        self.log.info(f"✔ Cycle done: {successful}/{KILLS_PER_CYCLE} kills")
         return True

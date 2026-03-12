@@ -28,23 +28,23 @@ class TaskRallyNiflung(BaseTask):
             return False
 
         # Open search panel
-        print("  [rally] Opening search panel...")
+        self.log.info("Opening search panel...")
         bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
         bot.wait(3)
 
         # Select Niflung category
-        print("  [rally] Selecting Niflung category...")
+        self.log.info("Selecting Niflung category...")
         bot.tap(NIFLUNG_CAT[0], NIFLUNG_CAT[1], jitter=True)
         bot.wait(2)
 
         # Level up to find Niflung Leader (tap 5 times)
-        print("  [rally] Leveling up to find leader...")
+        self.log.info("Leveling up to find leader...")
         for _ in range(5):
             bot.tap(LEVEL_UP_BTN[0], LEVEL_UP_BTN[1], jitter=False)
             bot.wait(0.3)
 
         # Search
-        print("  [rally] Searching...")
+        self.log.info("Searching...")
         bot.tap(NIFLUNG_SEARCH[0], NIFLUNG_SEARCH[1], jitter=True)
         bot.wait(5)
 
@@ -53,7 +53,7 @@ class TaskRallyNiflung(BaseTask):
         bot.wait(3)
 
         # Find Rally button
-        print("  [rally] Looking for Rally button...")
+        self.log.info("Looking for Rally button...")
         rally_found = self._find_and_tap(
             "Find a RALLY button (not Attack). "
             "Rally starts a group attack that others can join.",
@@ -67,11 +67,11 @@ class TaskRallyNiflung(BaseTask):
                 wait_after=3,
             )
             if create_found:
-                print("  [rally] ✔ Rally started!")
+                self.log.info("✔ Rally started!")
             else:
-                print("  [rally] Create button not found.")
+                self.log.info("Create button not found.")
         else:
-            print("  [rally] Rally button not found.")
+            self.log.info("Rally button not found.")
 
         bot.go_to_city()
         self._save_cooldown()

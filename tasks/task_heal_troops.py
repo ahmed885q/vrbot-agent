@@ -19,7 +19,7 @@ class TaskHealTroops(BuildingTask):
         bot.go_to_city()
         bot.wait(2)
 
-        print(f"  [{self.tag}] Opening Hospital...")
+        self.log.info("Opening Hospital...")
 
         # Find and tap the Hospital building
         found = self._find_and_tap(
@@ -28,7 +28,7 @@ class TaskHealTroops(BuildingTask):
             wait_after=3,
         )
         if not found:
-            print(f"  [{self.tag}] Hospital not found.")
+            self.log.info("Hospital not found.")
             self._safe_close()
             return True
 
@@ -39,7 +39,7 @@ class TaskHealTroops(BuildingTask):
             wait_after=3,
         )
         if not found_heal:
-            print(f"  [{self.tag}] No wounded troops or heal button not found.")
+            self.log.info("No wounded troops or heal button not found.")
             self._safe_close()
             self._save_cooldown()
             return True
@@ -50,7 +50,7 @@ class TaskHealTroops(BuildingTask):
             wait_after=2,
         )
 
-        print(f"  [{self.tag}] Troop healing started!")
+        self.log.info("Troop healing started!")
         bot.wait(random.uniform(1, 2))
         self._safe_close()
         self._save_cooldown()

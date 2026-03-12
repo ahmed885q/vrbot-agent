@@ -19,7 +19,7 @@ class TaskGatherBoost(BaseTask):
         bot.go_to_city()
         bot.wait(2)
 
-        print(f"  [{self.tag}] Opening items to find gather boosts...")
+        self.log.info("Opening items to find gather boosts...")
 
         # Open items/backpack/inventory
         found = self._find_and_tap(
@@ -55,7 +55,7 @@ class TaskGatherBoost(BaseTask):
             wait_after=2,
         )
         if not found_boost:
-            print(f"  [{self.tag}] No gather speed boosts available.")
+            self.log.info("No gather speed boosts available.")
             self._safe_close()
             self._save_cooldown()
             return True
@@ -71,9 +71,9 @@ class TaskGatherBoost(BaseTask):
                 "Find and tap 'Confirm' or 'OK' to activate the boost.",
                 wait_after=2,
             )
-            print(f"  [{self.tag}] Gather speed boost activated!")
+            self.log.info("Gather speed boost activated!")
         else:
-            print(f"  [{self.tag}] Could not activate boost.")
+            self.log.info("Could not activate boost.")
 
         bot.wait(random.uniform(1, 2))
         self._safe_close()

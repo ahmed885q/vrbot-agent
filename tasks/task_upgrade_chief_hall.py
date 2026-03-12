@@ -25,7 +25,7 @@ class TaskUpgradeChiefHall(BuildingTask):
         bot.wait(2)
 
         # Chief Hall is usually center — try tapping center first
-        print(f"  [{tag}] Looking for Chief Hall...")
+        self.log.info("Looking for Chief Hall...")
         bot.tap(640, 350)
         bot.wait(3)
 
@@ -46,7 +46,7 @@ class TaskUpgradeChiefHall(BuildingTask):
                 bot.tap(result2["x"], result2["y"])
                 bot.wait(4)
             else:
-                print(f"  [{tag}] Chief Hall not found.")
+                self.log.info("Chief Hall not found.")
                 return False
 
         # Look for upgrade button
@@ -71,14 +71,14 @@ class TaskUpgradeChiefHall(BuildingTask):
                 if "confirm_x" in req_check:
                     bot.tap(req_check["confirm_x"], req_check["confirm_y"])
                     bot.wait(3)
-                    print(f"  [{tag}] ✓ Chief Hall upgrade started!")
+                    self.log.info("✓ Chief Hall upgrade started!")
                 else:
                     self._tap_button("confirm", wait_after=3)
-                    print(f"  [{tag}] ✓ Upgrade initiated!")
+                    self.log.info("✓ Upgrade initiated!")
             else:
-                print(f"  [{tag}] Requirements not met yet.")
+                self.log.info("Requirements not met yet.")
         else:
-            print(f"  [{tag}] No upgrade available (builder busy or max level).")
+            self.log.info("No upgrade available (builder busy or max level).")
 
         self._safe_close()
         self._save_cooldown()

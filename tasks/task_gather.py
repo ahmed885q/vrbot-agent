@@ -61,37 +61,37 @@ class TaskGather(BaseTask):
     def _send_one_march(self, resource, march_num):
         bot = self.bot
         info = RESOURCES[resource]
-        print(f"\n  [gather] === March {march_num}/{MAX_MARCHES}: {resource} ===")
+        self.log.info(f"\n=== March {march_num}/{MAX_MARCHES}: {resource} ===")
 
         # Step 1: Open search panel
-        print("  [gather] Opening search panel...")
+        self.log.info("Opening search panel...")
         bot.tap(MAGNIFY_ICON[0], MAGNIFY_ICON[1], jitter=False)
         self._human_wait(2.5, 4)
 
         # Step 2: Select resource category
         cx, cy = info["cat"]
-        print(f"  [gather] Selecting {resource}...")
+        self.log.info(f"Selecting {resource}...")
         bot.tap(cx, cy, jitter=True)
         self._human_wait(1.5, 3)
 
         # Step 3: Search
         sx, sy = info["search"]
-        print(f"  [gather] Tapping Search ({sx},{sy})...")
+        self.log.info(f"Tapping Search ({sx},{sy})...")
         bot.tap(sx, sy, jitter=False)
         self._human_wait(5, 8)
 
         # Step 4: Gather
-        print("  [gather] Tapping Gather...")
+        self.log.info("Tapping Gather...")
         bot.tap(GATHER_BTN[0], GATHER_BTN[1], jitter=False)
         self._human_wait(2, 4)
 
         # Step 5: Create
-        print("  [gather] Tapping Create...")
+        self.log.info("Tapping Create...")
         bot.tap(CREATE_BTN[0], CREATE_BTN[1], jitter=False)
         self._human_wait(2, 4)
 
         # Step 6: March
-        print("  [gather] Tapping March...")
+        self.log.info("Tapping March...")
         bot.tap(MARCH_BTN[0], MARCH_BTN[1], jitter=False)
         self._human_wait(3, 5)
 
@@ -100,10 +100,10 @@ class TaskGather(BaseTask):
         screen = s.get("screen", "").lower() if s else ""
         if "world" in screen or "city" in screen:
             self.total_marches_sent += 1
-            print(f"  [gather] ✔ March #{march_num} sent! (total: {self.total_marches_sent})")
+            self.log.info(f"✔ March #{march_num} sent! (total: {self.total_marches_sent})")
             return True
         else:
-            print(f"  [gather] ⚠ March might have failed (screen: {screen})")
+            self.log.warning(f"⚠ March might have failed (screen: {screen})")
             # Try dismissing any popup
             bot.adb_back()
             bot.wait(2)
@@ -115,7 +115,7 @@ class TaskGather(BaseTask):
         successful = 0
         for i, resource in enumerate(MARCH_ORDER, 1):
             if not self._ensure_world_map():
-                print("  [gather] ✗ Failed to reach world map")
+                self.log.error("✗ Failed to reach world map")
                 bot.wait(5)
                 continue
 
@@ -124,7 +124,7 @@ class TaskGather(BaseTask):
 
             if i < len(MARCH_ORDER):
                 wait = random.uniform(*DELAY_BETWEEN_MARCHES)
-                print(f"  [gather] Waiting {wait:.0f}s before next march...")
+                self.log.info(f"Waiting {wait:.0f}s before next march...")
                 bot.wait(wait)
 
         return successful
@@ -134,18 +134,18 @@ class TaskGather(BaseTask):
         auto_farm_seconds = AUTO_FARM_HOURS * 3600
         wait_seconds = WAIT_BETWEEN_ROUNDS_HOURS * 3600
 
-        print(f"  [gather] ╔══════════════════════════════════════╗")
-        print(f"  [gather] ║  Auto Gather Started                 ║")
-        print(f"  [gather] ║  {MAX_MARCHES} marches / {WAIT_BETWEEN_ROUNDS_HOURS}h cycle          ║")
-        print(f"  [gather] ╚══════════════════════════════════════╝")
+        self.log.info("╔══════════════════════════════════════╗")
+        self.log.info("║  Auto Gather Started                 ║")
+        self.log.info(f"║  {MAX_MARCHES} marches / {WAIT_BETWEEN_ROUNDS_HOURS}h cycle          ║")
+        self.log.info("╚══════════════════════════════════════╝")
 
         while (time.time() - start_time) < auto_farm_seconds:
             try:
                 self.rounds_completed += 1
-                print(f"\n  [gather] ── Round #{self.rounds_completed} ──")
+                self.log.info(f"\n── Round #{self.rounds_completed} ──")
 
                 successful = self._send_round()
-                print(f"  [gather] ✔ Round done: {successful}/{MAX_MARCHES} marches sent")
+                self.log.info(f"✔ Round done: {successful}/{MAX_MARCHES} marches sent")
 
                 self.bot.go_to_city()
 
@@ -155,23 +155,23 @@ class TaskGather(BaseTask):
                     break
 
                 wait_h = min(WAIT_BETWEEN_ROUNDS_HOURS, remaining_h)
-                print(f"  [gather] 💤 Next round in {wait_h:.1f}h (total: {elapsed_h:.1f}h)")
+                self.log.info(f"💤 Next round in {wait_h:.1f}h (total: {elapsed_h:.1f}h)")
                 self.bot.wait(wait_h * 3600)
 
             except KeyboardInterrupt:
                 break
             except Exception as e:
-                print(f"  [gather] ✗ Error: {e}")
+                self.log.error(f"✗ Error: {e}")
                 self.bot.go_to_city()
                 self.bot.wait(30)
 
         elapsed = (time.time() - start_time) / 3600
-        print(f"\n  [gather] ╔══════════════════════════════════════╗")
-        print(f"  [gather] ║  Auto Gather Complete                ║")
-        print(f"  [gather] ║  Rounds: {self.rounds_completed:<29}║")
-        print(f"  [gather] ║  Marches: {self.total_marches_sent:<28}║")
-        print(f"  [gather] ║  Duration: {elapsed:.1f}h{' '*(23-len(f'{elapsed:.1f}h'))}║")
-        print(f"  [gather] ╚══════════════════════════════════════╝")
+        self.log.info("\n╔══════════════════════════════════════╗")
+        self.log.info("║  Auto Gather Complete                ║")
+        self.log.info(f"║  Rounds: {self.rounds_completed:<29}║")
+        self.log.info(f"║  Marches: {self.total_marches_sent:<28}║")
+        self.log.info(f"║  Duration: {elapsed:.1f}h{' '*(23-len(f'{elapsed:.1f}h'))}║")
+        self.log.info("╚══════════════════════════════════════╝")
 
         self.bot.go_to_city()
         return True

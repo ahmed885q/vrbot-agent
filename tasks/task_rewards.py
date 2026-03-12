@@ -17,7 +17,7 @@ class TaskRewards(BaseTask):
     def _collect_mail(self):
         """Open mail → Read & Claim All → close."""
         bot = self.bot
-        print("  [rewards] === Mail ===")
+        self.log.info("=== Mail ===")
         bot.tap(MAIL_ICON[0], MAIL_ICON[1], jitter=False)
         bot.wait(3)
 
@@ -25,25 +25,25 @@ class TaskRewards(BaseTask):
         s = bot.detect_screen()
         screen = s.get("screen", "").lower() if s else ""
         if screen == "city":
-            print("  [rewards] Mail didn't open, retrying...")
+            self.log.info("Mail didn't open, retrying...")
             bot.tap(MAIL_ICON[0], MAIL_ICON[1], jitter=False)
             bot.wait(3)
 
         # Read & Claim All
         bot.tap(READ_CLAIM_ALL[0], READ_CLAIM_ALL[1], jitter=False)
         bot.wait(3)
-        bot.tap(640, 400, jitter=False)  # dismiss popup
+        self._dismiss_popup()  # dismiss popup
         bot.wait(2)
 
         # Close mail
         bot.adb_back()
         bot.wait(2)
-        print("  [rewards] ✔ Mail claimed!")
+        self.log.info("✔ Mail claimed!")
 
     def _collect_quests(self):
         """Open daily quests → claim green buttons → close."""
         bot = self.bot
-        print("  [rewards] === Quests ===")
+        self.log.info("=== Quests ===")
         bot.tap(QUESTS_ICON[0], QUESTS_ICON[1], jitter=False)
         bot.wait(4)
 
@@ -61,7 +61,7 @@ class TaskRewards(BaseTask):
             if result and result.get("found"):
                 bot.tap(result["x"], result["y"])
                 bot.wait(2)
-                bot.tap(640, 400, jitter=False)
+                self._dismiss_popup()
                 bot.wait(2)
                 claimed += 1
             else:
@@ -69,7 +69,7 @@ class TaskRewards(BaseTask):
 
         bot.adb_back()
         bot.wait(2)
-        print(f"  [rewards] ✔ Claimed {claimed} quest(s).")
+        self.log.info(f"✔ Claimed {claimed} quest(s).")
 
     def run(self):
         if not self._cooldown_ok():

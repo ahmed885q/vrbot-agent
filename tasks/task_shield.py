@@ -20,7 +20,7 @@ class TaskShield(BaseTask):
         bot.wait(2)
 
         # Check if shield already active
-        print("  [shield] Checking shield status...")
+        self.log.info("Checking shield status...")
         img = bot.screenshot_b64()
         result = bot.ask_ai(
             "Viking Rise city (1280x720). "
@@ -30,23 +30,23 @@ class TaskShield(BaseTask):
             img, 60,
         )
         if result and result.get("shield_active"):
-            print("  [shield] ✔ Shield already active!")
+            self.log.info("✔ Shield already active!")
             self._save_cooldown()
             return True
 
         # Open Items bag
-        print("  [shield] Opening items...")
+        self.log.info("Opening items...")
         bot.tap(ITEMS_BTN[0], ITEMS_BTN[1], jitter=False)
         bot.wait(4)
 
         # Verify items opened
         s = bot.detect_screen()
         if s and s.get("screen", "").lower() == "city":
-            print("  [shield] Items didn't open.")
+            self.log.info("Items didn't open.")
             return False
 
         # Find shield item
-        print("  [shield] Looking for shield item...")
+        self.log.info("Looking for shield item...")
         shield_found = self._find_and_tap(
             "You are on an inventory screen. "
             "Find a Peace Shield or Protection Shield item. "
@@ -63,13 +63,13 @@ class TaskShield(BaseTask):
             )
             if use_found:
                 # Confirm if needed
-                bot.tap(640, 400, jitter=False)
+                self._dismiss_popup()
                 bot.wait(2)
-                print("  [shield] ✔ Shield activated!")
+                self.log.info("✔ Shield activated!")
             else:
-                print("  [shield] Use button not found.")
+                self.log.info("Use button not found.")
         else:
-            print("  [shield] No shield items available.")
+            self.log.info("No shield items available.")
 
         self._safe_close()
         self._save_cooldown()

@@ -21,7 +21,7 @@ class TaskTroopUpgrade(BuildingTask):
         bot.go_to_city()
         bot.wait(2)
 
-        print(f"  [{self.tag}] Opening training ground for upgrades...")
+        self.log.info("Opening training ground for upgrades...")
 
         # Find and tap training ground / barracks
         found = self._find_and_tap(
@@ -30,7 +30,7 @@ class TaskTroopUpgrade(BuildingTask):
             wait_after=3,
         )
         if not found:
-            print(f"  [{self.tag}] Training ground not found.")
+            self.log.info("Training ground not found.")
             self._safe_close()
             return True
 
@@ -41,14 +41,14 @@ class TaskTroopUpgrade(BuildingTask):
             wait_after=3,
         )
         if not found_tab:
-            print(f"  [{self.tag}] Upgrade tab not found — may not be available.")
+            self.log.info("Upgrade tab not found — may not be available.")
             self._safe_close()
             self._save_cooldown()
             return True
 
         upgraded = 0
         for troop in self.TROOP_TYPES:
-            print(f"  [{self.tag}] Checking {troop} upgrade...")
+            self.log.info(f"Checking {troop} upgrade...")
 
             found_troop = self._find_and_tap(
                 f"Find and tap the '{troop}' or similar troop type button "
@@ -71,14 +71,14 @@ class TaskTroopUpgrade(BuildingTask):
                     wait_after=2,
                 )
                 upgraded += 1
-                print(f"  [{self.tag}] {troop} upgrade started!")
+                self.log.info(f"{troop} upgrade started!")
 
             bot.wait(random.uniform(1, 2))
 
         if upgraded == 0:
-            print(f"  [{self.tag}] No troops available for upgrade.")
+            self.log.info("No troops available for upgrade.")
         else:
-            print(f"  [{self.tag}] {upgraded} troop type(s) upgraded!")
+            self.log.info(f"{upgraded} troop type(s) upgraded!")
 
         self._safe_close()
         self._save_cooldown()

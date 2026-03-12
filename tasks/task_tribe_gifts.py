@@ -22,7 +22,7 @@ class TaskTribeGifts(BaseTask):
         bot.wait(2)
 
         # Open Alliance
-        print("  [gifts] Opening tribe...")
+        self.log.info("Opening tribe...")
         bot.tap(ALLIANCE_BTN[0], ALLIANCE_BTN[1], jitter=False)
         bot.wait(4)
 
@@ -34,7 +34,7 @@ class TaskTribeGifts(BaseTask):
             bot.wait(4)
 
         # Tap Gifts tab
-        print("  [gifts] Tapping Gifts tab...")
+        self.log.info("Tapping Gifts tab...")
         bot.tap(GIFTS_TAB[0], GIFTS_TAB[1], jitter=False)
         bot.wait(3)
 
@@ -50,15 +50,15 @@ class TaskTribeGifts(BaseTask):
             if found:
                 claimed += 1
                 # Dismiss reward popup
-                bot.tap(640, 400, jitter=False)
+                self._dismiss_popup()
                 bot.wait(2)
             else:
                 break
 
         if claimed:
-            print(f"  [gifts] ✔ Claimed {claimed} gift(s)!")
+            self.log.info(f"✔ Claimed {claimed} gift(s)!")
         else:
-            print("  [gifts] No gifts available.")
+            self.log.info("No gifts available.")
 
         bot.adb_back()
         bot.wait(2)

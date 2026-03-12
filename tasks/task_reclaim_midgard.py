@@ -18,7 +18,7 @@ class TaskReclaimMidgard(BaseTask):
         bot.wait(2)
 
         # Open Reclaim Midgard panel
-        print(f"  [{self.tag}] Opening Reclaim Midgard...")
+        self.log.info("Opening Reclaim Midgard...")
         found = self._find_and_tap(
             "Find the 'Reclaim Midgard' or world exploration icon. "
             "It may be a map icon, compass, or globe on the right side panel.",
@@ -27,7 +27,7 @@ class TaskReclaimMidgard(BaseTask):
         if not found:
             # Try world map approach
             if not bot.go_to_world_map():
-                print(f"  [{self.tag}] Cannot access Reclaim Midgard.")
+                self.log.error("Cannot access Reclaim Midgard.")
                 return True
             found = self._find_and_tap(
                 "Find a fog area, locked zone, or 'Explore' icon on the world map.",
@@ -35,7 +35,7 @@ class TaskReclaimMidgard(BaseTask):
             )
 
         if not found:
-            print(f"  [{self.tag}] No Reclaim Midgard content found.")
+            self.log.info("No Reclaim Midgard content found.")
             bot.go_to_city()
             return True
 
@@ -68,9 +68,9 @@ class TaskReclaimMidgard(BaseTask):
                 bot.wait(2)
 
         if actions:
-            print(f"  [{self.tag}] ✔ Completed {actions} Midgard action(s)!")
+            self.log.info(f"✔ Completed {actions} Midgard action(s)!")
         else:
-            print(f"  [{self.tag}] No Midgard actions available.")
+            self.log.info("No Midgard actions available.")
 
         bot.go_to_city()
         self._save_cooldown()

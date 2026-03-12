@@ -47,7 +47,7 @@ class TaskHallOfValor(BaseTask):
 
     def _zoom_in(self, times=3):
         d = self.TOUCH_DEV
-        print(f'  [valor] Zooming in ({times}x)...')
+        self.log.info(f"Zooming in ({times}x)...")
         for t in range(times):
             cmds = []
             cmds.append(f'sendevent {d} 3 47 0; sendevent {d} 3 57 10{t}; sendevent {d} 3 53 590; sendevent {d} 3 54 360; sendevent {d} 3 58 1')
@@ -71,7 +71,7 @@ class TaskHallOfValor(BaseTask):
             img = self.bot.screenshot_b64()
             result = tm.find_any(["text_hall_of_valor"], screenshot_b64=img)
             if result:
-                print(f'  [valor] ✔ Template matched "Hall of Valor"!')
+                self.log.info(f"✔ Template matched \"Hall of Valor\"!")
                 return True
         return False
 
@@ -104,12 +104,12 @@ class TaskHallOfValor(BaseTask):
 
             # Template match: "Hall of Valor" text (FREE)
             if self._check_hall_of_valor():
-                print(f'  [valor] ✔ Found at grid ({x},{y})!')
+                self.log.info(f"✔ Found at grid ({x},{y})!")
                 return x, y
 
             # Check if we entered summon screen directly (YOLO - FREE)
             if self._is_in_summon():
-                print(f'  [valor] ✔ Entered summon directly from ({x},{y})!')
+                self.log.info(f"✔ Entered summon directly from ({x},{y})!")
                 return x, y
 
             # Quick check: did we leave city?
@@ -119,10 +119,10 @@ class TaskHallOfValor(BaseTask):
                 if screen == 'city':
                     continue
                 elif screen in ('summon', 'hero_summon_popup', 'skill_summon_popup'):
-                    print(f'  [valor] ✔ Entered summon from ({x},{y})!')
+                    self.log.info(f"✔ Entered summon from ({x},{y})!")
                     return x, y
                 elif screen != 'city':
-                    print(f'  [valor] ({x},{y}): entered {screen}, recovering...')
+                    self.log.info(f"({x},{y}): entered {screen}, recovering...")
                     self._recover_to_city()
                     self.bot.wait(1)
 
@@ -140,7 +140,7 @@ class TaskHallOfValor(BaseTask):
 
         if result and 'x' in result:
             ex, ey = int(result['x']), int(result['y'])
-            print(f'  [valor] Entering at ({ex}, {ey})...')
+            self.log.info(f"Entering at ({ex}, {ey})...")
             self.bot.tap(ex, ey, jitter=False)
             self.bot.wait(4)
 
@@ -194,7 +194,7 @@ class TaskHallOfValor(BaseTask):
         return result and result.get('free', False)
 
     def _do_free_summon(self, tab_name):
-        print(f'  [valor] Free {tab_name}! Summoning...')
+        self.log.info(f"Free {tab_name}! Summoning...")
         free_btn = self.bot.yolo_find_any(["free_summon_btn"])
         if free_btn:
             self.bot.tap(free_btn['x'], free_btn['y'])
@@ -212,7 +212,7 @@ class TaskHallOfValor(BaseTask):
         self.bot.wait(2)
 
         # Phase 1: Scan current view
-        print('  [valor] Phase 1: Scanning current view...')
+        self.log.info("Phase 1: Scanning current view...")
         bx, by = self._scan_grid(self.GRID_POSITIONS)
         if bx is not None:
             return bx, by
@@ -226,7 +226,7 @@ class TaskHallOfValor(BaseTask):
         ]
 
         for direction, swipe_coords in pans:
-            print(f'  [valor] Panning {direction}...')
+            self.log.info(f"Panning {direction}...")
             self.bot.swipe(*swipe_coords)
             self.bot.wait(2)
 
@@ -243,7 +243,7 @@ class TaskHallOfValor(BaseTask):
         bx, by = self._find_building()
 
         if bx is None:
-            print('  [valor] ❌ Building not found.')
+            self.log.info("❌ Building not found.")
             self.bot.go_to_city()
             return False
 
@@ -265,14 +265,14 @@ class TaskHallOfValor(BaseTask):
 
         if not already_in:
             if not self._enter_summon(bx, by):
-                print('  [valor] ❌ Could not enter summon screen.')
+                self.log.info("❌ Could not enter summon screen.")
                 self._dismiss_popup()
                 self.bot.go_to_city()
                 return False
 
         summoned = False
         for tab_name, tab_coords in self.SUMMON_TABS:
-            print(f'  [valor] Checking {tab_name}...')
+            self.log.info(f"Checking {tab_name}...")
             self.bot.tap(*tab_coords)
             self.bot.wait(3)
 
@@ -280,7 +280,7 @@ class TaskHallOfValor(BaseTask):
                 self._do_free_summon(tab_name)
                 summoned = True
             else:
-                print(f'  [valor] {tab_name} - on cooldown.')
+                self.log.info(f"{tab_name} - on cooldown.")
 
         self.bot.tap(*self.BACK_ARROW)
         self.bot.wait(2)
@@ -290,7 +290,7 @@ class TaskHallOfValor(BaseTask):
 
         self._save_cooldown()
         if summoned:
-            print('  [valor] ✔ Free summons claimed!')
+            self.log.info("✔ Free summons claimed!")
         else:
-            print('  [valor] No free summons available.')
+            self.log.info("No free summons available.")
         return True

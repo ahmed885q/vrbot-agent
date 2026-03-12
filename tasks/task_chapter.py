@@ -20,7 +20,7 @@ class TaskChapter(BaseTask):
         bot.wait(2)
 
         # Open chapter/quest panel — bottom-right quest icon
-        print(f"  [{self.tag}] Opening chapter panel...")
+        self.log.info("Opening chapter panel...")
         found = self._find_and_tap(
             "Find the Chapter or Quest icon on the bottom toolbar or right side. "
             "It may look like a scroll, book, or checklist icon.",
@@ -45,7 +45,7 @@ class TaskChapter(BaseTask):
             claimed += 1
 
             # Dismiss any reward popup
-            bot.tap(640, 400, jitter=False)
+            self._dismiss_popup()
             bot.wait(2)
 
             # Check if story cutscene — skip it
@@ -57,9 +57,9 @@ class TaskChapter(BaseTask):
                 bot.wait(1)
 
         if claimed:
-            print(f"  [{self.tag}] ✔ Completed {claimed} chapter step(s)!")
+            self.log.info(f"✔ Completed {claimed} chapter step(s)!")
         else:
-            print(f"  [{self.tag}] No chapter steps available.")
+            self.log.info("No chapter steps available.")
 
         self._safe_close()
         self._save_cooldown()

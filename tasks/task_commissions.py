@@ -17,7 +17,7 @@ class TaskCommissions(BaseTask):
         bot.wait(2)
 
         # Open commissions panel — usually in event/quest area
-        print(f"  [{self.tag}] Opening commissions...")
+        self.log.info("Opening commissions...")
         found = self._find_and_tap(
             "Find the Commissions icon or board. It may be a notice board, "
             "bulletin board, or mission icon on the right side of the screen.",
@@ -36,7 +36,7 @@ class TaskCommissions(BaseTask):
                 )
 
         if not found:
-            print(f"  [{self.tag}] Commissions not found.")
+            self.log.info("Commissions not found.")
             return True
 
         # Claim completed commissions
@@ -50,7 +50,7 @@ class TaskCommissions(BaseTask):
             if not ok:
                 break
             claimed += 1
-            bot.tap(640, 400, jitter=False)
+            self._dismiss_popup()
             bot.wait(2)
 
         # Start new commissions
@@ -64,9 +64,9 @@ class TaskCommissions(BaseTask):
             self._find_and_tap("Find a 'Confirm' button.", wait_after=2)
 
         if claimed:
-            print(f"  [{self.tag}] ✔ Claimed {claimed} commission(s)!")
+            self.log.info(f"✔ Claimed {claimed} commission(s)!")
         else:
-            print(f"  [{self.tag}] No commissions to claim.")
+            self.log.info("No commissions to claim.")
 
         self._safe_close()
         self._save_cooldown()

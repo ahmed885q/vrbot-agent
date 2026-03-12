@@ -19,7 +19,7 @@ class TaskIntelligenceRewards(BaseTask):
         bot.go_to_city()
         bot.wait(2)
 
-        print(f"  [{self.tag}] Opening intelligence/scout panel...")
+        self.log.info("Opening intelligence/scout panel...")
 
         # Try to find the intelligence or scout report icon
         found = self._find_and_tap(
@@ -62,9 +62,9 @@ class TaskIntelligenceRewards(BaseTask):
             bot.wait(random.uniform(0.5, 1.5))
 
         if collected == 0:
-            print(f"  [{self.tag}] No intelligence rewards to collect.")
+            self.log.info("No intelligence rewards to collect.")
         else:
-            print(f"  [{self.tag}] Collected {collected} intelligence reward(s)!")
+            self.log.info(f"Collected {collected} intelligence reward(s)!")
 
         self._safe_close()
         self._save_cooldown()

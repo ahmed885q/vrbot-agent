@@ -17,14 +17,14 @@ class TaskMarketTrade(BaseTask):
         bot.wait(2)
 
         # Find Market building
-        print(f"  [{self.tag}] Looking for Market...")
+        self.log.info("Looking for Market...")
         found = self._find_and_tap(
             "Find the Market or Trading Post building in the city. "
             "It looks like a merchant stall, market tent, or shop building.",
             wait_after=4,
         )
         if not found:
-            print(f"  [{self.tag}] Market not found (may not be unlocked yet).")
+            self.log.info("Market not found (may not be unlocked yet).")
             return True
 
         # Look for trade opportunities
@@ -42,9 +42,9 @@ class TaskMarketTrade(BaseTask):
             bot.wait(2)
 
         if trades:
-            print(f"  [{self.tag}] ✔ Completed {trades} trade(s)!")
+            self.log.info(f"✔ Completed {trades} trade(s)!")
         else:
-            print(f"  [{self.tag}] No trades available.")
+            self.log.info("No trades available.")
 
         self._safe_close()
         self._save_cooldown()

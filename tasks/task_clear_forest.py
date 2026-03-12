@@ -42,7 +42,7 @@ class TaskClearForest(BaseTask):
                     wait_after=3,
                 )
                 cleared += 1
-                bot.tap(640, 400, jitter=False)  # dismiss reward
+                self._dismiss_popup()  # dismiss reward
                 bot.wait(2)
             else:
                 bot.adb_back()
@@ -65,9 +65,9 @@ class TaskClearForest(BaseTask):
 
         cleared = self._clear_obstacles()
         if cleared:
-            print(f"  [{self.tag}] ✔ Cleared {cleared} obstacle(s)!")
+            self.log.info(f"✔ Cleared {cleared} obstacle(s)!")
         else:
-            print(f"  [{self.tag}] No obstacles to clear.")
+            self.log.info("No obstacles to clear.")
 
         self._safe_close()
         self._save_cooldown()

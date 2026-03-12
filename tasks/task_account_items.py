@@ -19,20 +19,20 @@ class TaskAccountItems(BaseTask):
         bot.go_to_city()
         bot.wait(2)
 
-        print("  [items] Opening items...")
+        self.log.info("Opening items...")
         bot.tap(ITEMS_BTN[0], ITEMS_BTN[1], jitter=False)
         bot.wait(4)
 
         # Verify opened
         s = bot.detect_screen()
         if s and s.get("screen", "").lower() == "city":
-            print("  [items] Items didn't open.")
+            self.log.info("Items didn't open.")
             return False
 
         # Find and use resource items (up to 3)
         used = 0
         for i in range(3):
-            print(f"  [items] Looking for usable item ({i + 1})...")
+            self.log.info(f"Looking for usable item ({i + 1})...")
             found = self._find_and_tap(
                 "You are on an inventory/items screen. "
                 "Find a resource chest, speedup item, or usable item. "
@@ -47,7 +47,7 @@ class TaskAccountItems(BaseTask):
                 )
                 if use_ok:
                     used += 1
-                    bot.tap(640, 400, jitter=False)  # dismiss popup
+                    self._dismiss_popup()  # dismiss popup
                     bot.wait(2)
                 else:
                     break
@@ -55,9 +55,9 @@ class TaskAccountItems(BaseTask):
                 break
 
         if used:
-            print(f"  [items] ✔ Used {used} item(s)!")
+            self.log.info(f"✔ Used {used} item(s)!")
         else:
-            print("  [items] No usable items.")
+            self.log.info("No usable items.")
 
         self._safe_close()
         self._save_cooldown()

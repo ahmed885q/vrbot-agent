@@ -18,7 +18,7 @@ class TaskMailRewards(BaseTask):
 
     def _collect_mail(self):
         bot = self.bot
-        print("  [mail] Opening mail...")
+        self.log.info("Opening mail...")
         bot.tap(MAIL_ICON[0], MAIL_ICON[1], jitter=False)
         bot.wait(3)
 
@@ -30,19 +30,19 @@ class TaskMailRewards(BaseTask):
             bot.wait(3)
 
         # Read & Claim All
-        print("  [mail] Tapping Read & Claim All...")
+        self.log.info("Tapping Read & Claim All...")
         bot.tap(READ_CLAIM_ALL[0], READ_CLAIM_ALL[1], jitter=False)
         bot.wait(3)
-        bot.tap(640, 400, jitter=False)
+        self._dismiss_popup()
         bot.wait(2)
 
         bot.adb_back()
         bot.wait(2)
-        print("  [mail] ✔ Mail claimed!")
+        self.log.info("✔ Mail claimed!")
 
     def _collect_quests(self):
         bot = self.bot
-        print("  [mail] Opening Daily Quests...")
+        self.log.info("Opening Daily Quests...")
         bot.tap(QUESTS_ICON[0], QUESTS_ICON[1], jitter=False)
         bot.wait(4)
 
@@ -60,7 +60,7 @@ class TaskMailRewards(BaseTask):
             if result and result.get("found"):
                 bot.tap(result["x"], result["y"])
                 bot.wait(2)
-                bot.tap(640, 400, jitter=False)
+                self._dismiss_popup()
                 bot.wait(2)
                 claimed += 1
             else:
@@ -75,7 +75,7 @@ class TaskMailRewards(BaseTask):
             bot.adb_back()
             bot.wait(2)
 
-        print(f"  [mail] ✔ Claimed {claimed} quest(s)!")
+        self.log.info(f"✔ Claimed {claimed} quest(s)!")
 
     def run(self):
         if not self._cooldown_ok():
@@ -93,5 +93,5 @@ class TaskMailRewards(BaseTask):
         bot.go_to_city()
 
         self._save_cooldown()
-        print("  [mail] ✔ All rewards collected!")
+        self.log.info("✔ All rewards collected!")
         return True

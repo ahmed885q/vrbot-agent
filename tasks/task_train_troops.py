@@ -26,7 +26,7 @@ class TaskTrainTroops(BuildingTask):
         # Find Barracks
         result = self._find_building()
         if not result:
-            print(f"  [{tag}] Barracks not found.")
+            self.log.info("Barracks not found.")
             return False
 
         bot.tap(result["x"], result["y"])
@@ -40,7 +40,7 @@ class TaskTrainTroops(BuildingTask):
             bot.wait(4)
 
         # Find Train button — pick highest tier available
-        print(f"  [{tag}] Looking for Train button...")
+        self.log.info("Looking for Train button...")
         found = self._find_and_tap(
             "You are inside the Barracks. Find the Train or Recruit button. "
             "If there are multiple troop tiers, pick the HIGHEST tier available. "
@@ -58,11 +58,11 @@ class TaskTrainTroops(BuildingTask):
             if not confirm:
                 confirm = self._tap_button("train", wait_after=3)
             if confirm:
-                print(f"  [{tag}] ✓ Troops training started!")
+                self.log.info("✓ Troops training started!")
             else:
-                print(f"  [{tag}] ✓ Train initiated (no confirm needed).")
+                self.log.info("✓ Train initiated (no confirm needed).")
         else:
-            print(f"  [{tag}] No Train button available (queue full?).")
+            self.log.info("No Train button available (queue full?).")
 
         self._safe_close()
         self._save_cooldown()
