@@ -415,8 +415,8 @@ class BotWorker(QThread):
             except Exception:
                 exe, dev = "adb", "emulator-5554"
 
-            pkg = "com.igg.android.vikingrise"
-            act = pkg + "/" + pkg + ".MainActivity"
+            pkg = "com.igg.android.vikingriseglobal"
+            act = pkg + "/com.gpc.sdk.unity.GPCSDKMainActivity"
 
             while self.running:
                 try:

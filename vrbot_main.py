@@ -495,7 +495,7 @@ class HealthGuard:
     """Monitors game process, detects crashes/freezes, auto-restarts."""
 
     GAME_PKG = "com.igg.android.vikingriseglobal"
-    GAME_ACT = GAME_PKG + "/com.igg.android.vikingriseglobal.MainActivity"
+    GAME_ACT = GAME_PKG + "/com.gpc.sdk.unity.GPCSDKMainActivity"
     FREEZE_TIMEOUT = 45     # seconds with identical screenshot = frozen
     CHECK_INTERVAL = 15     # background check interval
 

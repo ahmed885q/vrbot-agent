@@ -77,7 +77,7 @@ class GameHealthMonitor:
     """
 
     # Viking Rise package name
-    DEFAULT_PACKAGE = "com.igg.android.vikingrise"
+    DEFAULT_PACKAGE = "com.igg.android.vikingriseglobal"
     
     # LDPlayer related
     LDPLAYER_PACKAGE = "com.ldplayer"
@@ -445,7 +445,7 @@ class GameHealthMonitor:
         # Launch game activity
         self._run_adb(
             f"shell am start -n {self.game_package}/"
-            f"com.igg.android.vikingrise.MainActivity"
+            f"com.gpc.sdk.unity.GPCSDKMainActivity"
         )
         
         # Wait for game to start
