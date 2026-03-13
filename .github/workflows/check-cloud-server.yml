@@ -1,0 +1,44 @@
+name: Check Cloud Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH to cloud server with new password
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 88.99.64.19
+          username: root
+          password: ${{ secrets.CLOUD_SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 2m
+          script: |
+            echo "===== CONNECTED! ======"
+            hostname
+            uptime
+            echo ""
+            echo "===== DOCKER ======"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null | head -20
+            echo ""
+            echo "===== RUNNING PROCESSES ======"
+            ps aux | grep -E 'next|node|nginx|pm2' | grep -v grep
+            echo ""
+            echo "===== PM2 ======"
+            pm2 list 2>/dev/null || echo "No pm2"
+            echo ""
+            echo "===== NGINX ======"
+            systemctl status nginx 2>/dev/null | head -5
+            echo ""
+            echo "===== PORTS ======"
+            ss -tlnp | grep -E '80|443|3000'
+            echo ""
+            echo "===== NEXT.JS APP ======"
+            ls -la /opt/vrbot-site/ 2>/dev/null || ls -la /root/vrbot-site/ 2>/dev/null || ls -la /var/www/ 2>/dev/null || echo "Searching..."
+            find / -name "next.config.js" -not -path "*/node_modules/*" 2>/dev/null | head -5
+            echo ""
+            echo "===== NGINX SITES ======"
+            ls /etc/nginx/sites-enabled/ 2>/dev/null
+            cat /etc/nginx/sites-enabled/* 2>/dev/null | head -40
