@@ -1,0 +1,71 @@
+name: Launch Viking Rise on All Farms
+
+on:
+  workflow_dispatch:
+
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Launch game on all farms
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 88.99.64.19
+          username: root
+          password: ${{ secrets.CLOUD_SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 5m
+          script: |
+            echo "===== CHECK ADB ======"
+            which adb && adb version || echo "ADB not found"
+            echo ""
+
+            echo "===== FIND ADB PORTS ======"
+            # Check how farms connect to ADB
+            docker ps --format '{{.Names}}\t{{.Ports}}' | sort
+            echo ""
+
+            echo "===== CONNECT ADB TO ALL FARMS ======"
+            # Farm ports: farm_001 has no port mapping, farm_002=5557, farm_003=5558, etc.
+            # First check if there's a different ADB setup
+            for c in $(docker ps --format '{{.Names}}' | sort); do
+              port=$(docker inspect --format '{{range $p, $conf := .NetworkSettings.Ports}}{{if eq $p "5555/tcp"}}{{(index $conf 0).HostPort}}{{end}}{{end}}' $c 2>/dev/null)
+              ip=$(docker inspect --format '{{.NetworkSettings.IPAddress}}' $c 2>/dev/null)
+              if [ -z "$ip" ]; then
+                ip=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $c 2>/dev/null)
+              fi
+              echo "$c -> port=$port ip=$ip"
+
+              # Try to connect via port or IP
+              if [ -n "$port" ] && [ "$port" != "" ]; then
+                adb connect 127.0.0.1:$port 2>&1 || true
+              elif [ -n "$ip" ] && [ "$ip" != "" ]; then
+                adb connect $ip:5555 2>&1 || true
+              fi
+            done
+            echo ""
+
+            sleep 3
+            echo "===== CONNECTED DEVICES ======"
+            adb devices -l
+            echo ""
+
+            echo "===== CHECK IF GAME IS INSTALLED ======"
+            # Check on first connected device
+            first_dev=$(adb devices | grep -v "List" | grep "device" | head -1 | awk '{print $1}')
+            if [ -n "$first_dev" ]; then
+              adb -s $first_dev shell pm list packages 2>/dev/null | grep -iE "viking|igs" | head -5
+              echo ""
+            fi
+
+            echo "===== LAUNCH GAME ON ALL DEVICES ======"
+            for dev in $(adb devices | grep -v "List" | grep "device" | awk '{print $1}'); do
+              echo -n "$dev: "
+              # Try common Viking Rise package names
+              adb -s $dev shell monkey -p com.igg.android.vikingrise -c android.intent.category.LAUNCHER 1 2>&1 || \
+              adb -s $dev shell monkey -p com.igg.vikingrise -c android.intent.category.LAUNCHER 1 2>&1 || \
+              adb -s $dev shell am start -n com.igg.android.vikingrise/.MainActivity 2>&1 || \
+              echo "Could not launch"
+            done
+            echo ""
+            echo "===== DONE ======"
