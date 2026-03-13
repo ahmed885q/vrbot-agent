@@ -26,7 +26,7 @@ jobs:
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
-          command_timeout: 3m
+          command_timeout: 5m
           script: |
             set -e
 
@@ -34,15 +34,24 @@ jobs:
             pip3 install fastapi uvicorn pydantic --break-system-packages --quiet 2>/dev/null || \
             pip3 install fastapi uvicorn pydantic --quiet 2>/dev/null || true
 
+            # Install sshpass for SSH password auth to cloud server
+            apt-get install -y sshpass 2>/dev/null || true
+
             echo "===== Verify files ====="
             ls -la /opt/vrbot/orchestrator/
             head -3 /opt/vrbot/orchestrator/api.py
 
-            echo "===== Create .env if needed ====="
-            if [ ! -f /opt/vrbot/orchestrator/.env ]; then
-              echo "HETZNER_TOKEN=" > /opt/vrbot/orchestrator/.env
-              echo "Created .env"
-            fi
+            echo "===== Configure .env ====="
+            cat > /opt/vrbot/orchestrator/.env << 'ENVEOF'
+            CLOUD_SERVER_PASSWORD=${{ secrets.CLOUD_SERVER_PASSWORD }}
+            CLOUD_SERVER_IP=88.99.64.19
+            AUTO_DISCOVER=true
+            HETZNER_TOKEN=
+            ENVEOF
+            echo ".env configured with cloud server credentials"
+
+            echo "===== Setup SSH known hosts ====="
+            ssh-keyscan -H 88.99.64.19 >> /root/.ssh/known_hosts 2>/dev/null || true
 
             echo "===== Create systemd service ====="
             cat > /etc/systemd/system/vrbot-orchestrator.service << 'SVCEOF'
@@ -67,12 +76,16 @@ jobs:
             systemctl daemon-reload
             systemctl enable vrbot-orchestrator.service
             systemctl restart vrbot-orchestrator.service
-            sleep 5
+            sleep 8
 
             echo "===== Check status ====="
             systemctl is-active vrbot-orchestrator.service && echo "Orchestrator: OK" || echo "Orchestrator: FAIL"
-            journalctl -u vrbot-orchestrator.service -n 15 --no-pager
+            journalctl -u vrbot-orchestrator.service -n 30 --no-pager
 
             echo "===== Health check ====="
             sleep 3
-            curl -s http://localhost:8080/docs || curl -s http://localhost:8080/ || echo "Health check pending..."
+            curl -s http://localhost:8080/api/health || echo "Health check pending..."
+            echo ""
+
+            echo "===== Farm discovery check ====="
+            curl -s http://localhost:8080/api/farms | python3 -m json.tool 2>/dev/null | head -30 || echo "Farm list pending..."

@@ -5,11 +5,11 @@ Farm Executor - SSH/Docker/ADB Remote Execution
 
 Flow per farm:
   1. SSH to farm.server_ip
-  2. docker start farm_{farm_id} (redroid container)
-  3. Wait for ADB readiness on farm.adb_port
+  2. Get container Docker bridge IP via docker inspect
+  3. Connect ADB to container_ip:5555
   4. Run vrbot_main.py with task_type via ADB shell
   5. Monitor execution (timeout, health checks)
-  6. docker stop farm_{farm_id}
+  6. Container stays running (restart: unless-stopped)
 
 Requires:
   - SSH key or password access to farm servers
@@ -32,7 +32,10 @@ SSH_TIMEOUT = 30        # seconds for SSH connection
 ADB_WAIT_MAX = 60      # seconds to wait for ADB readiness
 DOCKER_STOP_TIMEOUT = 30
 VRBOT_AGENT_PATH = "/opt/vrbot/agent"
-VRBOT_VENV_PYTHON = "/opt/vrbot/agent/venv/bin/python3"  # or system python
+VRBOT_VENV_PYTHON = "/opt/vrbot/agent/venv/bin/python3"
+
+# Game package — correct global version
+GAME_PACKAGE = "com.igg.android.vikingriseglobal"
 
 # Task type → vrbot_main.py task list
 TASK_TYPE_MAP = {
@@ -58,9 +61,11 @@ class FarmExecutor:
             ssh_password: SSH password for farm servers (from env or secrets)
             ssh_key_path: Path to SSH private key (alternative to password)
         """
-        self.ssh_password = ssh_password or os.getenv("SERVER_PASSWORD", "")
+        self.ssh_password = ssh_password or os.getenv("CLOUD_SERVER_PASSWORD", "") or os.getenv("SERVER_PASSWORD", "")
         self.ssh_key_path = ssh_key_path or os.getenv("SSH_KEY_PATH", "")
         self.active_executions: Dict[str, asyncio.Task] = {}
+        # Cache container IPs to avoid repeated docker inspect calls
+        self._container_ip_cache: Dict[str, str] = {}
 
     # ══════════════════════════════════════
     #  SSH Command Execution
@@ -115,21 +120,68 @@ class FarmExecutor:
             return "", str(e), -1
 
     # ══════════════════════════════════════
+    #  Docker Bridge IP Resolution
+    # ══════════════════════════════════════
+
+    async def _get_container_ip(self, farm: Farm) -> Optional[str]:
+        """Get the Docker bridge IP for a farm's container.
+
+        Our containers use Docker bridge networking (not port mapping),
+        so we need to get the container IP via docker inspect.
+        """
+        container_name = farm.container_name or f"farm_{farm.id}"
+
+        # Check cache first
+        if container_name in self._container_ip_cache:
+            return self._container_ip_cache[container_name]
+
+        stdout, stderr, rc = await self._ssh_run(
+            farm.server_ip,
+            f"docker inspect --format '{{{{range .NetworkSettings.Networks}}}}{{{{.IPAddress}}}}{{{{end}}}}' {container_name} 2>/dev/null"
+        )
+
+        ip = stdout.strip()
+        if ip and rc == 0:
+            self._container_ip_cache[container_name] = ip
+            return ip
+
+        # Fallback: try .NetworkSettings.IPAddress
+        stdout, stderr, rc = await self._ssh_run(
+            farm.server_ip,
+            f"docker inspect --format '{{{{.NetworkSettings.IPAddress}}}}' {container_name} 2>/dev/null"
+        )
+
+        ip = stdout.strip()
+        if ip and rc == 0:
+            self._container_ip_cache[container_name] = ip
+            return ip
+
+        logger.error(f"Could not get IP for container {container_name}")
+        return None
+
+    def _clear_ip_cache(self, container_name: str = None):
+        """Clear cached container IP(s)."""
+        if container_name:
+            self._container_ip_cache.pop(container_name, None)
+        else:
+            self._container_ip_cache.clear()
+
+    # ══════════════════════════════════════
     #  Container Management
     # ══════════════════════════════════════
 
-    async def start_container(self, farm: Farm) -> bool:
-        """Start the Docker redroid container for a farm.
+    async def ensure_container_running(self, farm: Farm) -> bool:
+        """Ensure the Docker redroid container is running.
 
-        Container naming convention: farm_{farm_id}
-        ADB port: farm.adb_port (e.g., 5555, 5557, etc.)
+        Containers use restart: unless-stopped, so they should normally
+        already be running. This just verifies and starts if needed.
         """
         container_name = farm.container_name or f"farm_{farm.id}"
         farm.status = FarmStatus.STARTING
 
-        logger.info(f"  🐳 Starting container {container_name} on {farm.server_ip}")
+        logger.info(f"  🐳 Checking container {container_name} on {farm.server_ip}")
 
-        # Check if container exists and is running
+        # Check if container is running
         stdout, stderr, rc = await self._ssh_run(
             farm.server_ip,
             f"docker inspect -f '{{{{.State.Running}}}}' {container_name} 2>/dev/null || echo 'notfound'"
@@ -140,82 +192,75 @@ class FarmExecutor:
             farm.status = FarmStatus.RUNNING
             return True
 
-        if "notfound" in stdout or "false" in stdout.lower():
+        if "false" in stdout.lower():
             # Container exists but stopped — start it
-            if "false" in stdout.lower():
-                stdout, stderr, rc = await self._ssh_run(
-                    farm.server_ip,
-                    f"docker start {container_name}",
-                    timeout=60
-                )
-            else:
-                # Container doesn't exist — create it
-                adb_port = farm.adb_port or 5555
-                stdout, stderr, rc = await self._ssh_run(
-                    farm.server_ip,
-                    f"docker run -d --name {container_name} "
-                    f"--privileged "
-                    f"-p {adb_port}:5555 "
-                    f"-v /opt/vrbot/agent:/opt/vrbot/agent:ro "
-                    f"redroid/redroid:12.0.0-latest "
-                    f"androidboot.redroid_gpu_mode=guest "
-                    f"androidboot.redroid_width=1280 "
-                    f"androidboot.redroid_height=720",
-                    timeout=120
-                )
-
+            logger.info(f"  🐳 Starting stopped container {container_name}")
+            stdout, stderr, rc = await self._ssh_run(
+                farm.server_ip,
+                f"docker start {container_name}",
+                timeout=60
+            )
             if rc != 0:
                 logger.error(f"  ❌ Failed to start container: {stderr}")
                 farm.status = FarmStatus.ERROR
                 return False
 
+            # Clear IP cache since IP may have changed
+            self._clear_ip_cache(container_name)
+            await asyncio.sleep(10)  # Wait for container to initialize
+
+        elif "notfound" in stdout:
+            logger.error(f"  ❌ Container {container_name} does not exist")
+            farm.status = FarmStatus.ERROR
+            return False
+
+        # Verify we can get an IP
+        ip = await self._get_container_ip(farm)
+        if not ip:
+            logger.error(f"  ❌ Container {container_name} has no IP")
+            farm.status = FarmStatus.ERROR
+            return False
+
         # Wait for ADB readiness
         adb_ready = await self._wait_for_adb(farm)
         if adb_ready:
             farm.status = FarmStatus.RUNNING
-            logger.info(f"  ✅ Container {container_name} ready (ADB port {farm.adb_port})")
+            logger.info(f"  ✅ Container {container_name} ready (IP: {ip})")
             return True
         else:
             logger.warning(f"  ⚠️ Container started but ADB not ready")
             farm.status = FarmStatus.ERROR
             return False
 
+    # Keep old name as alias for compatibility
+    async def start_container(self, farm: Farm) -> bool:
+        return await self.ensure_container_running(farm)
+
     async def stop_container(self, farm: Farm) -> bool:
-        """Stop the Docker container for a farm."""
-        container_name = farm.container_name or f"farm_{farm.id}"
-        farm.status = FarmStatus.STOPPING
+        """Mark farm as idle but DON'T stop the container.
 
-        logger.info(f"  🐳 Stopping container {container_name}")
-
-        stdout, stderr, rc = await self._ssh_run(
-            farm.server_ip,
-            f"docker stop -t {DOCKER_STOP_TIMEOUT} {container_name}",
-            timeout=DOCKER_STOP_TIMEOUT + 10
-        )
-
+        Containers have restart: unless-stopped policy and should
+        stay running so the game stays loaded between cycles.
+        """
         farm.status = FarmStatus.IDLE
-
-        if rc != 0:
-            logger.warning(f"  ⚠️ Container stop returned {rc}: {stderr}")
-            # Force kill if graceful stop failed
-            await self._ssh_run(
-                farm.server_ip,
-                f"docker kill {container_name} 2>/dev/null; true"
-            )
-
+        logger.info(f"  🐳 Farm {farm.id} marked idle (container stays running)")
         return True
 
     async def _wait_for_adb(self, farm: Farm) -> bool:
-        """Wait for ADB to become ready on the container."""
-        adb_port = farm.adb_port or 5555
+        """Wait for ADB to become ready on the container via Docker bridge IP."""
+        container_ip = await self._get_container_ip(farm)
+        if not container_ip:
+            return False
+
+        adb_addr = f"{container_ip}:5555"
         elapsed = 0
         interval = 5
 
         while elapsed < ADB_WAIT_MAX:
             stdout, stderr, rc = await self._ssh_run(
                 farm.server_ip,
-                f"adb connect localhost:{adb_port} && "
-                f"adb -s localhost:{adb_port} shell getprop sys.boot_completed 2>/dev/null",
+                f"adb connect {adb_addr} 2>/dev/null && "
+                f"adb -s {adb_addr} shell getprop sys.boot_completed 2>/dev/null",
                 timeout=15
             )
 
@@ -234,15 +279,21 @@ class FarmExecutor:
     async def run_task_on_farm(self, farm: Farm, task: TaskRequest) -> bool:
         """Execute a bot task on a farm via SSH → ADB.
 
-        The actual execution runs vrbot_main.py in single-task mode:
-          python3 vrbot_main.py --task <task_name> --adb-serial localhost:<port>
-
-        For FARMING: runs the 'gather' task
-        For DAILY: runs all daily tasks in sequence
-        For NIFLING: runs the 'niflung' task
+        Uses Docker bridge IP to connect ADB (not localhost port mapping).
         """
-        adb_port = farm.adb_port or 5555
-        adb_serial = f"localhost:{adb_port}"
+        container_ip = await self._get_container_ip(farm)
+        if not container_ip:
+            task.error_message = "no_container_ip"
+            return False
+
+        adb_serial = f"{container_ip}:5555"
+
+        # Ensure ADB is connected
+        await self._ssh_run(
+            farm.server_ip,
+            f"adb connect {adb_serial} 2>/dev/null",
+            timeout=10
+        )
 
         # Determine which tasks to run
         if task.task_type == TaskType.DAILY:
@@ -254,7 +305,6 @@ class FarmExecutor:
             task_arg = f"--task {task_name}"
 
         # Build the remote command
-        # The bot runs on the server where the container is
         cmd = (
             f"cd {VRBOT_AGENT_PATH} && "
             f"ADB_SERIAL={adb_serial} "
@@ -282,7 +332,6 @@ class FarmExecutor:
         # Parse result
         if rc == 0:
             logger.info(f"  ✅ Task {task.task_type.value} completed on farm {farm.id}")
-            # Log last few lines of output
             for line in stdout.split("\n")[-5:]:
                 if line.strip():
                     logger.debug(f"    → {line.strip()}")
@@ -292,7 +341,6 @@ class FarmExecutor:
             if stderr:
                 logger.error(f"    stderr: {stderr[:200]}")
             if stdout:
-                # Check for known error patterns
                 if "captcha" in stdout.lower():
                     task.error_message = "captcha_detected"
                 elif "freeze" in stdout.lower() or "frozen" in stdout.lower():
@@ -308,17 +356,7 @@ class FarmExecutor:
     # ══════════════════════════════════════
 
     async def check_farm_health(self, farm: Farm) -> dict:
-        """Check the health of a farm's container and game state.
-
-        Returns:
-            {
-                "container_running": bool,
-                "adb_connected": bool,
-                "game_running": bool,
-                "screen": str,  # current screen detected
-            }
-        """
-        adb_port = farm.adb_port or 5555
+        """Check the health of a farm's container and game state."""
         container_name = farm.container_name or f"farm_{farm.id}"
 
         # Check container
@@ -336,18 +374,30 @@ class FarmExecutor:
                 "screen": "offline",
             }
 
+        # Get container IP
+        container_ip = await self._get_container_ip(farm)
+        if not container_ip:
+            return {
+                "container_running": True,
+                "adb_connected": False,
+                "game_running": False,
+                "screen": "no_ip",
+            }
+
+        adb_addr = f"{container_ip}:5555"
+
         # Check ADB
         stdout, _, rc = await self._ssh_run(
             farm.server_ip,
-            f"adb -s localhost:{adb_port} shell getprop sys.boot_completed 2>/dev/null"
+            f"adb -s {adb_addr} shell getprop sys.boot_completed 2>/dev/null"
         )
         adb_connected = "1" in stdout
 
-        # Check if Viking Rise is running
+        # Check if Viking Rise is running (correct package name)
         stdout, _, rc = await self._ssh_run(
             farm.server_ip,
-            f"adb -s localhost:{adb_port} shell dumpsys activity activities 2>/dev/null | "
-            f"grep -i 'viking\\|com.igg' | head -1"
+            f"adb -s {adb_addr} shell dumpsys activity activities 2>/dev/null | "
+            f"grep -i 'vikingriseglobal\\|com.igg' | head -1"
         )
         game_running = bool(stdout.strip())
 
@@ -360,20 +410,30 @@ class FarmExecutor:
 
     async def restart_game(self, farm: Farm) -> bool:
         """Force restart the Viking Rise game on a farm."""
-        adb_port = farm.adb_port or 5555
-        adb_serial = f"localhost:{adb_port}"
+        container_ip = await self._get_container_ip(farm)
+        if not container_ip:
+            return False
+
+        adb_addr = f"{container_ip}:5555"
+
+        # Ensure ADB connected
+        await self._ssh_run(
+            farm.server_ip,
+            f"adb connect {adb_addr} 2>/dev/null",
+            timeout=10
+        )
 
         # Kill the game
         await self._ssh_run(
             farm.server_ip,
-            f"adb -s {adb_serial} shell am force-stop com.igg.android.vikingrise"
+            f"adb -s {adb_addr} shell am force-stop {GAME_PACKAGE}"
         )
         await asyncio.sleep(3)
 
         # Restart it
         stdout, stderr, rc = await self._ssh_run(
             farm.server_ip,
-            f"adb -s {adb_serial} shell monkey -p com.igg.android.vikingrise "
+            f"adb -s {adb_addr} shell monkey -p {GAME_PACKAGE} "
             f"-c android.intent.category.LAUNCHER 1"
         )
 
@@ -383,6 +443,40 @@ class FarmExecutor:
         else:
             logger.error(f"  ❌ Failed to restart game on farm {farm.id}: {stderr}")
             return False
+
+    # ══════════════════════════════════════
+    #  Farm Discovery
+    # ══════════════════════════════════════
+
+    async def discover_farms(self, server_ip: str) -> list:
+        """Discover all farm containers on a server via SSH.
+
+        Returns list of dicts: [{name, ip, status}, ...]
+        """
+        stdout, stderr, rc = await self._ssh_run(
+            server_ip,
+            "for c in $(docker ps --format '{{.Names}}' | grep '^farm_' | sort); do "
+            "  ip=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $c 2>/dev/null); "
+            "  status=$(docker inspect --format '{{.State.Status}}' $c 2>/dev/null); "
+            "  echo \"$c|$ip|$status\"; "
+            "done",
+            timeout=30
+        )
+
+        farms = []
+        if rc == 0 and stdout:
+            for line in stdout.strip().split("\n"):
+                parts = line.strip().split("|")
+                if len(parts) == 3:
+                    name, ip, status = parts
+                    farms.append({
+                        "name": name,
+                        "ip": ip,
+                        "status": status,
+                    })
+
+        logger.info(f"  🔍 Discovered {len(farms)} farms on {server_ip}")
+        return farms
 
 
 # ══════════════════════════════════════════

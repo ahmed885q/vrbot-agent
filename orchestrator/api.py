@@ -21,6 +21,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional, List
 import logging
+import os
 
 from batch_scheduler import BatchScheduler
 from customer_scheduler import CustomerScheduler
@@ -78,6 +79,18 @@ class AddFarmsRequest(BaseModel):
     """إضافة مزارع لزبون"""
     customer_id: str
     farm_count: int
+
+class RegisterFarmRequest(BaseModel):
+    """تسجيل مزرعة يدوياً"""
+    farm_id: str
+    customer_id: str = "default"
+    server_ip: str
+    container_name: Optional[str] = None
+
+class AutoDiscoverRequest(BaseModel):
+    """اكتشاف المزارع تلقائياً من سيرفر"""
+    server_ip: str
+    customer_id: str = "default"
 
 
 # ══════════════════════════════════════════
@@ -579,8 +592,92 @@ async def validate_current():
 
 
 # ══════════════════════════════════════════
+#  Farm Registration & Discovery
+# ══════════════════════════════════════════
+
+@app.post("/api/farms/register")
+async def register_farm(req: RegisterFarmRequest):
+    """تسجيل مزرعة واحدة"""
+    from models import Farm
+    farm = Farm(
+        id=req.farm_id,
+        customer_id=req.customer_id,
+        server_ip=req.server_ip,
+        container_name=req.container_name or f"farm_{req.farm_id}",
+    )
+    batch_scheduler.add_farm(farm)
+    return {"status": "registered", "farm_id": farm.id, "total_farms": len(batch_scheduler.farms)}
+
+
+@app.post("/api/farms/discover")
+async def discover_farms(req: AutoDiscoverRequest):
+    """
+    🔍 اكتشاف تلقائي لكل المزارع على سيرفر
+
+    يتصل بالسيرفر عبر SSH → يكتشف كل containers اسمها farm_XXX → يسجلها
+    """
+    from farm_executor import get_executor
+    from models import Farm
+
+    executor = get_executor()
+    discovered = await executor.discover_farms(req.server_ip)
+
+    registered = 0
+    for farm_info in discovered:
+        name = farm_info["name"]
+        # Extract farm ID from container name (farm_001 → 001)
+        farm_id = name.replace("farm_", "")
+
+        if farm_id not in batch_scheduler.farms:
+            farm = Farm(
+                id=farm_id,
+                customer_id=req.customer_id,
+                server_ip=req.server_ip,
+                container_name=name,
+            )
+            batch_scheduler.add_farm(farm)
+            registered += 1
+
+    return {
+        "discovered": len(discovered),
+        "registered": registered,
+        "already_known": len(discovered) - registered,
+        "total_farms": len(batch_scheduler.farms),
+        "farms": [
+            {"name": f["name"], "ip": f["ip"], "status": f["status"]}
+            for f in discovered
+        ]
+    }
+
+
+@app.get("/api/farms")
+async def list_farms():
+    """قائمة كل المزارع المسجلة"""
+    farms = []
+    for farm in batch_scheduler.farms.values():
+        farms.append({
+            "id": farm.id,
+            "customer_id": farm.customer_id,
+            "server_ip": farm.server_ip,
+            "container_name": farm.container_name,
+            "status": farm.status.value,
+            "last_farming": farm.last_farming_at.isoformat() if farm.last_farming_at else None,
+            "last_daily": farm.last_daily_at.isoformat() if farm.last_daily_at else None,
+            "needs_farming": farm.needs_farming(config),
+            "needs_daily": farm.needs_daily(config),
+            "consecutive_failures": farm.consecutive_failures,
+        })
+    return {"farms": farms, "total": len(farms)}
+
+
+# ══════════════════════════════════════════
 #  Startup
 # ══════════════════════════════════════════
+
+# Cloud server configuration (auto-discovery on startup)
+CLOUD_SERVER_IP = os.getenv("CLOUD_SERVER_IP", "88.99.64.19")
+AUTO_DISCOVER_ON_STARTUP = os.getenv("AUTO_DISCOVER", "true").lower() == "true"
+
 
 @app.on_event("startup")
 async def startup():
@@ -588,6 +685,35 @@ async def startup():
     import asyncio
 
     logger.info("🚀 VRBOT Batch Scheduler API starting...")
+
+    # ─── Auto-discover farms from cloud server ───
+    if AUTO_DISCOVER_ON_STARTUP:
+        logger.info(f"🔍 Auto-discovering farms on {CLOUD_SERVER_IP}...")
+        try:
+            from farm_executor import get_executor
+            from models import Farm
+
+            executor = get_executor()
+            discovered = await executor.discover_farms(CLOUD_SERVER_IP)
+
+            for farm_info in discovered:
+                name = farm_info["name"]
+                farm_id = name.replace("farm_", "")
+
+                if farm_id not in batch_scheduler.farms:
+                    farm = Farm(
+                        id=farm_id,
+                        customer_id="default",
+                        server_ip=CLOUD_SERVER_IP,
+                        container_name=name,
+                    )
+                    batch_scheduler.add_farm(farm)
+
+            logger.info(f"✅ Auto-discovered {len(discovered)} farms, "
+                       f"total registered: {len(batch_scheduler.farms)}")
+        except Exception as e:
+            logger.error(f"❌ Auto-discovery failed: {e}")
+            logger.info("   → Farms can be registered manually via POST /api/farms/discover")
 
     # تشغيل Batch Scheduler (3 طوابير: farming + daily + nifling loops)
     asyncio.create_task(batch_scheduler.start())
