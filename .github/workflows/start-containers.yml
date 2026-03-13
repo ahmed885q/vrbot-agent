@@ -7,7 +7,7 @@ jobs:
   start:
     runs-on: ubuntu-latest
     steps:
-      - name: Check and start Docker containers
+      - name: Start all farm containers
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 88.99.64.19
@@ -16,28 +16,29 @@ jobs:
           port: 22
           command_timeout: 5m
           script: |
-            echo "===== DOCKER STATUS ======"
-            docker --version
-            systemctl status docker | head -5
+            echo "===== KERNEL MODULES ======"
+            lsmod | grep -E 'binder|ashmem' || echo "No binder/ashmem modules"
+            modprobe binder_linux 2>&1 || echo "binder_linux module failed"
+            modprobe ashmem_linux 2>&1 || echo "ashmem_linux module failed"
+            ls /dev/binder* /dev/ashmem* 2>/dev/null || echo "No binder/ashmem devices"
             echo ""
-            echo "===== ALL CONTAINERS (running + stopped) ======"
-            docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Image}}\t{{.Ports}}"
+            echo "===== STARTING ALL CONTAINERS ONE BY ONE ======"
+            for c in $(docker ps -a --format '{{.Names}}' | sort); do
+              status=$(docker inspect --format '{{.State.Status}}' $c)
+              if [ "$status" != "running" ]; then
+                echo -n "Starting $c... "
+                docker start $c 2>&1 && echo "OK" || echo "FAILED"
+              else
+                echo "$c is already running"
+              fi
+            done
             echo ""
-            echo "===== STARTING ALL STOPPED CONTAINERS ======"
-            stopped=$(docker ps -a --filter "status=exited" --filter "status=created" -q)
-            if [ -n "$stopped" ]; then
-              echo "Found stopped containers, starting them..."
-              docker start $stopped
-              echo ""
-              echo "===== AFTER START ======"
-              sleep 5
-              docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
-            else
-              echo "No stopped containers to start"
-            fi
+            sleep 10
+            echo "===== FINAL STATUS ======"
+            docker ps -a --format "table {{.Names}}\t{{.Status}}" | head -25
             echo ""
-            echo "===== DOCKER COMPOSE FILES ======"
-            find / -name "docker-compose*.yml" -not -path "*/proc/*" -not -path "*/sys/*" 2>/dev/null | head -10
-            echo ""
-            echo "===== RESTART POLICIES ======"
-            docker inspect --format '{{.Name}} -> {{.HostConfig.RestartPolicy.Name}}' $(docker ps -aq) 2>/dev/null
+            echo "===== SET RESTART POLICY ======"
+            for c in $(docker ps -a --format '{{.Names}}'); do
+              docker update --restart unless-stopped $c 2>&1
+            done
+            echo "Restart policies updated"
