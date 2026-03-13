@@ -1,0 +1,40 @@
+name: Check Orchestrator Status
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check orchestrator health and farms
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 65.109.214.187
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 2m
+          script: |
+            echo "===== SERVICE STATUS ====="
+            systemctl is-active vrbot-orchestrator.service && echo "Status: RUNNING" || echo "Status: DOWN"
+            echo ""
+
+            echo "===== HEALTH CHECK ====="
+            curl -s http://localhost:8080/api/health | python3 -m json.tool 2>/dev/null
+            echo ""
+
+            echo "===== REGISTERED FARMS ====="
+            curl -s http://localhost:8080/api/farms | python3 -m json.tool 2>/dev/null
+            echo ""
+
+            echo "===== BATCH SCHEDULER STATUS ====="
+            curl -s http://localhost:8080/api/batch/status | python3 -m json.tool 2>/dev/null
+            echo ""
+
+            echo "===== SYSTEM STATUS ====="
+            curl -s http://localhost:8080/api/status | python3 -m json.tool 2>/dev/null | head -50
+            echo ""
+
+            echo "===== RECENT LOGS ====="
+            journalctl -u vrbot-orchestrator.service -n 40 --no-pager 2>/dev/null | grep -v "404 Not Found"
