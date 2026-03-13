@@ -1,0 +1,39 @@
+name: Inspect Cloud App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect cloud dashboard app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 88.99.64.19
+          username: root
+          password: ${{ secrets.CLOUD_SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 2m
+          script: |
+            echo "===== APP DIRECTORY ======"
+            ls -la /opt/vrbot/cloud-dashboard/
+            echo ""
+            echo "===== SERVER.JS CONTENT ======"
+            cat /opt/vrbot/cloud-dashboard/server.js
+            echo ""
+            echo "===== PACKAGE.JSON ======"
+            cat /opt/vrbot/cloud-dashboard/package.json 2>/dev/null || echo "No package.json"
+            echo ""
+            echo "===== OTHER FILES ======"
+            find /opt/vrbot/cloud-dashboard/ -type f | head -30
+            echo ""
+            echo "===== SYSTEMD SERVICE ======"
+            cat /etc/systemd/system/cloud-dashboard.service 2>/dev/null || systemctl cat cloud-dashboard 2>/dev/null || echo "No systemd service found"
+            echo "Checking all services..."
+            ls /etc/systemd/system/ | grep -iE 'cloud|vrbot|node|dashboard' || echo "None"
+            echo ""
+            echo "===== CURL TEST ======"
+            curl -s http://localhost:3000/ | head -50
+            echo ""
+            curl -s http://localhost:3000/admin-login 2>&1 | head -20
