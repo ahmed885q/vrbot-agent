@@ -7,37 +7,46 @@ jobs:
   fix:
     runs-on: ubuntu-latest
     steps:
-      - name: Reconnect farms to bridge network and launch game
+      - name: Restart broken farms and launch game
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 88.99.64.19
           username: root
           password: ${{ secrets.CLOUD_SERVER_PASSWORD }}
           port: 22
-          command_timeout: 5m
+          command_timeout: 10m
           script: |
             GAME_PKG="com.igg.android.vikingriseglobal"
 
-            echo "===== FIX: RECONNECT FARMS TO BRIDGE ======"
+            echo "===== RESTART FARMS WITH NO NETWORK ======"
             for c in $(docker ps --format '{{.Names}}' | sort); do
-              nets=$(docker inspect --format '{{json .NetworkSettings.Networks}}' $c)
-              if [ "$nets" = "{}" ] || [ "$nets" = "null" ]; then
-                echo -n "$c: no network, reconnecting... "
-                docker network connect bridge $c 2>&1 && echo "OK" || echo "FAILED"
+              nets=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $c)
+              if [ -z "$nets" ]; then
+                echo -n "$c: restarting... "
+                docker restart $c --time 10 2>&1 | tail -1
+                sleep 2
               else
-                ip=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $c)
-                echo "$c: already connected (IP=$ip)"
+                echo "$c: OK (IP=$nets)"
               fi
             done
             echo ""
 
-            sleep 3
+            sleep 10
 
-            echo "===== VERIFY IPs ======"
+            echo "===== VERIFY ALL IPs ======"
+            ok=0
+            fail=0
             for c in $(docker ps --format '{{.Names}}' | sort); do
               ip=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $c)
-              echo "$c: IP=$ip"
+              if [ -n "$ip" ]; then
+                echo "$c: IP=$ip"
+                ok=$((ok + 1))
+              else
+                echo "$c: NO IP!"
+                fail=$((fail + 1))
+              fi
             done
+            echo "OK: $ok  FAILED: $fail"
             echo ""
 
             echo "===== CONNECT ADB ======"
@@ -54,11 +63,13 @@ jobs:
             echo "Connected devices: $DEVICE_COUNT"
             echo ""
 
-            echo "===== LAUNCH GAME ======"
-            for dev in $(adb devices | grep "device$" | awk '{print $1}'); do
-              echo -n "$dev: "
-              adb -s $dev shell monkey -p $GAME_PKG -c android.intent.category.LAUNCHER 1 2>&1 | grep -E "Events|No activities" | head -1
-            done
+            if [ "$DEVICE_COUNT" -gt 0 ]; then
+              echo "===== LAUNCH GAME ON ALL ======"
+              for dev in $(adb devices | grep "device$" | awk '{print $1}'); do
+                echo -n "$dev: "
+                result=$(adb -s $dev shell monkey -p $GAME_PKG -c android.intent.category.LAUNCHER 1 2>&1)
+                echo "$result" | grep -oE "Events injected|No activities" | head -1
+              done
+            fi
             echo ""
-
             echo "===== DONE ======"
