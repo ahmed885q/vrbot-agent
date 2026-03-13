@@ -1,0 +1,55 @@
+name: Debug Docker Network
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug Docker networking
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 88.99.64.19
+          username: root
+          password: ${{ secrets.CLOUD_SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 3m
+          script: |
+            echo "===== DOCKER NETWORKS ======"
+            docker network ls
+            echo ""
+
+            echo "===== FARM_001 FULL INSPECT (network section) ======"
+            docker inspect farm_001 --format '{{json .NetworkSettings}}' | python3 -m json.tool 2>/dev/null | head -30
+            echo ""
+
+            echo "===== FARM_002 FULL INSPECT (network section) ======"
+            docker inspect farm_002 --format '{{json .NetworkSettings}}' | python3 -m json.tool 2>/dev/null | head -30
+            echo ""
+
+            echo "===== FARM_001 vs FARM_002 CREATE COMMANDS ======"
+            echo "--- farm_001 ---"
+            docker inspect farm_001 --format '{{json .Config.Cmd}}' 2>/dev/null
+            docker inspect farm_001 --format 'NetworkMode={{.HostConfig.NetworkMode}} Privileged={{.HostConfig.Privileged}}' 2>/dev/null
+            echo ""
+            echo "--- farm_002 ---"
+            docker inspect farm_002 --format '{{json .Config.Cmd}}' 2>/dev/null
+            docker inspect farm_002 --format 'NetworkMode={{.HostConfig.NetworkMode}} Privileged={{.HostConfig.Privileged}}' 2>/dev/null
+            echo ""
+
+            echo "===== ALL FARMS NETWORK MODE ======"
+            for c in $(docker ps --format '{{.Names}}' | sort); do
+              mode=$(docker inspect --format '{{.HostConfig.NetworkMode}}' $c)
+              ip=$(docker inspect --format '{{.NetworkSettings.IPAddress}}' $c)
+              echo "$c: NetworkMode=$mode IP=$ip"
+            done
+            echo ""
+
+            echo "===== ADB INSIDE FARM_002 ======"
+            docker exec farm_002 getprop ro.boot.hardware 2>/dev/null | head -3
+            docker exec farm_002 ip addr 2>/dev/null | grep inet | head -5
+            echo ""
+
+            echo "===== CHECK HOST NETWORK PORTS ======"
+            ss -tlnp | grep 555 | head -20
