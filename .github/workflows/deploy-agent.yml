@@ -1,0 +1,115 @@
+name: Deploy Bot Agent
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy bot agent files to cloud server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 88.99.64.19
+          username: root
+          password: ${{ secrets.CLOUD_SERVER_PASSWORD }}
+          port: 22
+          source: >-
+            vrbot_main.py,
+            vrbot_core.py,
+            vrbot_config.py,
+            vrbot_utils.py,
+            smart_retry.py,
+            state_machine.py,
+            template_matcher.py,
+            yolo_detector.py,
+            captcha_detector.py,
+            health_monitor.py,
+            hub_client.py,
+            socketio_client.py,
+            run_task.py,
+            tasks/,
+            models/,
+            templates/,
+            config/
+          target: "/opt/vrbot/agent/"
+          strip_components: 0
+          overwrite: true
+
+      - name: Setup bot environment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 88.99.64.19
+          username: root
+          password: ${{ secrets.CLOUD_SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 5m
+          script: |
+            set -e
+
+            echo "===== Verify bot files ====="
+            ls -la /opt/vrbot/agent/
+            echo ""
+            ls -la /opt/vrbot/agent/tasks/ | head -20
+            echo ""
+
+            echo "===== Install Python dependencies ====="
+            pip3 install numpy Pillow --break-system-packages --quiet 2>/dev/null || \
+            pip3 install numpy Pillow --quiet 2>/dev/null || true
+
+            # Optional: onnxruntime for YOLO (heavier install)
+            pip3 install onnxruntime --break-system-packages --quiet 2>/dev/null || \
+            pip3 install onnxruntime --quiet 2>/dev/null || \
+            echo "onnxruntime install skipped (optional)"
+
+            echo "===== Create .env for bot ====="
+            cat > /opt/vrbot/agent/.env << 'ENVEOF'
+            VRBOT_BACKEND=docker
+            ENVEOF
+            echo "Bot .env configured for Docker backend"
+
+            echo "===== Create necessary directories ====="
+            mkdir -p /opt/vrbot/agent/logs
+            mkdir -p /opt/vrbot/agent/debug_screenshots
+            mkdir -p /opt/vrbot/agent/models
+
+            echo "===== Test bot import ====="
+            cd /opt/vrbot/agent
+            python3 -c "
+            import sys
+            print(f'Python: {sys.version}')
+            try:
+                import numpy; print(f'numpy: {numpy.__version__}')
+            except: print('numpy: NOT INSTALLED')
+            try:
+                from PIL import Image; print(f'Pillow: OK')
+            except: print('Pillow: NOT INSTALLED')
+            try:
+                import vrbot_config; print(f'vrbot_config: OK (backend={vrbot_config.BACKEND})')
+            except Exception as e: print(f'vrbot_config: ERROR - {e}')
+            try:
+                from vrbot_main import TASK_MAP; print(f'vrbot_main: OK ({len(TASK_MAP)} tasks)')
+            except Exception as e: print(f'vrbot_main: ERROR - {e}')
+            " 2>&1 || echo "Import test had errors"
+
+            echo "===== Quick ADB test on farm_001 ====="
+            FARM_IP=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' farm_001 2>/dev/null)
+            if [ -n "$FARM_IP" ]; then
+              echo "farm_001 IP: $FARM_IP"
+              adb connect $FARM_IP:5555 2>/dev/null || true
+              adb -s $FARM_IP:5555 shell getprop sys.boot_completed 2>/dev/null || echo "ADB not ready"
+            else
+              echo "farm_001 not running or no IP"
+            fi
+
+            echo "===== Quick bot dry run (gather task, single-run) ====="
+            cd /opt/vrbot/agent
+            timeout 30 python3 vrbot_main.py --task gather --adb-serial ${FARM_IP:-172.17.0.2}:5555 --single-run 2>&1 | tail -20 || echo "Dry run completed or timed out (expected)"
+
+            echo ""
+            echo "===== DEPLOYMENT COMPLETE ====="
+            echo "Bot agent deployed to /opt/vrbot/agent/"
+            echo "Files: $(find /opt/vrbot/agent -name '*.py' | wc -l) Python files"
+            echo "Tasks: $(ls /opt/vrbot/agent/tasks/task_*.py 2>/dev/null | wc -l) task files"
