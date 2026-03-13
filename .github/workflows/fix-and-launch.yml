@@ -7,7 +7,7 @@ jobs:
   fix:
     runs-on: ubuntu-latest
     steps:
-      - name: Fix Docker and launch game
+      - name: Inspect and recreate broken farms
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 88.99.64.19
@@ -18,55 +18,71 @@ jobs:
           script: |
             GAME_PKG="com.igg.android.vikingriseglobal"
 
-            echo "===== STEP 1: STOP ALL CONTAINERS ======"
-            docker stop $(docker ps -q) 2>/dev/null
-            echo "All stopped"
-            sleep 3
-
-            echo "===== STEP 2: RESTART DOCKER SERVICE ======"
-            systemctl restart docker
-            sleep 5
-            systemctl status docker | head -3
+            echo "===== INSPECT FARM_001 (working) vs FARM_002 (broken) ======"
+            echo "--- farm_001 Mounts ---"
+            docker inspect farm_001 --format '{{json .Mounts}}' | python3 -m json.tool 2>/dev/null
+            echo ""
+            echo "--- farm_002 Mounts ---"
+            docker inspect farm_002 --format '{{json .Mounts}}' | python3 -m json.tool 2>/dev/null
+            echo ""
+            echo "--- farm_001 HostConfig.Binds ---"
+            docker inspect farm_001 --format '{{json .HostConfig.Binds}}' 2>/dev/null
+            echo ""
+            echo "--- farm_002 HostConfig.Binds ---"
+            docker inspect farm_002 --format '{{json .HostConfig.Binds}}' 2>/dev/null
+            echo ""
+            echo "--- farm_001 HostConfig.Devices ---"
+            docker inspect farm_001 --format '{{json .HostConfig.Devices}}' 2>/dev/null
+            echo ""
+            echo "--- farm_001 Full create command reconstruction ---"
+            docker inspect farm_001 --format '
+            Image: {{.Config.Image}}
+            Cmd: {{json .Config.Cmd}}
+            Privileged: {{.HostConfig.Privileged}}
+            NetworkMode: {{.HostConfig.NetworkMode}}
+            SecurityOpt: {{json .HostConfig.SecurityOpt}}
+            Tmpfs: {{json .HostConfig.Tmpfs}}
+            ' 2>/dev/null
+            echo ""
+            echo "--- farm_002 Full ---"
+            docker inspect farm_002 --format '
+            Image: {{.Config.Image}}
+            Cmd: {{json .Config.Cmd}}
+            Privileged: {{.HostConfig.Privileged}}
+            NetworkMode: {{.HostConfig.NetworkMode}}
+            SecurityOpt: {{json .HostConfig.SecurityOpt}}
+            Tmpfs: {{json .HostConfig.Tmpfs}}
+            ' 2>/dev/null
             echo ""
 
-            echo "===== STEP 3: START ALL CONTAINERS ======"
-            for c in $(docker ps -a --format '{{.Names}}' | sort); do
-              echo -n "$c: "
-              docker start $c 2>&1 | tail -1
-              sleep 1
-            done
+            echo "===== CHECK DATA VOLUMES ======"
+            docker volume ls | head -30
             echo ""
 
-            sleep 15
+            echo "===== RECREATE FARM_002 AS TEST ======"
+            # Stop and remove farm_002
+            docker stop farm_002 2>/dev/null
+            docker rm farm_002 2>/dev/null
 
-            echo "===== STEP 4: VERIFY IPs ======"
-            ok=0
-            for c in $(docker ps --format '{{.Names}}' | sort); do
-              ip=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $c)
-              if [ -n "$ip" ]; then
-                echo "$c: $ip"
-                ok=$((ok + 1))
-              else
-                echo "$c: NO IP"
-              fi
-            done
-            echo "Farms with IP: $ok / 20"
-            echo ""
+            # Recreate with same settings as farm_001 but named farm_002
+            docker run -d --name farm_002 \
+              --privileged \
+              --network bridge \
+              redroid/redroid:11.0.0-latest \
+              androidboot.redroid_gpu_mode=host \
+              androidboot.redroid_width=720 \
+              androidboot.redroid_height=1280 \
+              androidboot.redroid_fps=10 \
+              ro.setupwizard.mode=DISABLED
 
-            echo "===== STEP 5: CONNECT ADB ======"
-            for c in $(docker ps --format '{{.Names}}' | sort); do
-              ip=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $c)
-              [ -n "$ip" ] && adb connect $ip:5555 2>&1 | tail -1
-            done
-            sleep 5
-            DEVS=$(adb devices | grep "device$" | wc -l)
-            echo "ADB devices: $DEVS"
-            echo ""
+            sleep 10
 
-            echo "===== STEP 6: LAUNCH GAME ======"
-            for dev in $(adb devices | grep "device$" | awk '{print $1}'); do
-              echo -n "$dev: "
-              adb -s $dev shell monkey -p $GAME_PKG -c android.intent.category.LAUNCHER 1 2>&1 | grep -c "Events injected" | xargs -I{} echo "OK"
-            done
-            echo ""
-            echo "===== DONE ======"
+            ip=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' farm_002)
+            echo "farm_002 new IP: $ip"
+
+            if [ -n "$ip" ]; then
+              adb connect $ip:5555 2>&1
+              sleep 3
+              echo "Checking game..."
+              adb -s $ip:5555 shell pm list packages 2>/dev/null | grep -i viking
+            fi
