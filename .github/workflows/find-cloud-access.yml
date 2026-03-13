@@ -1,0 +1,60 @@
+name: Find Cloud Server Access
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check from WS Hub server for access to Cloud server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 65.109.214.187
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 2m
+          script: |
+            echo "===== SSH KEYS ====="
+            ls -la /root/.ssh/ 2>/dev/null
+            echo ""
+            echo "===== Known Hosts ====="
+            cat /root/.ssh/known_hosts 2>/dev/null | head -20
+            echo ""
+            echo "===== SSH Config ====="
+            cat /root/.ssh/config 2>/dev/null || echo "No config"
+            echo ""
+            echo "===== Try SSH to 88.99.64.19 ====="
+            ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes root@88.99.64.19 "echo 'SUCCESS: Connected!'; hostname; uptime" 2>&1 || echo "SSH key auth failed"
+            echo ""
+            echo "===== Check env files for passwords ====="
+            grep -ri "88.99\|FARM\|CLOUD\|PASSWORD" /opt/vrbot/ws_hub/.env 2>/dev/null || echo "No match in ws_hub .env"
+            grep -ri "88.99\|FARM\|CLOUD\|PASSWORD" /opt/vrbot/orchestrator/.env 2>/dev/null || echo "No match in orchestrator .env"
+            echo ""
+            echo "===== History for SSH commands ====="
+            grep -i "ssh\|88.99" /root/.bash_history 2>/dev/null | tail -20 || echo "No history"
+
+      - name: Try direct SSH to cloud server with SERVER_PASSWORD
+        uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
+        with:
+          host: 88.99.64.19
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          command_timeout: 1m
+          script: |
+            echo "===== CONNECTED TO 88.99.64.19 ====="
+            hostname
+            uptime
+            echo ""
+            echo "===== Next.js Status ====="
+            pm2 list 2>/dev/null || echo "No pm2"
+            systemctl list-units --type=service --state=running | grep -iE 'next|vrbot|node|cloud' || echo "No matching services"
+            ps aux | grep -E 'next|node' | grep -v grep
+            echo ""
+            echo "===== Nginx Config ====="
+            cat /etc/nginx/sites-enabled/cloud* 2>/dev/null || cat /etc/nginx/conf.d/cloud* 2>/dev/null || echo "No cloud nginx config"
+            echo ""
+            echo "===== Port 3000 check ====="
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ 2>/dev/null || echo "Port 3000 not responding"
