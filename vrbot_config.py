@@ -1,16 +1,33 @@
 """
-VRBOT Config v5.3 — Dual Backend (LDPlayer + Docker/Redroid)
+VRBOT Config v5.4 — Dual Backend (LDPlayer + Docker/Redroid)
 """
 import os
+import sys
+
+# --- .env file loader ---
+_env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(_env_path):
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
 
 # --- Backend ---
 # "ldplayer"  = Local LDPlayer emulator via ADB (Windows)
 # "docker"    = Redroid containers via docker exec (Server)
-BACKEND = os.environ.get("VRBOT_BACKEND", "ldplayer")
+# Auto-detect: Linux defaults to "docker", Windows to "ldplayer"
+_default_backend = "docker" if sys.platform.startswith("linux") else "ldplayer"
+BACKEND = os.environ.get("VRBOT_BACKEND", _default_backend)
 
-# --- ADB (LDPlayer backend) ---
-ADB_EXE = r"C:\LDPlayer\LDPlayer9\adb.exe"
-ADB_DEVICE = "emulator-5554"
+# --- ADB (LDPlayer backend or direct ADB on Linux) ---
+if sys.platform.startswith("linux"):
+    ADB_EXE = "adb"
+    ADB_DEVICE = os.environ.get("ADB_SERIAL", "emulator-5554")
+else:
+    ADB_EXE = r"C:\LDPlayer\LDPlayer9\adb.exe"
+    ADB_DEVICE = os.environ.get("ADB_SERIAL", "emulator-5554")
 
 # --- Docker (Redroid backend) ---
 DOCKER_CONTAINER = os.environ.get("VRBOT_CONTAINER", "farm_001")
@@ -22,16 +39,7 @@ AI_PROVIDER = "anthropic"  # "openai" or "anthropic"
 OPENAI_MODEL = "gpt-4o-mini"
 CLAUDE_MODEL = "claude-sonnet-4-20250514"
 
-# --- API Keys (loaded from .env or environment) ---
-# Create a .env file with: ANTHROPIC_API_KEY=sk-ant-...
-_env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
-if os.path.exists(_env_path):
-    with open(_env_path) as _f:
-        for _line in _f:
-            _line = _line.strip()
-            if _line and not _line.startswith("#") and "=" in _line:
-                _k, _v = _line.split("=", 1)
-                os.environ.setdefault(_k.strip(), _v.strip())
+# --- API Keys (already loaded from .env at top of file) ---
 
 # --- YOLO ONNX (FREE - runs locally, no PyTorch needed) ---
 YOLO_ENABLED = True

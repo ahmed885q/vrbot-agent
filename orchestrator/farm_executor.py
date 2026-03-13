@@ -305,8 +305,12 @@ class FarmExecutor:
             task_arg = f"--task {task_name}"
 
         # Build the remote command
+        # Set VRBOT_CONTAINER for docker exec mode + ADB_SERIAL for direct ADB mode
+        container_name = farm.container_name or f"farm_{farm.id}"
         cmd = (
             f"cd {VRBOT_AGENT_PATH} && "
+            f"VRBOT_BACKEND=docker "
+            f"VRBOT_CONTAINER={container_name} "
             f"ADB_SERIAL={adb_serial} "
             f"FARM_ID={farm.id} "
             f"CUSTOMER_ID={farm.customer_id} "
