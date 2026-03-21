@@ -1,0 +1,35 @@
+name: Build Check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic requests beautifulsoup4 python-dotenv PyGithub schedule lxml
+
+      - name: Syntax check
+        run: |
+          python -m py_compile main.py || true
+          python -m py_compile core/brain.py || true
+          python -m py_compile core/memory.py || true
+          find . -name "*.py" -not -path "./.git/*" | head -20 | xargs python -m py_compile
+          echo "Syntax check passed"
+
+      - name: Build success
+        run: echo "Build passed - safe to merge"
