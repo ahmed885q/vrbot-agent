@@ -1,0 +1,59 @@
+name: Auto-Merge Agent PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  check_suite:
+    types: [completed]
+  workflow_run:
+    workflows: ["*"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      (
+        startsWith(github.head_ref, 'agent/') ||
+        startsWith(github.head_ref, 'feat/fix-') ||
+        startsWith(github.head_ref, 'auto-fix/') ||
+        contains(github.event.pull_request.title, '🤖') ||
+        contains(github.event.pull_request.title, 'Auto-fix') ||
+        contains(github.event.pull_request.title, 'auto-fix')
+      )
+
+    steps:
+      - name: Wait for checks
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref:              ${{ github.event.pull_request.head.sha }}
+          running-workflow-name: 'Auto-Merge Agent PRs'
+          repo-token:       ${{ secrets.GITHUB_TOKEN }}
+          wait-interval:    30
+          allowed-conclusions: success,skipped,neutral
+        timeout-minutes: 10
+        continue-on-error: true
+
+      - name: Auto-merge
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN:  ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD:  squash
+          MERGE_COMMIT_MESSAGE: |
+            ${{ github.event.pull_request.title }}
+
+            Auto-merged by VRBOT Agent workflow
+            PR: #${{ github.event.pull_request.number }}
+          MERGE_LABELS:  auto-fix,auto-merge
+          MERGE_REMOVE_LABELS: ''
+          UPDATE_LABELS: ''
+          MERGE_FORKS:   false
+          MERGE_RETRIES: 6
+          MERGE_RETRY_SLEEP: 10000
+          MERGE_DELETE_BRANCH: true
