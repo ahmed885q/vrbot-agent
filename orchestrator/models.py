@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Optional
 import uuid
+from vrbot_models import FarmCommand, APIResponse, Farm
 
 
 # ──────────────────────────────────────────
