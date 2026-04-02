@@ -66,7 +66,7 @@ class GameHealthMonitor:
     Usage:
         monitor = GameHealthMonitor(
             adb_controller=adb,
-            game_package="com.igg.android.vikingrise",
+            game_package="com.igg.android.vikingriseglobal",
             device_serial="emulator-5554"
         )
         monitor.on_health_change = my_callback

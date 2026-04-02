@@ -373,7 +373,7 @@ if main_tree:
         # Verify game package
         health_code = ast.get_source_segment(main_code, classes["HealthGuard"])
         if health_code:
-            check("    Correct game package", "com.igg.android.vikingrise" in health_code)
+            check("    Correct game package", "com.igg.android.vikingriseglobal" in health_code)
     else:
         fail("  HealthGuard class missing")
 
