@@ -1178,11 +1178,75 @@ class Bot:
         return self.ask_ai(prompt, image_b64, 60)
 
     # ════════════════════════════════════════════════════
+    # CRASH DIALOG DETECTION & GAME RESTART
+    # ════════════════════════════════════════════════════
+
+    GAME_PKG = "com.igg.android.vikingriseglobal"
+    GAME_ACT = GAME_PKG + "/com.gpc.sdk.unity.GPCSDKMainActivity"
+
+    def dismiss_crash_dialog(self):
+        """Detect and dismiss 'Failure to initialize' / crash dialogs."""
+        try:
+            path = self.screenshot("crash_check")
+            if not path:
+                return False
+
+            # Read raw bytes for text detection
+            from PIL import Image
+            img = Image.open(path)
+            # Convert to grayscale and check for known crash patterns
+            gray = img.convert("L")
+            pixels = list(gray.getdata())
+            w, h = img.size
+
+            # Check center region for dialog (dark overlay + bright dialog box)
+            center_y = h // 2
+            center_region = pixels[w * (center_y - 50):w * (center_y + 50)]
+            avg_brightness = sum(center_region) / len(center_region) if center_region else 0
+
+            # Dialog pattern: center is bright (>120), edges are dark (<60)
+            edge_region = pixels[:w * 50] + pixels[w * (h - 50):]
+            edge_brightness = sum(edge_region) / len(edge_region) if edge_region else 128
+
+            has_dialog = avg_brightness > 120 and edge_brightness < 80
+
+            if has_dialog:
+                log.warning("[crash_dialog] Dialog detected — dismissing")
+                # Tap OK button area (center-bottom of dialog on 1280x720)
+                self.tap(640, 480, jitter=False)
+                time.sleep(1)
+                self.tap(640, 480, jitter=False)
+                time.sleep(2)
+
+                # Check if game process died
+                pid = self._adb("shell", "pidof", self.GAME_PKG).strip()
+                if not pid:
+                    log.warning("[crash_dialog] Game crashed — restarting")
+                    self.restart_game()
+                return True
+
+            return False
+        except Exception as e:
+            log.debug(f"[crash_dialog] check error: {e}")
+            return False
+
+    def restart_game(self):
+        """Force-stop and restart Viking Rise."""
+        log.info("[restart] Restarting game...")
+        self._adb("shell", "am", "force-stop", self.GAME_PKG)
+        time.sleep(3)
+        self._adb("shell", "am", "start", "-n", self.GAME_ACT)
+        time.sleep(30)  # Wait for game to load
+        log.info("[restart] Game restarted")
+
+    # ════════════════════════════════════════════════════
     # NAVIGATION (smart, minimal API usage)
     # ════════════════════════════════════════════════════
 
     def go_to_city(self, max_attempts=15):
         """Navigate back to city. YOLO-first, smart popup handling."""
+        self.dismiss_crash_dialog()
+
         last_screen = None
         same_screen_count = 0
 

@@ -657,6 +657,10 @@ def run_task(bot, task_name, captcha=None, smart_retry=None):
 
     log.info(f"Running: {cls.name}")
 
+    # Dismiss any crash dialog before starting
+    if hasattr(bot, 'dismiss_crash_dialog'):
+        bot.dismiss_crash_dialog()
+
     t0 = time.time()
     crash_error = None
     try:
