@@ -1231,10 +1231,14 @@ class Bot:
             return False
 
     def restart_game(self):
-        """Force-stop and restart Viking Rise."""
+        """Force-stop and restart Viking Rise with LD_LIBRARY_PATH wrap."""
         log.info("[restart] Restarting game...")
         self._adb("shell", "am", "force-stop", self.GAME_PKG)
-        time.sleep(3)
+        time.sleep(2)
+        # Set wrap property so libnesec-x86.so loads correctly
+        self._adb("shell", "setprop", "wrap." + self.GAME_PKG,
+                  "LD_LIBRARY_PATH=/data/local/tmp/vrlibs")
+        time.sleep(1)
         self._adb("shell", "am", "start", "-n", self.GAME_ACT)
         time.sleep(30)  # Wait for game to load
         log.info("[restart] Game restarted")

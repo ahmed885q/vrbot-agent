@@ -586,7 +586,10 @@ class HealthGuard:
         log.warning(f"Game restart #{self.total_restarts}")
 
         self._adb("shell", "am", "force-stop", self.GAME_PKG)
-        time.sleep(5)
+        time.sleep(2)
+        self._adb("shell", "setprop", "wrap." + self.GAME_PKG,
+                  "LD_LIBRARY_PATH=/data/local/tmp/vrlibs")
+        time.sleep(1)
         self._adb("shell", "am", "start", "-n", self.GAME_ACT)
         time.sleep(40)  # game loading time
 
