@@ -31,6 +31,13 @@ import threading
 import traceback
 from datetime import datetime
 
+# Force UTF-8 stdout on Windows (fixes UnicodeEncodeError for box-drawing chars)
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, Exception):
+    pass
+
 # ═══════════════════════════════════════════════════════════════════
 # Logging — auto-creates logs/ directory
 # ═══════════════════════════════════════════════════════════════════
