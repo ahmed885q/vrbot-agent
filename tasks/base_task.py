@@ -17,6 +17,17 @@ import time
 import random
 import logging
 
+# Stats tracker (optional — graceful no-op if Redis unavailable)
+try:
+    import sys as _sys
+    _sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from vrbot_stats import record_tap as _record_tap, record_task_run as _record_task_run
+    _STATS_ENABLED = True
+except ImportError:
+    _STATS_ENABLED = False
+    def _record_tap(*a, **kw): pass
+    def _record_task_run(*a, **kw): pass
+
 # -- Task Logger (shared by all tasks, configured in vrbot_main.py) --
 log = logging.getLogger("vrbot.task")
 
@@ -64,6 +75,9 @@ class BaseTask:
         self._state = "init"
         self._start_time = None
         self._actions_taken = 0
+        # Stats — farm_id comes from bot config (defaults to container name)
+        self._farm_id = getattr(bot, "farm_id", None) or os.environ.get("VRBOT_CONTAINER", "farm_001")
+        self._task_start_time = None
 
     # -- State tracking --
 
@@ -80,6 +94,7 @@ class BaseTask:
         self.bot.hybrid_tap_center(fallback_xy=(640, 400))
         self.bot.wait(wait_after)
         self._actions_taken += 1
+        _record_tap(self._farm_id)
 
     # -- Human-like wait --
 
@@ -90,10 +105,20 @@ class BaseTask:
     # -- Cooldown --
 
     def _cooldown_ok(self):
-        return cooldown_ok(self.tag, self.cooldown_hours)
+        ok = cooldown_ok(self.tag, self.cooldown_hours)
+        if ok:
+            self._task_start_time = time.time()   # start timer when task actually runs
+        return ok
 
     def _save_cooldown(self):
         cooldown_save(self.tag)
+        # Auto-record task completion to stats
+        duration = (time.time() - self._task_start_time) if self._task_start_time else 0
+        _record_task_run(self._farm_id, self.tag, duration)
+        # Record taps from this task run
+        if self._actions_taken > 0:
+            _record_tap(self._farm_id, self._actions_taken)
+        self.log.debug(f"Stats: task={self.tag} taps={self._actions_taken} duration={duration:.1f}s")
 
     # -- Safe close (hybrid: template -> YOLO -> AI -> back) --
 
