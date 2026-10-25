@@ -71,6 +71,7 @@ from state_machine import BotState, TaskState
 
 TASK_MAP = {
     # Quick Collections
+    "daily_login":         ("tasks.task_daily_login",         "TaskDailyLogin"),
     "daily_gifts":         ("tasks.task_daily_gifts",         "TaskDailyGifts"),
     "rewards":             ("tasks.task_rewards",             "TaskRewards"),
     "mail_rewards":        ("tasks.task_mail_rewards",        "TaskMailRewards"),
@@ -237,6 +238,7 @@ TASK_PRIORITY = {
     "city_rush":           PRI_NORMAL,
 
     # LOW — quick collections & events
+    "daily_login":         PRI_LOW,
     "daily_gifts":         PRI_LOW,
     "rewards":             PRI_LOW,
     "mail_rewards":        PRI_LOW,
@@ -827,6 +829,8 @@ class BotStateManager:
         self.total_ok: int = 0
         self.total_fail: int = 0
         self.total_skip: int = 0
+        self.cooldown_skip: int = 0   # skipped because cooldown not expired
+        self.error_skip: int = 0      # skipped due to unrecoverable error
         self.start_time: float = 0
         self.last_error: str = ""
         self.game_restarts: int = 0
@@ -869,6 +873,8 @@ class BotStateManager:
             "total_ok": self.total_ok,
             "total_fail": self.total_fail,
             "total_skip": self.total_skip,
+            "cooldown_skip": self.cooldown_skip,
+            "error_skip": self.error_skip,
             "uptime_seconds": round(uptime),
             "game_restarts": self.game_restarts,
             "captchas_detected": self.captchas_detected,
@@ -1021,6 +1027,7 @@ def main_enhanced(once=False, single_task=None):
                         if not gsm.verify_state(GameScreen.CITY):
                             log.error(f"[{task_name}] Still not in CITY after recovery — skipping")
                             _bot_state.total_skip += 1
+                            _bot_state.error_skip += 1
                             _bot_state.set_task(task_name, "skipped")
                             continue
                 else:
@@ -1039,6 +1046,7 @@ def main_enhanced(once=False, single_task=None):
 
                 if result is None:
                     _bot_state.total_skip += 1
+                    _bot_state.cooldown_skip += 1   # task returned None = cooldown active
                     _bot_state.set_task(task_name, "skipped")
                 elif result:
                     _bot_state.on_task_result(task_name, True, duration)
@@ -1076,7 +1084,7 @@ def main_enhanced(once=False, single_task=None):
     s = _bot_state
     print(f"\n{'=' * 60}")
     print(f"  SESSION COMPLETE")
-    print(f"  Cycles: {s.cycle}  |  OK: {s.total_ok}  |  FAIL: {s.total_fail}  |  Skip: {s.total_skip}")
+    print(f"  Cycles: {s.cycle}  |  OK: {s.total_ok}  |  FAIL: {s.total_fail}  |  Skip: {s.total_skip}  (cd:{s.cooldown_skip} err:{s.error_skip})")
     print(f"  Game Restarts: {health.total_restarts}  |  Captchas: {captcha.total_detected}")
     if gsm:
         gs = gsm.get_stats()
