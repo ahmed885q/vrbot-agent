@@ -33,6 +33,16 @@ from models import SchedulerConfig
 
 logger = logging.getLogger("api")
 
+# Stats router (graceful — silently skipped if import fails)
+try:
+    import sys as _sys, os as _os
+    _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+    from api.v1.stats import router as _stats_router
+    _STATS_ROUTER_OK = True
+except Exception as _e:
+    logger.warning(f"Stats router not loaded: {_e}")
+    _STATS_ROUTER_OK = False
+
 # ══════════════════════════════════════════
 #  App Setup
 # ══════════════════════════════════════════
@@ -42,6 +52,10 @@ app = FastAPI(
     description="نظام جدولة المزارع بنظام الدفعات الذكي",
     version="1.0.0"
 )
+
+# Mount stats router at /api/stats/*
+if _STATS_ROUTER_OK:
+    app.include_router(_stats_router, prefix="/api")
 
 # المكونات
 config = SchedulerConfig()
