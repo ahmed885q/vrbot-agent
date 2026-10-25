@@ -264,6 +264,9 @@ TASK_PRIORITY = {
     "gather_boost":        PRI_NORMAL,
     "map_explore":         PRI_LOW,
     "intelligence_rewards":PRI_LOW,
+
+    # Resource logistics
+    "transfer_resources":  PRI_NORMAL,
 }
 
 PRI_NAMES = {1: "CRITICAL", 2: "HIGH", 3: "NORMAL", 4: "LOW"}
