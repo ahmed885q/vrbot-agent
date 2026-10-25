@@ -149,6 +149,11 @@ TASK_MAP = {
     "gather_boost":        ("tasks.task_gather_boost",        "TaskGatherBoost"),
     "map_explore":         ("tasks.task_map_explore",         "TaskMapExplore"),
     "intelligence_rewards":("tasks.task_intelligence_rewards","TaskIntelligenceRewards"),
+
+    # v6.0 — GnBot Parity tasks
+    "auto_speedup":        ("tasks.task_auto_speedup",        "TaskAutoSpeedup"),
+    "daily_quest":         ("tasks.task_daily_quest",         "TaskDailyQuest"),
+    "auto_vip":            ("tasks.task_auto_vip",            "TaskAutoVip"),
 }
 
 # Original sequential order (kept for --classic mode)
@@ -189,6 +194,9 @@ TASK_ORDER = [
 
     # Phase 11: Meta
     "city_rush",
+
+    # Phase 12: GnBot Parity (v6.0)
+    "auto_speedup", "daily_quest", "daily_login", "auto_vip",
 
     # Last: Defense
     "shield",
@@ -269,6 +277,11 @@ TASK_PRIORITY = {
 
     # Resource logistics
     "transfer_resources":  PRI_NORMAL,
+
+    # v6.0 — GnBot Parity
+    "auto_speedup":        PRI_HIGH,    # speedup construction/research = critical economy
+    "daily_quest":         PRI_NORMAL,  # daily quest rewards
+    "auto_vip":            PRI_LOW,     # claim VIP points/rewards
 }
 
 PRI_NAMES = {1: "CRITICAL", 2: "HIGH", 3: "NORMAL", 4: "LOW"}

@@ -118,21 +118,28 @@ TASKS_ENABLED = {
 
     # ── Alliance ──
     "tribe_tech": True,
-    "city_rush": False,
-    "community_events": False,
-    "conquer_island": False,
-    "gather_supplies": False,
-    "market_trade": False,
-    "rebate_pack": False,
-    "surprise_gift": False,
-    "toy_shop": False,
-    "tribe_gold_tile": False,
+    "city_rush": True,
+    "community_events": True,
+    "conquer_island": True,
+    "gather_supplies": True,
+    "market_trade": True,
+    "rebate_pack": True,
+    "surprise_gift": True,
+    "toy_shop": True,
+    "tribe_gold_tile": True,
+    "transfer_resources": False,   # manual only — needs target castle config
 
     # ── Maintenance ──
     "wall_repair": True,
     "heal_troops": True,
     "troop_upgrade": True,
     "gather_boost": True,
-    "map_explore": False,
+    "map_explore": True,
     "intelligence_rewards": True,
+
+    # ── GnBot Parity (v6 additions) ──
+    "daily_login": True,
+    "auto_speedup": True,
+    "daily_quest": True,
+    "auto_vip": True,
 }
